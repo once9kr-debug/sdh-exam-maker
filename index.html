@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Roboto:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@800;900&family=Roboto:wght@400;500;700&display=swap');
 
     body {
       font-family: 'Noto Sans KR', sans-serif;
@@ -49,8 +49,55 @@
       margin-bottom: 8px;
     }
 
-    .logo-img {
-      object-fit: contain;
+    /* 내장형 고화질 SDH STUDIO 벡터 로고 컴포넌트 */
+    .sdh-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Montserrat', sans-serif;
+      user-select: none;
+    }
+    .sdh-cube {
+      background: #000;
+      color: #fff;
+      font-weight: 900;
+      font-size: 26px;
+      padding: 2px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 2px 3px 0px rgba(0,0,0,0.25);
+      line-height: 1;
+    }
+    .sdh-text-block {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+    .sdh-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .sdh-dh {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #000;
+    }
+    .sdh-studio {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #000;
+    }
+    .sdh-sub {
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 5px;
+      color: #334155;
+      margin-top: 4px;
     }
 
     .type-chip {
@@ -130,11 +177,22 @@
   <!-- ==================== 1. 로그인 팝업 모달 ==================== -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
+      
+      <!-- 내장형 고화질 SDH STUDIO 로고 -->
       <div class="text-center mb-6">
-        <div class="flex justify-center mb-3">
-          <img src="Gemini_Generated_Image_d6cc20d6cc20d6cc.png" alt="SDH STUDIO Logo" class="h-14 logo-img" />
+        <div class="flex justify-center mb-4">
+          <div class="sdh-logo-wrap p-2 border border-slate-100 rounded-xl shadow-sm bg-white">
+            <span class="sdh-cube">S</span>
+            <div class="sdh-text-block text-left">
+              <div class="sdh-title-row">
+                <span class="sdh-dh">DH</span>
+                <span class="sdh-studio">STUDIO</span>
+              </div>
+              <span class="sdh-sub">IS NOW ON</span>
+            </div>
+          </div>
         </div>
-        <p class="text-xs text-slate-500 mt-1">고등부 영어 변형문제 자동 생성 및 출제 시스템</p>
+        <p class="text-xs text-slate-500 font-medium">고등부 영어 변형문제 자동 생성 및 출제 시스템</p>
       </div>
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
@@ -165,21 +223,33 @@
     </div>
   </div>
 
-  <!-- ==================== 메인 프레임 ==================== -->
+  <!-- ==================== 메인 시스템 구조 ==================== -->
   <div id="appContainer" class="flex flex-1 min-h-screen">
 
-    <!-- LNB (좌측 사이드바) -->
+    <!-- [LNB: 좌측 사이드바 메뉴] -->
     <aside class="no-print w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
+      
+      <!-- 사이드바 상단 로고 -->
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
-        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm">
-          <img src="Gemini_Generated_Image_d6cc20d6cc20d6cc.png" alt="SDH STUDIO Logo" class="h-9 w-auto object-contain" />
+        <div class="bg-white px-3 py-2.5 rounded-xl flex items-center justify-center shadow-sm">
+          <div class="sdh-logo-wrap scale-90 origin-center">
+            <span class="sdh-cube">S</span>
+            <div class="sdh-text-block text-left">
+              <div class="sdh-title-row">
+                <span class="sdh-dh">DH</span>
+                <span class="sdh-studio">STUDIO</span>
+              </div>
+              <span class="sdh-sub">IS NOW ON</span>
+            </div>
+          </div>
         </div>
-        <div class="flex items-center justify-between px-1">
+        <div class="flex items-center justify-between px-1 mt-1">
           <span class="text-[10px] text-slate-400 font-medium tracking-wide">EXAM GENERATOR</span>
           <span id="userBadge" class="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded font-bold">관리자 모드</span>
         </div>
       </div>
 
+      <!-- 메뉴 목록 -->
       <nav class="p-4 space-y-1.5 flex-1">
         <button onclick="switchView('examList')" id="nav-mock" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition">
           <span class="flex items-center gap-3">
@@ -224,10 +294,10 @@
       </div>
     </aside>
 
-    <!-- 컨텐츠 영역 -->
+    <!-- [컨텐츠 메인 뷰] -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
 
-      <!-- ==================== VIEW 1: 모의고사 목록 ==================== -->
+      <!-- ==================== VIEW 1: 모의고사 목록 화면 ==================== -->
       <section id="view-examList" class="p-8 space-y-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
@@ -285,7 +355,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 2: 유형 및 지문 선택 ==================== -->
+      <!-- ==================== VIEW 2: 지문 및 문제 유형 선택 화면 ==================== -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -415,7 +485,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 3: 2단 인쇄용 시험지 ==================== -->
+      <!-- ==================== VIEW 3: 2단 인쇄용 시험지 화면 ==================== -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
         <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
@@ -463,10 +533,21 @@
           </div>
         </div>
 
+        <!-- 실제 시험지 출력 박스 -->
         <div class="print-area bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
+          <!-- 시험지 타이틀 헤더 & SDH 로고 -->
           <div class="border-b-2 border-slate-950 pb-3 mb-6 flex justify-between items-end">
-            <div class="flex items-center gap-3">
-              <img src="Gemini_Generated_Image_d6cc20d6cc20d6cc.png" alt="SDH STUDIO Logo" class="h-10 w-auto object-contain" />
+            <div class="flex items-center gap-4">
+              <div class="sdh-logo-wrap scale-75 origin-left">
+                <span class="sdh-cube">S</span>
+                <div class="sdh-text-block text-left">
+                  <div class="sdh-title-row">
+                    <span class="sdh-dh">DH</span>
+                    <span class="sdh-studio">STUDIO</span>
+                  </div>
+                  <span class="sdh-sub">IS NOW ON</span>
+                </div>
+              </div>
               <div>
                 <div class="text-[10px] font-bold text-slate-500 tracking-wider">HIGH SCHOOL ENGLISH CLINIC</div>
                 <h1 id="examSheetMainTitle" class="text-xl font-black text-slate-950 tracking-tight exam-eng-font">
