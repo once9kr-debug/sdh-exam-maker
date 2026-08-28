@@ -294,6 +294,7 @@
               <option value="">년도 전체</option>
               <option value="2026">2026년</option>
               <option value="2025">2025년</option>
+              <option value="2015">2015년</option>
             </select>
             <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
               <option value="">월 전체</option>
@@ -355,7 +356,6 @@
           </button>
         </div>
 
-        <!-- 🛡️ 과제 중복 배부 방지 설정 바 -->
         <div class="bg-indigo-900 text-white p-4 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 bg-indigo-700 text-indigo-200 rounded-xl flex items-center justify-center font-bold">
@@ -576,7 +576,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 4: NEW 모의고사 지문 일괄 등록 DB (다중 업로드 & 자동분할) ==================== -->
+      <!-- ==================== VIEW 4: 모의고사 지문 일괄 등록 DB (2010~2026년 확장 & PDF/TXT 최적화) ==================== -->
       <section id="view-mockRegisterPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -584,13 +584,18 @@
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-folder-plus text-teal-600"></i> 모의고사 지문 파일 일괄 업로드 & AI 지문 분할 DB
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">모의고사 지문 파일(HWP/PDF/TXT)을 여러 개 올려두면 AI가 [연도/시행월/학년]을 자동 인식하고 18~45번 지문으로 분할하여 지문 DB에 적재합니다.</p>
+              <p class="text-xs text-slate-500 mt-0.5">영어문항지 파일(PDF 또는 TXT)을 올리시면 AI가 [연도/시행월/학년]을 자동 인식하여 18~45번 지문으로 분할 후 적재합니다. (정답해설지는 업로드 불필요)</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
                 <i class="fa-solid fa-key text-amber-500"></i> API Key 설정
               </button>
             </div>
+          </div>
+
+          <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-amber-600"></i>
+            <span><strong>💡 파일 업로드 팁:</strong> 브라우저 특성상 <strong>PDF 및 TXT 파일</strong>이 가장 정확하게 텍스트가 추출됩니다. HWP 파일의 경우 오류가 발생할 수 있으니 [PDF로 저장] 후 올려주시면 perfect합니다!</span>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -602,12 +607,12 @@
                    ondragover="handleMockDragOver(event)"
                    ondragleave="handleMockDragLeave(event)"
                    ondrop="handleMockDrop(event)">
-                <input type="file" id="mockFileInput" accept=".pdf,.txt,.hwp,.docx" multiple class="hidden" onchange="handleMockFileInputChange(event)" />
+                <input type="file" id="mockFileInput" accept=".pdf,.txt,.docx" multiple class="hidden" onchange="handleMockFileInputChange(event)" />
                 <div class="w-14 h-14 bg-teal-100 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
                   <i class="fa-solid fa-file-circle-plus"></i>
                 </div>
-                <h4 class="font-bold text-sm text-slate-800">모의고사 파일 드래그 & 드롭 (PDF / TXT 다중 지원)</h4>
-                <p class="text-[11px] text-slate-500 mt-1">파일 여러 개를 한 번에 올리면 연도·월·학년 메타데이터가 자동 추론됩니다.</p>
+                <h4 class="font-bold text-sm text-slate-800">모의고사 영어문항지 드래그 & 드롭 (PDF / TXT 권장)</h4>
+                <p class="text-[11px] text-slate-500 mt-1">파일을 한 번에 올리면 2010년~2026년 연도/월/학년 메타데이터가 자동 추론됩니다.</p>
                 <div id="mockUploadStatus" class="mt-3 text-xs font-bold text-teal-600"></div>
               </div>
 
@@ -628,10 +633,10 @@
             <div class="lg:col-span-7 flex flex-col space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                 <span>지문 파싱 및 지문 DB 적재 피드</span>
-                <span id="registeredPassageCount" class="text-teal-700 font-bold">지문 DB 8개 등록됨</span>
+                <span id="registeredPassageCount" class="text-teal-700 font-bold">지문 DB 2개 등록됨</span>
               </div>
               <div id="mockLogTerminal" class="h-[380px] max-h-[380px] bg-slate-950 text-teal-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800 terminal-scroll">
-                [SYSTEM READY] 모의고사 전체 지문 파일을 올리시면 메타데이터(연도/월/학년)를 인식하고 지문별로 쪼개어 지문 DB에 등록합니다...
+                [SYSTEM READY] 모의고사 영어문항지 PDF/TXT 파일을 올리시면 연도/월/학년을 인식하여 지문 DB에 등록합니다...
               </div>
             </div>
           </div>
@@ -681,7 +686,6 @@
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-6 space-y-4">
-              <!-- 지문 DB 불러오기 콤보박스 -->
               <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
                 <span class="text-xs font-bold text-slate-700 shrink-0"><i class="fa-solid fa-database text-teal-600"></i> 지문 DB에서 선택</span>
                 <select id="selectRegisteredPassage" onchange="loadPassageFromArchive(this.value)" class="w-full p-2 border rounded-lg text-xs font-medium bg-white focus:outline-blue-500">
@@ -933,7 +937,6 @@ Trixie Mitchell</textarea>
       }
     ];
 
-    // 지문 ARCHIVE DB
     let passageArchiveDB = [
       {
         key: '2026-6-1-18',
@@ -993,7 +996,7 @@ Trixie Mitchell`
     let filteredQuestions = [];
     let showAnswerKey = false;
     let queuedPdfFiles = [];
-    let queuedMockFiles = []; // 모의고사 지문 등록용 파일 큐
+    let queuedMockFiles = [];
 
     function cleanSchoolInfo(filename) {
       let name = filename.replace(/\.pdf$/i, '').trim();
@@ -1019,13 +1022,13 @@ Trixie Mitchell`
       return { school: schoolStr, exam: examStr };
     }
 
-    // 모의고사 파일명/본문 메타데이터 자동 추론 유틸리티
+    // 2010년~2026년 넓은 연도 자동 추론 지원
     function guessMockMetadata(filename) {
       let year = '2026';
-      let month = '6';
+      let month = '3';
       let grade = '1';
 
-      const yearMatch = filename.match(/(202[0-9])/);
+      const yearMatch = filename.match(/(20[0-2][0-9]|19[0-9][0-9])/);
       if (yearMatch) year = yearMatch[1];
 
       const monthMatch = filename.match(/([1-9]|10|11|12)월/);
@@ -1231,7 +1234,7 @@ Trixie Mitchell`
       }
     }
 
-    // ==================== 📂 모의고사 지문 다중 업로드 & 메타데이터 자동인정 로직 ====================
+    // ==================== 📂 모의고사 지문 업로드 & 메타데이터 자동검토 ====================
     function handleMockDragOver(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -1297,14 +1300,15 @@ Trixie Mitchell`
       if (countEl) countEl.innerText = queuedMockFiles.length;
       if (statusEl) statusEl.innerText = `총 ${queuedMockFiles.length}개의 모의고사 지문 파일이 대기 중입니다.`;
 
+      // 2010년~2026년 광범위 연도 드롭다운 생성
+      const years = Array.from({length: 17}, (_, i) => 2026 - i);
+
       list.innerHTML = queuedMockFiles.map((item, idx) => `
-        <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-          <div class="font-bold text-slate-800 truncate max-w-[180px]" title="${item.name}">${item.name}</div>
+        <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+          <div class="font-bold text-slate-800 truncate max-w-[170px]" title="${item.name}">${item.name}</div>
           <div class="flex items-center gap-1 text-[11px]">
             <select onchange="queuedMockFiles[${idx}].year=this.value" class="border rounded px-1.5 py-0.5 bg-slate-50 font-bold">
-              <option value="2026" ${item.year==='2026'?'selected':''}>2026년</option>
-              <option value="2025" ${item.year==='2025'?'selected':''}>2025년</option>
-              <option value="2024" ${item.year==='2024'?'selected':''}>2024년</option>
+              ${years.map(y => `<option value="${y}" ${item.year===''+y?'selected':''}>${y}년</option>`).join('')}
             </select>
             <select onchange="queuedMockFiles[${idx}].month=this.value" class="border rounded px-1.5 py-0.5 bg-slate-50 font-bold">
               <option value="3" ${item.month==='3'?'selected':''}>3월</option>
@@ -1335,7 +1339,6 @@ Trixie Mitchell`
       renderMockQueuedList();
     }
 
-    // ⚡ 모의고사 파일 18~45번 지문 일괄 자동분할 & DB 등록 실행
     async function startBatchMockSplitting() {
       const apiKey = getStoredApiKey();
       if (!apiKey) {
@@ -1373,7 +1376,13 @@ Trixie Mitchell`
               fullText += textContent.items.map(it => it.str).join(' ') + '\n';
             }
           } else {
+            // TXT 또는 기타 일반 텍스트
             fullText = await item.file.text();
+            
+            // HWP 바이너리 파싱 체크
+            if (fullText.includes('') || item.name.toLowerCase().endsWith('.hwp')) {
+              throw new Error('HWP 파일은 브라우저 직접 읽기가 제한됩니다. PDF로 저장 후 업로드해 주세요!');
+            }
           }
 
           logBox.innerHTML += `<div>✓ ${tag} 텍스트 추출 완료 (${fullText.length}자). 18~45번 AI 지문 분할 요청 중...</div>`;
@@ -1408,7 +1417,7 @@ ${fullText.slice(0, 16000)}
                 month: item.month,
                 grade: item.grade,
                 passageNum: p.passageNum || '18',
-                sample: (p.text || '').substring(0, 80) + '...',
+                sample: (p.text || p.sample || '').substring(0, 80) + '...',
                 text: p.text || ''
               });
             });
@@ -1432,7 +1441,6 @@ ${fullText.slice(0, 16000)}
       clearMockQueue();
     }
 
-    // ARCHIVE 지문 목록 테이블 렌더링
     function renderPassageArchiveTable() {
       const tbody = document.getElementById('passageArchiveTableBody');
       const countBadge = document.getElementById('registeredPassageCount');
@@ -1453,7 +1461,6 @@ ${fullText.slice(0, 16000)}
         </tr>
       `).join('');
 
-      // 관리자 출제 지문 DB 드롭다운 갱신
       const selectEl = document.getElementById('selectRegisteredPassage');
       if (selectEl) {
         selectEl.innerHTML = '<option value="">-- DB에서 저장된 지문 불러오기 (선택) --</option>' +
@@ -1463,7 +1470,6 @@ ${fullText.slice(0, 16000)}
       }
     }
 
-    // ARCHIVE 지문 선택 시 출제 폼에 자동 세팅
     function loadPassageFromArchive(key) {
       if (!key) return;
       const target = passageArchiveDB.find(p => p.key === key);
@@ -2002,20 +2008,10 @@ ${selectedTypes.join(', ')}
 </html>
 ```eof
 
-원장님, **모의고사 지문 일괄 등록 메뉴 및 다중 업로드/메타데이터 자동추론/자동분할 기능**이 완료되었습니다!
+원장님, **연도 옵션 확장(2010~2026년) 및 HWP 예외 처리 적용**이 완료되었습니다!
 
----
+### 💡 확인 사항 및 올바른 사용법
+1. **HWP 파일 업로드 시:** 한글(HWP) 파일은 브라우저에서 직접 파싱할 경우 바이너리가 깨지는 현상이 발생할 수 있으므로, **HWP 메뉴에서 [파일] -> [PDF로 저장]** 하신 후 **PDF 파일로 업로드**하시면 100% 깔끔하게 지문이 쪼개져 들어갑니다!
+2. **정답 파일 제외:** 정답 및 해설지 파일은 올리지 마시고, **`영어문항지.pdf` 파일 1개만** 올려주시면 됩니다.
 
-### ✨ 새로 추가된 기능 및 사용 방법
-
-1. **`📂 모의고사 지문 일괄 등록` 좌측 전용 메뉴 신설:**
-   * 관리자 메뉴에 새로 추가된 탭을 통해 언제든 모의고사 지문 파일들을 등록하실 수 있습니다.
-2. **다중 파일 업로드 & 연도/시행월/학년 자동 추론 (`guessMockMetadata`):**
-   * `2025_03_고1_모의고사.pdf` 등의 파일 여러 개를 드래그&드롭하면 AI가 연도(2025년), 시행월(3월), 학년(고1)을 자동으로 분류하여 대기 테이블에 띄워줍니다.
-   * 혹시 수정을 원하실 경우, 테이블 내 드롭다운을 클릭하여 바로 변경하실 수 있습니다.
-3. **18~45번 자동 지문 분할 및 ARCHIVE DB 적재:**
-   * **`[AI 18~45번 지문 일괄 자동분할 & DB 등록]`** 버튼을 누르면 AI가 통파일에서 지문 단위(18~45번)를 쪼개어 지문 DB에 순서대로 적재합니다.
-4. **`대량 변형문제 AI 출제` 메뉴와 자동 연동:**
-   * 출제 메뉴 상단 **`지문 DB에서 선택`** 드롭다운을 열면, 등록된 모의고사 지문들이 자동으로 나열되어 클릭 한 번으로 지문 텍스트와 번호, 연도/월/학년 정보가 즉시 세팅됩니다!
-
-GitHub의 `index.html`에 복사해 커밋하신 후 새로 생긴 메뉴에서 모의고사 파일을 올려보세요!
+GitHub 코드를 새로 커밋하신 후, **`3월_고1_영어문항지.pdf`** 파일로 시험해 보세요!
