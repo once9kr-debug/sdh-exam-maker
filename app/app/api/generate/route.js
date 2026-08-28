@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
@@ -6,8 +7,14 @@ export async function POST(req) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY가 설정되지 않았습니다.' }, { status: 500 });
+      return NextResponse.json({ error: 'GEMINI_API_KEY가 Vercel에 설정되지 않았습니다.' }, { status: 400 });
     }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      generationConfig: { responseMimeType: "application/json" }
+    });
 
     const prompt = `
 너는 대한민국 고등학교 영어 내신 시험문제 출제 전문가이다. 
@@ -20,7 +27,7 @@ ${passage}
 ${questionTypes.join(', ')}
 
 [출력 형식]
-반드시 다음 JSON 배열 형식으로만 응답해야 한다. 마크다운이나 추가 설명 문구는 제외해라.
+반드시 다음 JSON 구조를 갖춘 배열로만 응답해야 한다:
 [
   {
     "question_type": "어법",
@@ -33,26 +40,13 @@ ${questionTypes.join(', ')}
 ]
 `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json" }
-      })
-    });
-
-    const data = await response.json();
-    if (!data.candidates || !data.candidates[0]) {
-      return NextResponse.json({ error: 'Gemini API 응답을 받지 못했습니다.' }, { status: 500 });
-    }
-
-    const resultText = data.candidates[0].content.parts[0].text;
-    const questions = JSON.parse(resultText);
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const questions = JSON.parse(responseText);
 
     return NextResponse.json({ questions });
   } catch (error) {
     console.error('Gemini API Error:', error);
-    return NextResponse.json({ error: '문제 생성 중 오류가 발생했습니다.' }, { status: 500 });
+    return NextResponse.json({ error: `API 오류: ${error.message}` }, { status: 500 });
   }
 }
