@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 export default function ExamGenerator() {
   const [passage, setPassage] = useState('');
@@ -32,14 +32,21 @@ export default function ExamGenerator() {
       });
       const data = await res.json();
 
+      if (!res.ok || data.error) {
+        alert(`API 오류: ${data.error || '문제 생성 실패'}`);
+        return;
+      }
+
       if (data.questions) {
         setQuestions(data.questions);
 
-        if (supabaseUrl && supabaseAnonKey) {
-          const { data: passageData } = await supabase
+        if (supabase) {
+          const { data: passageData, error: pErr } = await supabase
             .from('passages')
             .insert([{ title: title || '무제 지문', content: passage }])
             .select();
+
+          if (pErr) console.error('Supabase Passage Error:', pErr);
 
           if (passageData && passageData[0]) {
             const passageId = passageData[0].id;
@@ -51,14 +58,13 @@ export default function ExamGenerator() {
               answer: q.answer,
               explanation: q.explanation
             }));
-            await supabase.from('questions').insert(questionsToInsert);
+            const { error: qErr } = await supabase.from('questions').insert(questionsToInsert);
+            if (qErr) console.error('Supabase Question Error:', qErr);
           }
         }
-      } else if (data.error) {
-        alert(data.error);
       }
     } catch (err) {
-      alert('문제 생성 및 DB 저장 중 오류가 발생했습니다.');
+      alert(`시스템 오류 발생: ${err.message}`);
     } finally {
       setLoading(false);
     }
