@@ -1096,33 +1096,37 @@ Trixie Mitchell</textarea>
     }
 
     function extractJsonFromText(rawText) {
-      let clean = rawText.trim();
-      clean = clean.replace(/```json/gi, '').replace(/```/g, '').trim();
+  let clean = rawText.trim();
+  clean = clean.replace(/```json/gi, '').replace(/```/g, '').trim();
 
-      const firstBracket = clean.indexOf('[');
-      if (firstBracket !== -1) {
-        clean = clean.substring(firstBracket);
-      }
+  const firstBracket = clean.indexOf('[');
+  if (firstBracket !== -1) {
+    clean = clean.substring(firstBracket);
+  }
 
-      let lastBracket = clean.lastIndexOf(']');
-      if (lastBracket === -1) {
-        const lastCurly = clean.lastIndexOf('}');
-        if (lastCurly !== -1) {
-          clean = clean.substring(0, lastCurly + 1) + ']';
-        } else {
-          clean = clean + '}]';
-        }
-      } else {
-        clean = clean.substring(0, lastBracket + 1);
-      }
-
-      try {
-        return JSON.parse(clean);
-      } catch (err) {
-        clean = clean.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
-        return JSON.parse(clean);
-      }
+  let lastBracket = clean.lastIndexOf(']');
+  if (lastBracket === -1) {
+    const lastCurly = clean.lastIndexOf('}');
+    if (lastCurly !== -1) {
+      clean = clean.substring(0, lastCurly + 1) + ']';
+    } else {
+      clean = clean + '}]';
     }
+  } else {
+    clean = clean.substring(0, lastBracket + 1);
+  }
+
+  // 🛠️ 제어 문자 및 잘못된 이스케이프 문자 정제 로직 추가
+  try {
+    return JSON.parse(clean);
+  } catch (err) {
+    // 줄바꿈, 탭, 특수 제어문자 정제 후 재시도
+    clean = clean
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+      .replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+    return JSON.parse(clean);
+  }
+}
 
     function handleLogin(e) {
       if (e) e.preventDefault();
