@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Roboto:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@800;900&family=Roboto:wght@400;500;700&display=swap');
 
     body {
       font-family: 'Noto Sans KR', sans-serif;
@@ -47,10 +47,6 @@
       background: #ffffff;
       margin-top: 6px;
       margin-bottom: 8px;
-    }
-
-    .logo-img {
-      object-fit: contain;
     }
 
     .type-chip {
@@ -130,11 +126,23 @@
   <!-- ==================== 1. 로그인 팝업 모달 ==================== -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
+      
+      <!-- 내장형 SVG SDH STUDIO 로고 -->
       <div class="text-center mb-6">
         <div class="flex justify-center mb-3">
-          <img src="Code_Generated_Image.jpg" alt="SDH STUDIO Logo" class="h-12 logo-img" />
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-12 w-auto">
+            <!-- 3D 큐브 배경 -->
+            <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
+            <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
+            <!-- S 문자 -->
+            <path d="M 54 28 C 45 23, 31 27, 30 36 C 29 45, 50 46, 49 55 C 48 64, 34 64, 25 58" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-9 44 42)"/>
+            <!-- DH -->
+            <text x="96" y="68" font-family="'Montserrat', sans-serif" font-size="56" font-weight="900" fill="#000000" letter-spacing="-1.5">DH</text>
+            <!-- STUDIO -->
+            <text x="202" y="68" font-family="'Montserrat', sans-serif" font-size="54" font-weight="800" fill="#000000" letter-spacing="4">STUDIO</text>
+          </svg>
         </div>
-        <p class="text-xs text-slate-500 mt-1 font-medium">고등부 영어 변형문제 자동 생성 및 출제 시스템</p>
+        <p class="text-xs text-slate-500 font-medium">고등부 영어 변형문제 자동 생성 및 출제 시스템</p>
       </div>
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
@@ -172,9 +180,15 @@
     <aside class="no-print w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
         <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm">
-          <img src="Code_Generated_Image.jpg" alt="SDH STUDIO Logo" class="h-8 w-auto object-contain" />
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-8 w-auto">
+            <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
+            <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
+            <path d="M 54 28 C 45 23, 31 27, 30 36 C 29 45, 50 46, 49 55 C 48 64, 34 64, 25 58" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-9 44 42)"/>
+            <text x="96" y="68" font-family="'Montserrat', sans-serif" font-size="56" font-weight="900" fill="#000000" letter-spacing="-1.5">DH</text>
+            <text x="202" y="68" font-family="'Montserrat', sans-serif" font-size="54" font-weight="800" fill="#000000" letter-spacing="4">STUDIO</text>
+          </svg>
         </div>
-        <div class="flex items-center justify-between px-1">
+        <div class="flex items-center justify-between px-1 mt-0.5">
           <span class="text-[10px] text-slate-400 font-medium tracking-wide">EXAM GENERATOR</span>
           <span id="userBadge" class="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded font-bold">관리자 모드</span>
         </div>
@@ -466,7 +480,13 @@
         <div class="print-area bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
           <div class="border-b-2 border-slate-950 pb-3 mb-6 flex justify-between items-end">
             <div class="flex items-center gap-3">
-              <img src="Code_Generated_Image.jpg" alt="SDH STUDIO Logo" class="h-9 w-auto object-contain" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-9 w-auto">
+                <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
+                <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
+                <path d="M 54 28 C 45 23, 31 27, 30 36 C 29 45, 50 46, 49 55 C 48 64, 34 64, 25 58" fill="none" stroke="#ffffff" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-9 44 42)"/>
+                <text x="96" y="68" font-family="'Montserrat', sans-serif" font-size="56" font-weight="900" fill="#000000" letter-spacing="-1.5">DH</text>
+                <text x="202" y="68" font-family="'Montserrat', sans-serif" font-size="54" font-weight="800" fill="#000000" letter-spacing="4">STUDIO</text>
+              </svg>
               <div>
                 <div class="text-[10px] font-bold text-slate-500 tracking-wider">HIGH SCHOOL ENGLISH CLINIC</div>
                 <h1 id="examSheetMainTitle" class="text-xl font-black text-slate-950 tracking-tight exam-eng-font">
@@ -935,6 +955,4 @@ Trixie Mitchell`,
 </html>
 ```eof
 
-원장님께서 올려주신 슬림 가로형 **SDH STUDIO** 로고 이미지(`Code_Generated_Image.jpg`)로 로그인 창, 좌측 LNB 네비게이션 헤더, 그리고 2단 시험지 인쇄용 상단 헤더까지 일괄 교체 완료했습니다! 
-
-GitHub 저장소의 `index.html` 파일을 열고 위 코드 블록 우측 상단의 **복사 아이콘**을 눌러 붙여넣기 후 커밋하시면 바로 적용됩니다.
+외부 이미지 파일 링크 대신 **순수 SVG 벡터 그래픽**을 코드 내에 직접 내장하여, 별도의 파일 업로드 없이도 로그인 화면과 사이드바, 시험지 헤더의 로고가 영구적으로 깨짐 없이 선명하게 표시됩니다. GitHub의 `index.html`에 복사해 적용해 보세요!
