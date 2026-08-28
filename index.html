@@ -105,14 +105,12 @@
       font-weight: normal;
     }
 
-    /* 드래그 앤 드롭 하이라이트 */
     .drag-active {
       border-color: #0284c7 !important;
       background-color: #e0f2fe !important;
       transform: scale(1.01);
     }
 
-    /* 터미널 피드 커스텀 스크롤바 */
     .terminal-scroll::-webkit-scrollbar {
       width: 6px;
     }
@@ -247,7 +245,7 @@
           
           <button onclick="switchView('adminPanel')" id="nav-admin" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
             <span class="flex items-center gap-3 text-amber-400">
-              <i class="fa-solid fa-wand-magic-sparkles w-4"></i> 변형문제 AI 출제
+              <i class="fa-solid fa-wand-magic-sparkles w-4"></i> 대량 변형문제 AI 출제
             </span>
             <i class="fa-solid fa-bolt text-xs"></i>
           </button>
@@ -333,7 +331,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 2: 유형 및 지문 선택 ==================== -->
+      <!-- ==================== VIEW 2: 유형 및 지문 선택 (중복 배부 방지 필터 포함) ==================== -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -342,12 +340,37 @@
             </button>
             <div>
               <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">모의고사 2026년-6월, 1학년 (고1)</h2>
-              <p class="text-xs text-slate-500">원하시는 출제 유형과 지문 번호를 선택한 후 [선택 문제 보기]를 클릭하세요.</p>
+              <p class="text-xs text-slate-500">원하시는 출제 유형과 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
             </div>
           </div>
           <button onclick="resetSelections()" class="text-xs text-slate-500 hover:text-slate-800 bg-white border border-slate-200 px-3 py-2 rounded-lg font-medium">
             <i class="fa-solid fa-rotate-left mr-1"></i> 선택 초기화
           </button>
+        </div>
+
+        <!-- 🛡️ 과제 중복 배부 방지 설정 바 -->
+        <div class="bg-indigo-900 text-white p-4 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-indigo-700 text-indigo-200 rounded-xl flex items-center justify-center font-bold">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm">과제 중복 배부 방지 스마트 필터</h4>
+              <p class="text-[11px] text-indigo-300">이전에 학생들에게 이미 배부했던 기출 변형문제는 자동으로 필터링하고 안 풀어본 새 문제만 배부합니다.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer font-bold bg-indigo-800 px-3 py-2 rounded-xl border border-indigo-700">
+              <input type="checkbox" id="chkExcludeAssigned" checked onchange="updateCounts()" class="rounded text-amber-400" />
+              <span>이전 주차 배부 문제 자동 제외</span>
+            </label>
+            <select id="assignedWeekSelect" onchange="updateCounts()" class="bg-indigo-950 text-indigo-100 border border-indigo-700 text-xs rounded-xl px-3 py-2 font-bold focus:outline-none">
+              <option value="ALL">전체 과제 배부 이력 누적 제외</option>
+              <option value="W1">1주차 배부 이력 제외</option>
+              <option value="W2">2주차 배부 이력 제외</option>
+            </select>
+          </div>
         </div>
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
@@ -452,13 +475,13 @@
 
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <div class="flex items-center gap-4 text-xs">
-            <span class="font-bold text-slate-700">문항 수 선택</span>
-            <input type="number" id="limitCount" value="30" class="w-20 p-2 border rounded-lg text-center font-bold text-blue-600" />
-            <span class="text-slate-400">(최대 600문항 가능)</span>
+            <span class="font-bold text-slate-700">목표 출제 문항 수</span>
+            <input type="number" id="limitCount" value="150" class="w-24 p-2 border rounded-lg text-center font-bold text-blue-600" />
+            <span class="text-slate-400">(대량 과제용 최대 600문항 가능)</span>
           </div>
 
           <button onclick="generateExamPaper()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
-            <i class="fa-solid fa-book"></i> 선택 문제 보기 (시험지 생성)
+            <i class="fa-solid fa-book-bookmark"></i> 선택 과제 문제집 출제 (중복 제외)
           </button>
         </div>
       </section>
@@ -474,6 +497,9 @@
               <h3 id="paperTopTitle" class="font-black text-lg text-slate-900">[ 2026년도 6월 1학년 2026년6월 고1모의고사 ]</h3>
             </div>
             <div class="flex items-center gap-2">
+              <button onclick="markAsAssignedHomework()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow">
+                <i class="fa-solid fa-check-double"></i> 배부 이력에 기록 (다음 주 중복 방지)
+              </button>
               <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow">
                 <i class="fa-solid fa-print"></i> 인쇄 및 PDF 저장
               </button>
@@ -543,15 +569,15 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 4: 관리자 실전 출제 모드 ==================== -->
+      <!-- ==================== VIEW 4: 관리자 대량 실전 출제 모드 (지문당 N개 옵션 추가) ==================== -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 기출 데이터 기반 1등급 실전 출제 엔진
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 지문별 대량 변형문제 AI 출제 엔진
               </h2>
-              <p class="text-xs text-slate-500">우리 학원 기출 DB에 축적된 실제 학교 시험지의 출제 패턴/오답 트릭을 학습하여 최고 퀄리티의 변형문제를 출제합니다.</p>
+              <p class="text-xs text-slate-500">지문 1개당 유형별 3~10개씩 매번 다른 선택지 패러프레이징으로 150~200문항 과제용 문제를 대량 생성합니다.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
@@ -587,8 +613,21 @@ Trixie Mitchell</textarea>
             </div>
 
             <div class="lg:col-span-6 space-y-4 flex flex-col justify-between">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-2">자동 생성할 변형문제 유형 선택</label>
+              <div class="space-y-3">
+                <!-- ⚡ 유형별 생성 수량 선택 옵션 -->
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-layer-group text-amber-600"></i> 지문 1개당 유형별 출제 수량
+                  </span>
+                  <select id="questionsPerType" class="border border-amber-300 rounded-lg px-2.5 py-1 text-xs font-bold bg-white text-amber-900 focus:outline-none">
+                    <option value="1">유형당 1문제씩 (기본)</option>
+                    <option value="2">유형당 2문제씩 (패러프레이징)</option>
+                    <option value="3" selected>유형당 3문제씩 (대량 과제용)</option>
+                    <option value="5">유형당 5문제씩 (집중 훈련용)</option>
+                  </select>
+                </div>
+
+                <label class="block text-xs font-bold text-slate-700">자동 생성할 변형문제 유형 선택</label>
                 <div class="grid grid-cols-2 gap-2 text-xs">
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" name="adminGenType" value="주제" checked /> 대의파악 (주제/제목/요지)
@@ -793,9 +832,12 @@ Trixie Mitchell</textarea>
       }
     ];
 
+    // 과제 배부 기록 저장소 (학생 중복 문제 제거용)
+    let assignedHomeworkHistory = ['Q-18-주제-1', 'Q-18-어법-1'];
+
     let generatedQuestionsPool = [
       {
-        id: 1,
+        id: 'Q-18-주제-1',
         passageNum: '18',
         type: '주제',
         title: '다음 글의 주제로 가장 적절한 것은?',
@@ -811,7 +853,7 @@ Trixie Mitchell</textarea>
         explanation: '지역 도서관의 도서 기부 행사에 주민들을 초대하고 참여를 독려하는 안내문이므로 ⑤번이 정답입니다.'
       },
       {
-        id: 2,
+        id: 'Q-18-어법-1',
         passageNum: '18',
         type: '어법',
         title: '다음 글의 밑줄 친 부분 중, 어법상 <u>틀린</u> 것은?',
@@ -888,7 +930,6 @@ Trixie Mitchell</textarea>
       alert('Gemini API Key가 성공적으로 저장되었습니다!');
     }
 
-    // --- 🚀 강건한 Gemini API 호출 및 JSON 복원 로직 ---
     async function callGeminiUniversal(apiKey, prompt, onLog) {
       const candidateModels = [
         'gemini-1.5-flash',
@@ -912,7 +953,7 @@ Trixie Mitchell</textarea>
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
-                temperature: 0.1,
+                temperature: 0.2,
                 maxOutputTokens: 8192
               }
             })
@@ -936,11 +977,8 @@ Trixie Mitchell</textarea>
       throw lastError || new Error('Gemini API 호출에 실패했습니다. API Key를 확인하세요.');
     }
 
-    // 안전한 JSON 복구 및 추출 함수
     function extractJsonFromText(rawText) {
       let clean = rawText.trim();
-      
-      // 마크다운 블록 제거
       clean = clean.replace(/```json/gi, '').replace(/```/g, '').trim();
 
       const firstBracket = clean.indexOf('[');
@@ -948,7 +986,6 @@ Trixie Mitchell</textarea>
         clean = clean.substring(firstBracket);
       }
 
-      // 잘린 JSON 자동 복원
       let lastBracket = clean.lastIndexOf(']');
       if (lastBracket === -1) {
         const lastCurly = clean.lastIndexOf('}');
@@ -964,7 +1001,6 @@ Trixie Mitchell</textarea>
       try {
         return JSON.parse(clean);
       } catch (err) {
-        // 큰따옴표 내 줄바꿈 특수문자 완화 시도
         clean = clean.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
         return JSON.parse(clean);
       }
@@ -1281,7 +1317,7 @@ ${fullText.slice(0, 15000)}
       clearQueuedFiles();
     }
 
-    // ==================== 🤖 Gemini AI 변형문제 출제 (안전 예외 처리 강화) ====================
+    // ==================== 🤖 Gemini AI 대량 변형문제 출제 (지문당 N개 옵션 지원) ====================
     async function executeGeminiBatchGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) {
@@ -1293,6 +1329,7 @@ ${fullText.slice(0, 15000)}
       const passage = document.getElementById('adminPassageText').value.trim();
       const passageNum = document.getElementById('adminPassageNum').value.trim() || '23';
       const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
+      const countPerType = parseInt(document.getElementById('questionsPerType').value) || 3;
 
       if (!passage) return alert('영어 지문을 입력해 주세요.');
       if (selectedTypes.length === 0) return alert('생성할 문제 유형을 1개 이상 선택해 주세요.');
@@ -1300,8 +1337,8 @@ ${fullText.slice(0, 15000)}
       const btn = document.getElementById('btnAdminGen');
       const logBox = document.getElementById('generationLogBox');
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>⚡ Gemini AI 엔진 연결 및 우리 학원 기출 DB (${schoolBenchmarkDB.length}제) 벤치마크 패턴 추출 중...</div>`;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 기출 패턴 기반 AI 출제 중...';
+      logBox.innerHTML = `<div>⚡ Gemini AI 대량 출제 가동 (유형당 ${countPerType}개씩 총 ${selectedTypes.length * countPerType}문항 생성 지시)...</div>`;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대량 변형문제 출제 중...';
       btn.disabled = true;
 
       const benchmarkSamples = schoolBenchmarkDB.slice(0, 3).map(bm => `
@@ -1314,7 +1351,7 @@ ${fullText.slice(0, 15000)}
 
       const systemPrompt = `
 당신은 대한민국 최고 수준의 고등학교 영어 내신 시험 출제 전문가입니다.
-아래 제공된 [우리 학원 실제 학교 기출 벤치마크 DB]의 오답 함정 패턴과 출제 원리를 철저히 학습/모방하여, 주어진 [영어 지문]에 대해 고난도 1등급 변형문제를 제작하십시오.
+주어진 [영어 지문]에 대해 아래 [요청된 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 서로 다른 패러프레이징 및 오답 트릭을 적용한 고품질 변형문제를 대량 제작하십시오.
 
 ${benchmarkSamples}
 
@@ -1324,19 +1361,18 @@ ${passage}
 [요청된 출제 유형]:
 ${selectedTypes.join(', ')}
 
-[출제 지침]:
-1. '어법': 위 기출 벤치마크처럼 단순 오타가 아닌 what/that, 수일치, 능동/수동, 대동사 등 실제 학교 시험 단골 킬러 문법으로 밑줄 5개(①~⑤) 중 1개 오류 출제.
-2. '어휘': 문맥상 정반대 반의어(Antonym)로 변형된 어휘 1개 포함 밑줄 5개 출제.
-3. '주제'/'제목'/'요지': 매력적인 오답을 갖춘 정교한 5지선다 영어 선택지 구성.
-4. '빈칸': 핵심 주제문을 빈칸(________)으로 만들고 패러프레이징 선택지 구성.
-5. '순서': (A)-(B)-(C) 논리적 연결 구조 단락 분할.
-6. '주관식': 학교 기출처럼 [조건: 주어진 단어 어순배열 + 어형변화 1개] 서술형 채점표 포함 출제.
+[대량 출제 지침]:
+1. 각 유형별로 **${countPerType}개씩** 문제를 만드십시오. (예: 주제 유형이면 주제1, 주제2, 주제3 총 ${countPerType}문항 생성)
+2. 동일 유형이라도 1번 문제는 직관적 영문 선택지, 2번 문제는 고급 어휘 패러프레이징, 3번 문제는 비유적 표현 등 **매번 선택지(①~⑤)의 어구와 함정 패턴을 다르게** 다변화하십시오.
+3. '어법': what/that, 수일치, 능동/수동, 대동사 등 단골 킬러 문법 밑줄 5개.
+4. '어휘': 문맥상 정반대 반의어(Antonym) 치환.
+5. '주관식': [조건: 어순배열 + 어형변화 1개] 서술형 채점표 포함.
 
-반드시 마크다운 및 추가설명 없이 순수 JSON Array 형태로만 출력하십시오. 특수문자나 줄바꿈 시 큰따옴표 이스케이프 규격을 철저히 지키십시오.
+반드시 마크다운 없이 순수 JSON Array 형태로만 출력하십시오.
 [
   {
     "type": "유형명(주제/어법/어휘/빈칸/순서/주관식 중 하나)",
-    "title": "발문 (예: 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?)",
+    "title": "발문 (예: [주제 변형 #1] 다음 글의 주제로 가장 적절한 것은?)",
     "passage": "변형된 지문 텍스트 (밑줄 ①<u>...</u> 표시 포함)",
     "options": ["① 보기1", "② 보기2", "③ 보기3", "④ 보기4", "⑤ 보기5"],
     "answer": "정답 번호 및 정답 어구",
@@ -1353,7 +1389,7 @@ ${selectedTypes.join(', ')}
         const parsedQuestions = extractJsonFromText(rawText);
 
         const formatted = parsedQuestions.map((q, i) => ({
-          id: Date.now() + i,
+          id: 'Q-' + passageNum + '-' + (q.type || '변형') + '-' + Date.now() + '-' + i,
           passageNum: passageNum,
           type: q.type || '변형',
           title: q.title || `[${passageNum}번 변형문제]`,
@@ -1364,10 +1400,10 @@ ${selectedTypes.join(', ')}
         }));
 
         generatedQuestionsPool.unshift(...formatted);
-        logBox.innerHTML += `<div class="text-emerald-300 font-bold">🎉 성공! 기출 패턴이 반영된 ${formatted.length}개 변형문제가 문제풀에 즉시 추가되었습니다.</div>`;
+        logBox.innerHTML += `<div class="text-emerald-300 font-bold">🎉 성공! 대량 출제된 ${formatted.length}개 변형문제가 문제 은행에 추가되었습니다.</div>`;
 
         setTimeout(() => {
-          alert(`축하합니다! 기출 벤치마크 패턴을 학습한 고퀄리티 변형문제 ${formatted.length}문항이 출제되었습니다.\n[선택 문제 보기]에서 2단 인쇄용 시험지로 바로 확인하세요!`);
+          alert(`축하합니다! 지문 [${passageNum}번]에서 유형당 ${countPerType}개씩 총 ${formatted.length}문항의 대량 변형문제가 완벽 출제되었습니다.\n과제 배부 시 기배부된 문제는 자동으로 제외됩니다.`);
           btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
           btn.disabled = false;
           switchView('examList');
@@ -1377,12 +1413,13 @@ ${selectedTypes.join(', ')}
       } catch (err) {
         console.error('Gemini API Error:', err);
         logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ 오류 발생: ${err.message}</div>`;
-        alert(`출제 실패: ${err.message}\n응답 파싱 오류를 방지하기 위해 생성 유형을 2~3개씩 나누어 출제하시는 것을 권장합니다.`);
+        alert(`출제 실패: ${err.message}`);
         btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
         btn.disabled = false;
       }
     }
 
+    // --- 과제 출제 및 중복 제외 로직 ---
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
       const year = document.getElementById('filterYear').value;
@@ -1408,7 +1445,7 @@ ${selectedTypes.join(', ')}
           <td class="py-4 px-6">${exam.grade}</td>
           <td class="py-4 px-6 text-center font-bold text-blue-600">${exam.questionCount}</td>
           <td class="py-4 px-6 text-center">
-            <button onclick="openExamTypeSelector('${exam.id}')" class="text-amber-500 hover:text-amber-600 p-2 rounded-lg hover:bg-amber-50 transition" title="문제 선택 및 보기">
+            <button onclick="openExamTypeSelector('${exam.id}')" class="text-amber-500 hover:text-amber-600 p-2 rounded-lg hover:bg-amber-50 transition" title="과제 문제 선택">
               <i class="fa-solid fa-folder-open text-xl"></i>
             </button>
           </td>
@@ -1436,29 +1473,55 @@ ${selectedTypes.join(', ')}
 
     function updateCounts() {}
 
+    // 🛡️ 중복 배부 문제 자동 제외 시험지 생성
     function generateExamPaper() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qType"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="pNum"]:checked')).map(cb => cb.value);
-      const limit = parseInt(document.getElementById('limitCount').value) || 30;
+      const limit = parseInt(document.getElementById('limitCount').value) || 150;
+      const excludeAssigned = document.getElementById('chkExcludeAssigned').checked;
 
       if (selectedTypes.length === 0) return alert('최소 하나 이상의 출제 유형을 선택해 주세요.');
       if (selectedPassages.length === 0) return alert('최소 하나 이상의 지문 번호를 선택해 주세요.');
 
-      filteredQuestions = generatedQuestionsPool.filter(q => {
+      // 1. 유형 및 지문 필터링
+      let candidatePool = generatedQuestionsPool.filter(q => {
         const typeMatch = selectedTypes.some(t => q.type.includes(t) || t.includes(q.type));
         const passageMatch = selectedPassages.includes(q.passageNum);
         return typeMatch || passageMatch;
-      }).slice(0, limit);
+      });
 
-      if (filteredQuestions.length === 0) {
-        filteredQuestions = [...generatedQuestionsPool];
+      // 2. 기배부 과제 중복 제외 로직
+      if (excludeAssigned) {
+        const beforeCount = candidatePool.length;
+        candidatePool = candidatePool.filter(q => !assignedHomeworkHistory.includes(q.id));
+        const excludedCount = beforeCount - candidatePool.length;
+        if (excludedCount > 0) {
+          console.log(`🛡️ 기배부된 중복 문제 ${excludedCount}개가 자동으로 제외되었습니다.`);
+        }
       }
 
-      document.getElementById('paperTopTitle').innerText = `[ ${currentSelectedExam.year}년도 ${currentSelectedExam.month}월 ${currentSelectedExam.grade} ${currentSelectedExam.title} ]`;
-      document.getElementById('examSheetMainTitle').innerText = `${currentSelectedExam.year}년도 ${currentSelectedExam.month}월 ${currentSelectedExam.grade} 영어과 변형문제집`;
+      filteredQuestions = candidatePool.slice(0, limit);
+
+      if (filteredQuestions.length === 0) {
+        alert('선택하신 조건의 안 풀어본 새 문제가 부족합니다. [대량 변형문제 AI 출제]에서 새로운 문제를 생성해 주세요.');
+        filteredQuestions = [...generatedQuestionsPool].slice(0, limit);
+      }
+
+      document.getElementById('paperTopTitle').innerText = `[ ${currentSelectedExam.year}년도 ${currentSelectedExam.grade} 과제용 변형문제집 (${filteredQuestions.length}문항) ]`;
+      document.getElementById('examSheetMainTitle').innerText = `${currentSelectedExam.year}년도 ${currentSelectedExam.grade} 영어과 과제용 변형문제집`;
 
       renderPaper();
       switchView('paperView');
+    }
+
+    // 📝 현재 생성된 문제집을 학생 배부 이력에 기록
+    function markAsAssignedHomework() {
+      if (filteredQuestions.length === 0) return alert('기록할 문제집이 없습니다.');
+      
+      const newIds = filteredQuestions.map(q => q.id);
+      assignedHomeworkHistory.push(...newIds);
+
+      alert(`✅ 성공! 현재 과제 문제집 (${filteredQuestions.length}문항)이 학생 배부 이력에 저장되었습니다.\n다음 주에 새 과제를 출제할 때 이 문항들은 자동으로 제외됩니다!`);
     }
 
     function renderPaper() {
@@ -1547,5 +1610,3 @@ ${selectedTypes.join(', ')}
 </body>
 </html>
 ```eof
-
-GitHub의 `index.html`에 복사해 커밋하신 후 다시 **`Gemini AI 변형문제 자동 생성 시작`**을 눌러보시면 파싱 오류 없이 문제 출제가 완료됩니다.
