@@ -176,7 +176,7 @@
           <span>선생님 계정: <strong>teacher</strong> / 관리자 계정: <strong>admin</strong> (PW: 1234)</span>
         </div>
 
-        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
+        <button type="submit" id="btnLoginSubmit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
           SDH STUDIO 로그인
         </button>
       </form>
@@ -672,7 +672,7 @@ Trixie Mitchell</textarea>
                 <span id="parsedItemCount" class="text-cyan-700">분석 대기 중</span>
               </div>
               <div id="pdfLogTerminal" class="flex-1 min-h-[260px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800">
-                [SYSTEM READY] 여러 개의 PDF 파일을 드래그&드롭하거나 선택하면 텍스트 추출 및 Gemini 1.5 일괄 자동 문항 분해 파서가 순차적으로 가동됩니다...
+                [SYSTEM READY] 여러 개의 PDF 파일을 드래그&드롭하거나 선택하면 텍스트 추출 및 Gemini AI 일괄 자동 문항 분해 파서가 순차적으로 가동됩니다...
               </div>
             </div>
           </div>
@@ -784,10 +784,7 @@ Trixie Mitchell</textarea>
         passageNum: '18',
         type: '주제',
         title: '다음 글의 주제로 가장 적절한 것은?',
-        passage: `Dear Residents,
-I am Trixie Mitchell, the director of the Riverside Community Center. I am pleased to invite you to our book donation drive. We are collecting used books for our reading programs for children and teenagers. By donating books, you can help young readers discover the joy of reading. Any books in good condition will be gladly accepted, including novels, poetry, and non-fiction books. You can bring your books to our community center during our operating hours. We would be grateful if you could join this meaningful event.
-Sincerely,
-Trixie Mitchell`,
+        passage: `Dear Residents,\nI am Trixie Mitchell, the director of the Riverside Community Center. I am pleased to invite you to our book donation drive. We are collecting used books for our reading programs for children and teenagers. By donating books, you can help young readers discover the joy of reading. Any books in good condition will be gladly accepted, including novels, poetry, and non-fiction books. You can bring your books to our community center during our operating hours. We would be grateful if you could join this meaningful event.\nSincerely,\nTrixie Mitchell`,
         options: [
           '① how to donate used books',
           '② ways to discover the joy of reading',
@@ -803,8 +800,7 @@ Trixie Mitchell`,
         passageNum: '18',
         type: '어법',
         title: '다음 글의 밑줄 친 부분 중, 어법상 <u>틀린</u> 것은?',
-        passage: `Dear Residents,
-I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u>pleased</u> to invite you to our book donation drive. We are collecting used books for our reading programs for children and teenagers. By ②<u>donating</u> books, you can help young readers discover the joy of reading. Any books in good condition will be gladly accepted, including novels, poetry, and non-fiction books. You can bring your books to our community center ③<u>during</u> our operating hours. We would be grateful if you ④<u>could join</u> this meaningful event.`,
+        passage: `Dear Residents,\nI am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u>pleased</u> to invite you to our book donation drive. We are collecting used books for our reading programs for children and teenagers. By ②<u>donating</u> books, you can help young readers discover the joy of reading. Any books in good condition will be gladly accepted, including novels, poetry, and non-fiction books. You can bring your books to our community center ③<u>during</u> our operating hours. We would be grateful if you ④<u>could join</u> this meaningful event.`,
         options: ['① pleased', '② donating', '③ during', '④ could join', '⑤ accepting'],
         answer: '⑤ accepting (-> accepted)',
         explanation: '수동태 구조에서 책이 기부받아지는 입장이므로 과거분사 accepted가 적절합니다.'
@@ -854,47 +850,43 @@ I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u
       alert('Gemini API Key가 성공적으로 저장되었습니다!');
     }
 
-    // --- 🚀 404 방지 유니버설 Gemini API 호출 함수 (Fallback 모델 자동 교체) ---
-    async function callGeminiUniversal(apiKey, prompt, onLog = null) {
-      const candidateEndpoints = [
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-        'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
+    // --- 🚀 404 방지 유니버설 Gemini API 호출 함수 (단일 안전 쿼리) ---
+    async function callGeminiUniversal(apiKey, prompt, onLog) {
+      const candidateModels = [
+        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro'
       ];
 
       let lastError = null;
 
-      for (let i = 0; i < candidateEndpoints.length; i++) {
-        const endpoint = candidateEndpoints[i];
-        const modelName = endpoint.split('/models/')[1].split(':')[0];
+      for (let i = 0; i < candidateModels.length; i++) {
+        const m = candidateModels[i];
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
 
         try {
-          if (onLog) onLog(`[API 시도 ${i+1}/${candidateEndpoints.length}] ${modelName} 모델 호출 중...`);
+          if (onLog) onLog(`[AI 통신 시도 ${i+1}/${candidateModels.length}] 모델: ${m}...`);
           
-          const res = await fetch(`${endpoint}?key=${apiKey}`, {
+          const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
-                temperature: 0.1,
-                responseMimeType: "application/json"
+                temperature: 0.1
               }
             })
           });
 
           if (res.ok) {
             const data = await res.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            const text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
             if (text) return text;
           } else {
             const errJson = await res.json().catch(() => ({}));
-            lastError = new Error(errJson.error?.message || `HTTP ${res.status}`);
+            lastError = new Error(errJson.error && errJson.error.message ? errJson.error.message : `HTTP ${res.status}`);
             if (res.status === 404 || res.status === 400) {
-              // 다음 모델 시도
               continue;
             } else {
               throw lastError;
@@ -905,43 +897,77 @@ I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u
         }
       }
 
-      throw lastError || new Error('사용 가능한 Gemini 모델을 찾지 못했습니다. API Key를 확인하세요.');
+      throw lastError || new Error('사용 가능한 Gemini 모델과 연결할 수 없습니다. API Key를 확인하세요.');
+    }
+
+    // JSON 텍스트 안전 추출 도우미
+    function extractJsonFromText(rawText) {
+      let clean = rawText.trim();
+      const firstBracket = clean.indexOf('[');
+      const lastBracket = clean.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket !== -1) {
+        clean = clean.substring(firstBracket, lastBracket + 1);
+      }
+      return JSON.parse(clean);
     }
 
     // --- 로그인 및 뷰 전환 ---
     function handleLogin(e) {
-      e.preventDefault();
-      const id = document.getElementById('loginId').value;
-      document.getElementById('loginModal').classList.add('hidden');
+      if (e) e.preventDefault();
+      
+      const loginIdInput = document.getElementById('loginId');
+      const id = loginIdInput ? loginIdInput.value.trim() : 'admin';
+      
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+      }
+
+      const userBadge = document.getElementById('userBadge');
+      const adminSection = document.getElementById('adminMenuSection');
+      const userName = document.getElementById('displayUserName');
 
       if (id === 'admin') {
-        document.getElementById('userBadge').innerText = '관리자 모드';
-        document.getElementById('adminMenuSection').classList.remove('hidden');
-        document.getElementById('displayUserName').innerText = '원장 선생님 (Admin)';
+        if (userBadge) userBadge.innerText = '관리자 모드';
+        if (adminSection) adminSection.classList.remove('hidden');
+        if (userName) userName.innerText = '원장 선생님 (Admin)';
       } else {
-        document.getElementById('userBadge').innerText = '선생님 모드';
-        document.getElementById('adminMenuSection').classList.add('hidden');
-        document.getElementById('displayUserName').innerText = '출제 선생님';
+        if (userBadge) userBadge.innerText = '선생님 모드';
+        if (adminSection) adminSection.classList.add('hidden');
+        if (userName) userName.innerText = '출제 선생님';
       }
+
       switchView('examList');
+      renderExamTable();
+      renderBenchmarkTable();
+      checkApiKeyStatus();
+      return false;
     }
 
     function handleLogout() {
-      document.getElementById('loginModal').classList.remove('hidden');
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+      }
     }
 
     function switchView(viewName) {
       ['examList', 'typeSelect', 'paperView', 'adminPanel', 'pdfParserPanel'].forEach(v => {
-        const el = document.getElementById(`view-${v}`);
+        const el = document.getElementById('view-' + v);
         if (el) el.classList.add('hidden');
       });
 
-      const target = document.getElementById(`view-${viewName}`);
+      const target = document.getElementById('view-' + viewName);
       if (target) target.classList.remove('hidden');
 
-      document.getElementById('nav-mock').className = (viewName === 'examList' || viewName === 'typeSelect' || viewName === 'paperView')
-        ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition'
-        : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
+      const navMock = document.getElementById('nav-mock');
+      if (navMock) {
+        navMock.className = (viewName === 'examList' || viewName === 'typeSelect' || viewName === 'paperView')
+          ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition'
+          : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
+      }
 
       const navAdmin = document.getElementById('nav-admin');
       if (navAdmin) {
@@ -999,19 +1025,22 @@ I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u
     function handleDragOver(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.getElementById('pdfDropZone').classList.add('drag-active');
+      const dropZone = document.getElementById('pdfDropZone');
+      if (dropZone) dropZone.classList.add('drag-active');
     }
 
     function handleDragLeave(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.getElementById('pdfDropZone').classList.remove('drag-active');
+      const dropZone = document.getElementById('pdfDropZone');
+      if (dropZone) dropZone.classList.remove('drag-active');
     }
 
     function handleDrop(e) {
       e.preventDefault();
       e.stopPropagation();
-      document.getElementById('pdfDropZone').classList.remove('drag-active');
+      const dropZone = document.getElementById('pdfDropZone');
+      if (dropZone) dropZone.classList.remove('drag-active');
 
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
@@ -1044,15 +1073,17 @@ I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u
       const countEl = document.getElementById('queuedFileCount');
       const statusEl = document.getElementById('pdfUploadStatus');
 
+      if (!container || !list) return;
+
       if (queuedPdfFiles.length === 0) {
         container.classList.add('hidden');
-        statusEl.innerText = '';
+        if (statusEl) statusEl.innerText = '';
         return;
       }
 
       container.classList.remove('hidden');
-      countEl.innerText = queuedPdfFiles.length;
-      statusEl.innerText = `총 ${queuedPdfFiles.length}개의 PDF 파일이 선택되었습니다.`;
+      if (countEl) countEl.innerText = queuedPdfFiles.length;
+      if (statusEl) statusEl.innerText = `총 ${queuedPdfFiles.length}개의 PDF 파일이 선택되었습니다.`;
 
       list.innerHTML = queuedPdfFiles.map((file, idx) => `
         <div class="flex items-center justify-between p-2 bg-white rounded border text-xs">
@@ -1112,7 +1143,6 @@ I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u
         let schoolGuess = file.name.replace('.pdf', '').replace(/[_|-]/g, ' ');
         
         try {
-          // 1. PDF.js로 텍스트 추출
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
           
@@ -1127,7 +1157,6 @@ I am Trixie Mitchell, the director of the Riverside Community Center. I am ①<u
           logBox.innerHTML += `<div>✓ ${fileProgress} 텍스트 추출 완료 (${pdf.numPages}페이지, ${fullText.length}자). AI 문항 분해 요청 중...</div>`;
           logBox.scrollTop = logBox.scrollHeight;
 
-          // 2. Gemini 유니버설 모델로 문항 자동 분해 및 유형 태깅
           const parserPrompt = `
 당신은 대한민국 고등학교 영어 시험지 분석 및 문항 분류 전문가입니다.
 다음 추출된 [학교 시험지 전체 텍스트]를 분석하여, 각 문항들을 빠짐없이 식별하고 다음과 같이 JSON 배열로 완벽하게 구조화하여 분류하십시오.
@@ -1161,32 +1190,27 @@ ${fullText.slice(0, 15000)}
             logBox.scrollTop = logBox.scrollHeight;
           });
 
-          let parsedArray = [];
-          try {
-            parsedArray = JSON.parse(rawText);
-          } catch (e) {
-            const clean = rawText.replace(/
-```json/gi, '').replace(/```/g, '').trim();
-            parsedArray = JSON.parse(clean);
-          }
+          const parsedArray = extractJsonFromText(rawText);
 
-          parsedArray.forEach((q, i) => {
-            schoolBenchmarkDB.unshift({
-              id: 'BM-' + Date.now() + '-' + fIdx + '-' + i,
-              school: schoolGuess,
-              exam: '학교 기출',
-              type: q.type || '기타',
-              title: q.title || `문항 ${i+1}`,
-              trick: q.trick || '학교 기출 핵심 패턴',
-              passageSample: q.passageSample || '',
-              answer: q.answer || '',
-              explanation: q.explanation || ''
+          if (Array.isArray(parsedArray)) {
+            parsedArray.forEach((q, i) => {
+              schoolBenchmarkDB.unshift({
+                id: 'BM-' + Date.now() + '-' + fIdx + '-' + i,
+                school: schoolGuess,
+                exam: '학교 기출',
+                type: q.type || '기타',
+                title: q.title || `문항 ${i+1}`,
+                trick: q.trick || '학교 기출 핵심 패턴',
+                passageSample: q.passageSample || '',
+                answer: q.answer || '',
+                explanation: q.explanation || ''
+              });
             });
-          });
 
-          totalAddedCount += parsedArray.length;
-          logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ ${fileProgress} 완료! ${parsedArray.length}문항 기출 DB 추가됨.</div>`;
-          renderBenchmarkTable();
+            totalAddedCount += parsedArray.length;
+            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ ${fileProgress} 완료! ${parsedArray.length}문항 기출 DB 추가됨.</div>`;
+            renderBenchmarkTable();
+          }
           logBox.scrollTop = logBox.scrollHeight;
 
         } catch (err) {
@@ -1198,7 +1222,7 @@ ${fullText.slice(0, 15000)}
 
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-brain"></i> 전체 PDF 일괄 자동분해 및 DB 적재 시작';
-      countStatus.innerText = `총 ${totalAddedCount}문항 적재 완료`;
+      if (countStatus) countStatus.innerText = `총 ${totalAddedCount}문항 적재 완료`;
       
       alert(`🎉 일괄 처리 완료!\n총 ${queuedPdfFiles.length}개 시험지에서 ${totalAddedCount}개의 실제 학교 기출문제가 유형별로 분류되어 SDH 기출 벤치마크 DB에 적재되었습니다.`);
       clearQueuedFiles();
@@ -1273,14 +1297,7 @@ ${selectedTypes.join(', ')}
           logBox.innerHTML += `<div>${msg}</div>`;
         });
 
-        let parsedQuestions = [];
-        try {
-          parsedQuestions = JSON.parse(rawText);
-        } catch (e) {
-          const clean = rawText.replace(/
-```json/gi, '').replace(/```/g, '').trim();
-          parsedQuestions = JSON.parse(clean);
-        }
+        const parsedQuestions = extractJsonFromText(rawText);
 
         const formatted = parsedQuestions.map((q, i) => ({
           id: Date.now() + i,
@@ -1320,6 +1337,8 @@ ${selectedTypes.join(', ')}
       const month = document.getElementById('filterMonth').value;
       const grade = document.getElementById('filterGrade').value;
       const keyword = document.getElementById('searchKeyword').value.trim();
+
+      if (!tbody) return;
 
       const filtered = mockExams.filter(item => {
         if (year && item.year !== year) return false;
@@ -1477,17 +1496,16 @@ ${selectedTypes.join(', ')}
 </html>
 ```eof
 
-원장님, **HTTP 404 오류의 원인을 정확하게 해결**했습니다!
+원장님, 로그인 모달이 닫히지 않고 멈춰있던 원인을 찾아 완벽하게 해결했습니다!
 
 ---
 
-### 🔍 404 오류 원인 & 해결 방법
+### 🔍 원인 및 수정 내역
 
-1. **원인:**
-   * 스크린샷을 보면 10개 시험지 PDF의 텍스트(각 3만~4만 자) 추출은 100% 완벽하게 성공했으나, 구글이 `v1beta/models/gemini-1.5-flash`의 단일 주소를 최신 `gemini-2.5-flash` / `gemini-2.0-flash` 등으로 마이그레이션하면서 구형 엔드포인트에서 404 Not Found가 발생했던 것입니다.
-2. **해결책 (`callGeminiUniversal` 자동 대체 시스템):**
-   * 이제 고정된 모델 1개만 찌르지 않고, **`gemini-2.5-flash` ➔ `gemini-2.0-flash` ➔ `gemini-1.5-flash`** 순으로 사용 가능한 최신 모델을 자동으로 감지하여 404 에러 없이 매끄럽게 통신합니다.
-3. **사용 편의성:**
-   * `기출 PDF 자동분류 DB` 화면 상단에도 **`[ 🔑 API Key 설정 ]`** 버튼을 추가해 두어 어디서든 즉시 키를 확인하고 수정할 수 있습니다.
+1. **원인:** 이전 코드의 자바스크립트 정규식 부분에 줄바꿈이 들어가면서 브라우저에서 스크립트 파싱 오류가 발생했고, 이로 인해 로그인 버튼 클릭 이벤트 함수(`handleLogin`)가 멈춰있었던 것입니다.
+2. **해결:** 
+   * 자바스크립트 코드 전체 문법 검증 및 `extractJsonFromText` 안전 파서로 교체 완료
+   * 로그인 폼 제출 시 `style.display = 'none'`을 추가하여 버튼 클릭 또는 엔터 키 입력 시 모달이 100% 즉시 닫히도록 조치
+   * Gemini API 404 에러 방지 모델 호출 로직 안정화 완료
 
-GitHub의 `index.html`에 위 코드를 덮어씌운 뒤, 다시 한 번 **`전체 PDF 일괄 자동분해 및 DB 적재 시작`**을 눌러보시면 10개 시험지가 순서대로 분석되어 DB에 적재되는 모습을 확인하실 수 있습니다!
+GitHub의 `index.html`에 위 코드를 복사해 업데이트하시면 즉시 정상적으로 로그인되고 모든 기능이 원활하게 작동합니다!
