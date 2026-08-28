@@ -1207,16 +1207,22 @@ Trixie Mitchell</textarea>
 
     // ==================== 📂 스마트 25개 지문 정제 분할 파서 ====================
     function cleanPassageText(rawPassage) {
-      let clean = rawPassage;
-      // 한글 문제 발문 및 선택지 정제
-      clean = clean.replace(/다음\s*글의[\s\S]*?\?/g, '');
-      clean = clean.replace(/밑줄\s*친[\s\S]*?\?/g, '');
-      clean = clean.replace(/점\s*\[\s*\d+\s*\]/g, '');
-      clean = clean.replace(/①|②|③|④|⑤/g, '');
-      clean = clean.replace(/^[0-9]{2}\.\s*/g, ''); // 앞쪽 문제 번호 제거
-      clean = clean.replace(/\n\s*\n/g, '\n'); // 과도한 공백 정리
-      return clean.trim();
-    }
+  let clean = rawPassage;
+  
+  // 1. 한국어 문제 발문 전체 제거 (예: "다음 글의...", "위 글의...", "[3점]" 등)
+  clean = clean.replace(/[가-힣\s\d\.\,\?\(\)\[\]\~\-\:]*?(다음|위|밑줄|글|필자|주장|요지|주제|제목|빈칸|도표|내용|일치|불일치|심경|목적|어법|어휘|흐름|순서|삽입|요약|선택지)[가-힣\s\d\.\,\?\(\)\[\]\~\-\:]*?(\?|\n|$)/g, '');
+
+  // 2. 문제 번호 및 배점, 보기 번호 제거
+  clean = clean.replace(/^[0-9]{1,2}\s*[\.\:\-]\s*/g, ''); // 18. 19. 등
+  clean = clean.replace(/점\s*\[\s*\d+\s*\]/g, ''); // 점 [3]
+  clean = clean.replace(/[①②③④⑤]\s*/g, ''); // ①~⑤ 선택지 기호
+
+  // 3. 남은 한국어 잔재 및 다중 공백 정제
+  clean = clean.replace(/[가-힣]+/g, ''); // 영문 본문 외 한국어 단어 제거
+  clean = clean.replace(/\n\s*\n/g, '\n').trim();
+
+  return clean;
+}
 
     function parseTo25Passages(fullText) {
       const results = [];
