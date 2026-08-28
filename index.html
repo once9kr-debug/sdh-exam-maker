@@ -4,10 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SDH STUDIO - 고등부 영어 변형문제 출제 시스템</title>
-  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Roboto:wght@400;500;700&display=swap');
@@ -19,7 +17,6 @@
       color: #1e293b;
     }
 
-    /* 시험지 전용 폰트 및 스타일 */
     .exam-paper-font {
       font-family: 'Nanum Myeongjo', 'Batang', serif;
     }
@@ -27,7 +24,6 @@
       font-family: 'Roboto', 'Noto Sans KR', sans-serif;
     }
 
-    /* 2단 시험지 레이아웃 (Print & Screen) */
     .exam-columns-2 {
       column-count: 2;
       column-gap: 32px;
@@ -42,7 +38,6 @@
       margin-bottom: 26px;
     }
 
-    /* 지문 박스 스타일 (Exam4You / 너른터 스타일) */
     .passage-box {
       border: 1px solid #475569;
       padding: 10px 14px;
@@ -54,7 +49,59 @@
       margin-bottom: 8px;
     }
 
-    /* 인쇄 전용 CSS */
+    .logo-img {
+      object-fit: contain;
+    }
+
+    .type-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .type-chip:hover {
+      background-color: #e2e8f0;
+    }
+    .count-badge {
+      font-size: 10px;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 1px 5px;
+      border-radius: 9999px;
+    }
+    .passage-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+    }
+    .passage-chip input:checked + span {
+      color: #2563eb;
+    }
+    .p-badge {
+      font-size: 10px;
+      background: #94a3b8;
+      color: white;
+      padding: 0 4px;
+      border-radius: 4px;
+      font-weight: normal;
+    }
+
     @media print {
       body {
         background: white !important;
@@ -80,14 +127,13 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- ==================== 1. 로그인 팝업 모달 ==================== -->
+  <!-- 로그인 모달 -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl text-white text-3xl font-black mb-3 shadow-lg shadow-blue-500/30">
-          SDH
+        <div class="flex justify-center mb-3">
+          <img src="image_b4773b.png" alt="SDH STUDIO Logo" class="h-14 logo-img" />
         </div>
-        <h2 class="text-2xl font-black text-slate-800 tracking-tight">SDH STUDIO</h2>
         <p class="text-xs text-slate-500 mt-1">고등부 영어 변형문제 자동 생성 및 출제 시스템</p>
       </div>
 
@@ -112,30 +158,28 @@
           <span>선생님 계정: <strong>teacher</strong> / 관리자 계정: <strong>admin</strong> (PW: 1234)</span>
         </div>
 
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
           SDH STUDIO 로그인
         </button>
       </form>
     </div>
   </div>
 
-  <!-- ==================== 메인 시스템 헤더 & 좌측 사이드바 구조 ==================== -->
+  <!-- 메인 프레임 -->
   <div id="appContainer" class="flex flex-1 min-h-screen">
 
-    <!-- [LNB: 좌측 사이드바 메뉴] -->
+    <!-- LNB (좌측 사이드바) -->
     <aside class="no-print w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
-      <!-- 로고 -->
-      <div class="p-5 border-b border-slate-800 flex items-center gap-3">
-        <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-xl">
-          S
+      <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
+        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm">
+          <img src="image_b4773b.png" alt="SDH STUDIO Logo" class="h-9 w-auto object-contain" />
         </div>
-        <div>
-          <h1 class="font-black text-lg tracking-wider text-white">SDH STUDIO</h1>
-          <span id="userBadge" class="text-[11px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded font-medium">관리자 모드</span>
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[10px] text-slate-400 font-medium tracking-wide">EXAM GENERATOR</span>
+          <span id="userBadge" class="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded font-bold">관리자 모드</span>
         </div>
       </div>
 
-      <!-- 메뉴 목록 -->
       <nav class="p-4 space-y-1.5 flex-1">
         <button onclick="switchView('examList')" id="nav-mock" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition">
           <span class="flex items-center gap-3">
@@ -158,7 +202,6 @@
           <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">EBS</span>
         </button>
 
-        <!-- 관리자 전용 메뉴 (지문 등록 / Gemini AI 일괄 문제 생성) -->
         <div id="adminMenuSection" class="pt-4 mt-4 border-t border-slate-800">
           <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
           <button onclick="switchView('adminPanel')" id="nav-admin" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
@@ -170,7 +213,6 @@
         </div>
       </nav>
 
-      <!-- 사용자 정보 및 로그아웃 -->
       <div class="p-4 border-t border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2 text-xs text-slate-300">
           <i class="fa-solid fa-circle-user text-base text-blue-400"></i>
@@ -182,12 +224,11 @@
       </div>
     </aside>
 
-    <!-- [컨텐츠 메인 뷰] -->
+    <!-- 컨텐츠 영역 -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
 
-      <!-- ==================== VIEW 1: 모의고사 목록 화면 (스토리보드 1) ==================== -->
+      <!-- VIEW 1: 모의고사 목록 -->
       <section id="view-examList" class="p-8 space-y-6">
-        <!-- 검색 및 필터 바 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded">교재 선택</span>
@@ -227,7 +268,6 @@
           </div>
         </div>
 
-        <!-- 모의고사 테이블 리스트 -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <table class="w-full text-left border-collapse text-sm">
             <thead>
@@ -240,16 +280,13 @@
                 <th class="py-3.5 px-6 text-center">출제 및 보기</th>
               </tr>
             </thead>
-            <tbody id="examTableBody" class="divide-y divide-slate-100 text-slate-700">
-              <!-- JS로 렌더링 -->
-            </tbody>
+            <tbody id="examTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- ==================== VIEW 2: 지문 및 문제 유형 선택 화면 (스토리보드 2) ==================== -->
+      <!-- VIEW 2: 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
-        <!-- 상단 헤더 & 뒤로가기 -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <button onclick="switchView('examList')" class="w-9 h-9 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 flex items-center justify-center shadow-sm">
@@ -265,7 +302,6 @@
           </button>
         </div>
 
-        <!-- 1. 출제 유형 선택 영역 (스토리보드 상단 칩스) -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -276,7 +312,6 @@
             </label>
           </div>
 
-          <!-- 대분류 1: 대의파악 -->
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <span class="text-xs font-bold bg-teal-500 text-white px-3 py-1.5 rounded-full">대의 파악</span>
             <label class="type-chip"><input type="checkbox" name="qType" value="기본" onchange="updateCounts()" /> 기본 <span class="count-badge">13</span></label>
@@ -293,7 +328,6 @@
             <label class="type-chip"><input type="checkbox" name="qType" value="불일치" onchange="updateCounts()" /> 불일치 <span class="count-badge">29</span></label>
           </div>
 
-          <!-- 대분류 2: 언어 논리 -->
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <span class="text-xs font-bold bg-amber-500 text-white px-3 py-1.5 rounded-full">언어 논리</span>
             <label class="type-chip"><input type="checkbox" name="qType" value="함축의미" onchange="updateCounts()" /> 함축의미 <span class="count-badge">10</span></label>
@@ -304,7 +338,6 @@
             <label class="type-chip"><input type="checkbox" name="qType" value="흐름" onchange="updateCounts()" /> 흐름 <span class="count-badge">11</span></label>
           </div>
 
-          <!-- 대분류 3: 어법/어휘 및 서술형 -->
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <span class="text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-full">어법/어휘</span>
             <label class="type-chip"><input type="checkbox" name="qType" value="어법" checked onchange="updateCounts()" /> 어법 <span class="count-badge">22</span></label>
@@ -317,7 +350,6 @@
           </div>
         </div>
 
-        <!-- 2. 지문 번호 선택 테이블 (스토리보드 중단 번호 칩) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-6 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -328,7 +360,6 @@
             </label>
           </div>
 
-          <!-- 18 ~ 22번 그룹 -->
           <div class="flex items-center gap-4 py-2 border-b border-slate-100">
             <div class="w-14 text-xs font-bold text-slate-400">그룹 1</div>
             <div class="flex flex-wrap gap-2.5 flex-1">
@@ -341,7 +372,6 @@
             <span class="text-xs font-bold text-slate-500">70문항</span>
           </div>
 
-          <!-- 23 ~ 34번 그룹 -->
           <div class="flex items-center gap-4 py-2 border-b border-slate-100">
             <div class="w-14 text-xs font-bold text-slate-400">그룹 2</div>
             <div class="flex flex-wrap gap-2.5 flex-1">
@@ -357,7 +387,6 @@
             <span class="text-xs font-bold text-slate-500">142문항</span>
           </div>
 
-          <!-- 35 ~ 45번 그룹 -->
           <div class="flex items-center gap-4 py-2">
             <div class="w-14 text-xs font-bold text-slate-400">그룹 3</div>
             <div class="flex flex-wrap gap-2.5 flex-1">
@@ -373,7 +402,6 @@
           </div>
         </div>
 
-        <!-- 3. 하단 액션 바 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <div class="flex items-center gap-4 text-xs">
             <span class="font-bold text-slate-700">문항 수 선택</span>
@@ -387,9 +415,8 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 3: 2단 인쇄용 시험지 화면 (스토리보드 3) ==================== -->
+      <!-- VIEW 3: 2단 인쇄용 시험지 -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
-        <!-- 상단 옵션 바 (인쇄 시 숨김) -->
         <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <div class="flex items-center gap-3">
@@ -408,7 +435,6 @@
             </div>
           </div>
 
-          <!-- 세부 서식 컨트롤러 -->
           <div class="flex flex-wrap items-center justify-between text-xs text-slate-700 gap-4">
             <div class="flex items-center gap-6">
               <span class="font-bold text-slate-900">문제지 형식</span>
@@ -437,15 +463,16 @@
           </div>
         </div>
 
-        <!-- 실제 시험지 출력 박스 (인쇄 타겟) -->
         <div class="print-area bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
-          <!-- 시험지 타이틀 헤더 -->
           <div class="border-b-2 border-slate-950 pb-3 mb-6 flex justify-between items-end">
-            <div>
-              <div class="text-[11px] font-bold text-slate-600 tracking-wider">SDH HIGH SCHOOL ENGLISH CLINIC</div>
-              <h1 id="examSheetMainTitle" class="text-2xl font-black text-slate-950 tracking-tight exam-eng-font">
-                2026년도 6월 고1 학력평가 변형문제집
-              </h1>
+            <div class="flex items-center gap-3">
+              <img src="image_b4773b.png" alt="SDH STUDIO Logo" class="h-10 w-auto object-contain" />
+              <div>
+                <div class="text-[10px] font-bold text-slate-500 tracking-wider">HIGH SCHOOL ENGLISH CLINIC</div>
+                <h1 id="examSheetMainTitle" class="text-xl font-black text-slate-950 tracking-tight exam-eng-font">
+                  2026년도 6월 고1 학력평가 변형문제집
+                </h1>
+              </div>
             </div>
             <div class="text-right text-xs space-y-1 font-medium text-slate-800">
               <div>성 명 : ____________________</div>
@@ -453,22 +480,16 @@
             </div>
           </div>
 
-          <!-- 2단 문제 본문 컨테이너 -->
-          <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm">
-            <!-- JS 동적 렌더링 -->
-          </div>
+          <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
 
-          <!-- 정답 및 해설지 섹션 (별도 페이지 인쇄 가능) -->
           <div id="answerSheetContainer" class="mt-12 pt-8 border-t-2 border-dashed border-slate-400 hidden">
             <h3 class="text-lg font-black text-slate-900 mb-4 pb-2 border-b">정답 및 상세 해설</h3>
-            <div id="answerSheetContent" class="grid grid-cols-2 gap-6 text-xs text-slate-700">
-              <!-- JS 렌더링 -->
-            </div>
+            <div id="answerSheetContent" class="grid grid-cols-2 gap-6 text-xs text-slate-700"></div>
           </div>
         </div>
       </section>
 
-      <!-- ==================== VIEW 4: 관리자 모드 (지문 등록 & AI 일괄 출제) ==================== -->
+      <!-- VIEW 4: 관리자 출제 모드 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -482,7 +503,6 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- 좌측: 지문 입력 -->
             <div class="lg:col-span-6 space-y-4">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">모의고사 / 시험 분류</label>
@@ -507,7 +527,6 @@ Trixie Mitchell</textarea>
               </div>
             </div>
 
-            <!-- 우측: 생성할 변형 유형 & API 실행 -->
             <div class="lg:col-span-6 space-y-4 flex flex-col justify-between">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-2">자동 생성할 변형문제 유형 선택</label>
@@ -551,9 +570,7 @@ Trixie Mitchell</textarea>
     </main>
   </div>
 
-  <!-- ==================== JavaScript 로직 및 상태 관리 ==================== -->
   <script>
-    // --- 1. 기본 목업 데이터베이스 (Exam4You / 너른터 스타일) ---
     const mockExams = [
       { id: '2026-6-1', year: '2026', month: '6', title: '2026년 6월 학력평가', grade: '1학년', questionCount: 329 },
       { id: '2026-6-2', year: '2026', month: '6', title: '2026년 6월 학력평가', grade: '2학년', questionCount: 323 },
@@ -565,7 +582,6 @@ Trixie Mitchell</textarea>
       { id: '2025-11-3', year: '2025', month: '11', title: '2026 대입 수능평가', grade: '3학년', questionCount: 323 }
     ];
 
-    // 기출 및 변형문제 DB Pool
     let generatedQuestionsPool = [
       {
         id: 1,
@@ -668,7 +684,6 @@ Trixie Mitchell`,
     let filteredQuestions = [];
     let showAnswerKey = false;
 
-    // --- 2. 로그인 및 네비게이션 제어 ---
     function handleLogin(e) {
       e.preventDefault();
       const id = document.getElementById('loginId').value;
@@ -699,7 +714,6 @@ Trixie Mitchell`,
       const target = document.getElementById(`view-${viewName}`);
       if (target) target.classList.remove('hidden');
 
-      // 네비 버튼 활성화 스타일
       document.getElementById('nav-mock').className = (viewName === 'examList' || viewName === 'typeSelect' || viewName === 'paperView')
         ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition'
         : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
@@ -712,7 +726,6 @@ Trixie Mitchell`,
       }
     }
 
-    // --- 3. 모의고사 목록 렌더링 (화면 1) ---
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
       const year = document.getElementById('filterYear').value;
@@ -744,7 +757,6 @@ Trixie Mitchell`,
       `).join('');
     }
 
-    // --- 4. 지문 및 유형 선택 (화면 2) ---
     function openExamTypeSelector(examId) {
       currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
       document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade})`;
@@ -763,11 +775,8 @@ Trixie Mitchell`,
       document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
     }
 
-    function updateCounts() {
-      // 실시간 문항수 카운트
-    }
+    function updateCounts() {}
 
-    // --- 5. 2단 시험지 생성 및 렌더링 (화면 3) ---
     function generateExamPaper() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qType"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="pNum"]:checked')).map(cb => cb.value);
@@ -776,7 +785,6 @@ Trixie Mitchell`,
       if (selectedTypes.length === 0) return alert('최소 하나 이상의 출제 유형을 선택해 주세요.');
       if (selectedPassages.length === 0) return alert('최소 하나 이상의 지문 번호를 선택해 주세요.');
 
-      // Pool에서 필터링
       filteredQuestions = generatedQuestionsPool.filter(q => {
         const typeMatch = selectedTypes.some(t => q.type.includes(t) || t.includes(q.type));
         const passageMatch = selectedPassages.includes(q.passageNum);
@@ -784,7 +792,7 @@ Trixie Mitchell`,
       }).slice(0, limit);
 
       if (filteredQuestions.length === 0) {
-        filteredQuestions = [...generatedQuestionsPool]; // 매칭 없으면 기본 풀 전체 로드
+        filteredQuestions = [...generatedQuestionsPool];
       }
 
       document.getElementById('paperTopTitle').innerText = `[ ${currentSelectedExam.year}년도 ${currentSelectedExam.month}월 ${currentSelectedExam.grade} ${currentSelectedExam.title} ]`;
@@ -800,26 +808,22 @@ Trixie Mitchell`,
 
       container.innerHTML = filteredQuestions.map((q, idx) => `
         <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[13px]">
-          <!-- 문항 헤더 -->
           <div class="font-bold text-[14px] flex items-start gap-1">
             <span class="font-black text-slate-950">${idx + 1}.</span>
             <span>${q.title}</span>
             <span class="text-[10px] text-slate-500 font-sans ml-auto shrink-0">[${q.passageNum}번]</span>
           </div>
 
-          <!-- 지문 박스 -->
           <div class="passage-box exam-eng-font text-slate-800">
             ${q.passage.replace(/\\n/g, '<br/>')}
           </div>
 
-          <!-- 보기 목록 -->
           ${q.options && q.options.length > 0 ? `
             <div class="grid grid-cols-1 gap-0.5 pl-2 mt-2 text-[12.5px] exam-eng-font text-slate-800">
               ${q.options.map(opt => `<div>${opt}</div>`).join('')}
             </div>
           ` : ''}
 
-          <!-- 교사용 정답 표시 -->
           ${isTeacher ? `
             <div class="mt-2 p-2 bg-rose-50 border border-rose-200 rounded text-xs text-rose-700 font-sans">
               <strong>[정답]</strong> ${q.answer} <br/>
@@ -879,13 +883,9 @@ Trixie Mitchell`,
       renderPaper();
     }
 
-    // --- 6. 관리자 모드: Gemini API 연동 대량 변형문제 생성 (화면 4) ---
     async function executeGeminiBatchGenerate() {
       const passage = document.getElementById('adminPassageText').value;
       const passageNum = document.getElementById('adminPassageNum').value || '외부';
-      const year = document.getElementById('adminYear').value;
-      const month = document.getElementById('adminMonth').value;
-      const grade = document.getElementById('adminGrade').value;
 
       if (!passage.trim()) return alert('영어 지문을 입력해 주세요.');
 
@@ -893,7 +893,6 @@ Trixie Mitchell`,
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gemini AI 출제 중...';
       btn.disabled = true;
 
-      // 시뮬레이션 및 실제 풀 등록
       setTimeout(() => {
         const newQuestions = [
           {
@@ -928,79 +927,10 @@ Trixie Mitchell`,
       }, 1500);
     }
 
-    // --- 초기 실행 ---
     document.addEventListener('DOMContentLoaded', () => {
       renderExamTable();
     });
   </script>
-
-  <!-- 부가 CSS 칩 스타일 -->
-  <style>
-    .type-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 10px;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 9999px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #334155;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .type-chip:hover {
-      background-color: #e2e8f0;
-    }
-    .count-badge {
-      font-size: 10px;
-      color: #64748b;
-      background: #e2e8f0;
-      padding: 1px 5px;
-      border-radius: 9999px;
-    }
-    .passage-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #1e293b;
-      cursor: pointer;
-    }
-    .passage-chip input:checked + span {
-      color: #2563eb;
-    }
-    .p-badge {
-      font-size: 10px;
-      background: #94a3b8;
-      color: white;
-      padding: 0 4px;
-      border-radius: 4px;
-      font-weight: normal;
-    }
-  </style>
 </body>
 </html>
 ```eof
-
-원장님께서 스토리보드로 기획해주신 **SDH STUDIO의 정식 출제 플랫폼**을 단일 독립 실행형 웹 파일로 완벽하게 제작했습니다!
-
----
-
-### 🌟 완성된 핵심 기능 및 UI 특징
-
-1. **스토리보드 100% 반영 UI:**
-   * **로그인 & 교사/관리자 분리:** 선생님 모드와 관리자 모드로 나뉘며, 관리자는 지문 등록 및 AI 자동 생성 탭에 접근 가능합니다.
-   * **1단계 목록:** 모의고사 년도, 월, 학년별 리스트 및 보기 버튼
-   * **2단계 유형 & 번호 선택:** 대의파악(주제/제목/요지/목적), 언어논리(빈칸/순서/삽입), 어법/어휘, 주관식 서술형 칩 및 지문 번호 다중 체크
-   * **3단계 2단 내신형 시험지:** Exam4You / 너른터 스타일의 지문 박스, 2단 조판, 교사용/학생용 정답 표시, 정답 및 해설지 분리 출력
-2. **배포 및 테스트 편의성:**
-   * 복잡한 빌드 에러 없이 브라우저에서 바로 열거나 Vercel/GitHub에 파일 하나로 즉시 배포하여 모든 선생님들이 바로 사용하실 수 있습니다.
-
-파일을 확인해 보시고, 추가로 다듬고 싶은 디자인이나 세부 출제 유형이 있다면 말씀해 주세요!
