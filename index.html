@@ -16,231 +16,35 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@800;900&family=Roboto:wght@400;500;700&display=swap');
 
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background-color: #f1f5f9;
-      margin: 0;
-      color: #0f172a;
-    }
-
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f5f9; margin: 0; color: #0f172a; }
     .exam-paper-font { font-family: 'Nanum Myeongjo', 'Batang', serif; }
     .exam-eng-font { font-family: 'Roboto', 'Noto Sans KR', sans-serif; }
-
-    .exam-columns-2 {
-      column-count: 2;
-      column-gap: 28px;
-      column-rule: 1px solid #e2e8f0;
-    }
-
-    .question-block {
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-      margin-bottom: 22px;
-      position: relative;
-    }
-
-    .passage-box {
-      border: 1px solid #334155;
-      padding: 9px 12px;
-      border-radius: 4px;
-      line-height: 1.65;
-      font-size: 12px;
-      background: #ffffff;
-      margin-top: 5px;
-      margin-bottom: 8px;
-      text-align: justify;
-      text-justify: inter-word;
-      word-break: break-word;
-    }
-
-    .given-box {
-      border: 1.5px solid #0f172a;
-      padding: 8px 12px;
-      background: #f8fafc;
-      font-size: 12px;
-      line-height: 1.6;
-      margin-bottom: 8px;
-      border-radius: 4px;
-    }
-
-    .type-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #334155;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .type-chip:hover {
-      background-color: #f8fafc;
-      border-color: #64748b;
-    }
-    .type-chip input:checked + span {
-      color: #0f172a;
-      font-weight: 800;
-    }
-    .count-badge {
-      font-size: 11px;
-      color: #0e7490;
-      background: #ecfeff;
-      border: 1px solid #a5f3fc;
-      padding: 1px 7px;
-      border-radius: 9999px;
-      font-weight: 800;
-    }
-
-    .passage-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 12px;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #334155;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .passage-chip:hover { background-color: #f8fafc; }
-    .passage-chip input:checked + span { color: #0f172a; }
-    
-    .p-badge {
-      font-size: 11px;
-      background: #0f172a;
-      color: #38bdf8;
-      border: 1px solid #0284c7;
-      padding: 1px 8px;
-      border-radius: 9999px;
-      font-weight: 800;
-    }
-
-    .diff-btn {
-      flex: 1;
-      padding: 10px 0;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 700;
-      border-radius: 10px;
-      border: 1px solid #cbd5e1;
-      background-color: #ffffff;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .diff-btn.active-diff {
-      background-color: #0f172a;
-      color: #f59e0b;
-      border-color: #0f172a;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
-    }
-
-    .filter-diff-btn {
-      padding: 7px 18px;
-      font-size: 12px;
-      font-weight: 700;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      background-color: #ffffff;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .filter-diff-btn.active-filter-diff {
-      background-color: #0f172a;
-      color: #38bdf8;
-      border-color: #0f172a;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
-    }
-
-    .nav-item {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #94a3b8;
-      transition: all 0.15s;
-    }
-    .nav-item:hover {
-      background-color: #1e293b;
-      color: #f8fafc;
-    }
-    .nav-item.active-nav {
-      background-color: #1e293b !important;
-      color: #ffffff !important;
-      font-weight: 700;
-      border-left: 4px solid #38bdf8;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    .terminal-cursor {
-      display: inline-block;
-      width: 8px;
-      height: 14px;
-      background-color: #10b981;
-      margin-left: 6px;
-      vertical-align: middle;
-      animation: blink 0.8s infinite;
-    }
+    .exam-columns-2 { column-count: 2; column-gap: 28px; column-rule: 1px solid #e2e8f0; }
+    .question-block { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 22px; position: relative; }
+    .passage-box { border: 1px solid #334155; padding: 9px 12px; border-radius: 4px; line-height: 1.65; font-size: 12px; background: #ffffff; margin-top: 5px; margin-bottom: 8px; text-align: justify; word-break: break-word; }
+    .given-box { border: 1.5px solid #0f172a; padding: 8px 12px; background: #f8fafc; font-size: 12px; line-height: 1.6; margin-bottom: 8px; border-radius: 4px; }
+    .type-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer; }
+    .type-chip input:checked + span { color: #0f172a; font-weight: 800; }
+    .count-badge { font-size: 11px; color: #0e7490; background: #ecfeff; border: 1px solid #a5f3fc; padding: 1px 7px; border-radius: 9999px; font-weight: 800; }
+    .passage-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; }
+    .p-badge { font-size: 11px; background: #0f172a; color: #38bdf8; border: 1px solid #0284c7; padding: 1px 8px; border-radius: 9999px; font-weight: 800; }
+    .diff-btn { flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 700; border-radius: 10px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
+    .diff-btn.active-diff { background-color: #0f172a; color: #f59e0b; border-color: #0f172a; }
+    .filter-diff-btn { padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
+    .filter-diff-btn.active-filter-diff { background-color: #0f172a; color: #38bdf8; border-color: #0f172a; }
+    .nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
+    .nav-item.active-nav { background-color: #1e293b !important; color: #ffffff !important; font-weight: 700; border-left: 4px solid #38bdf8; }
 
     @media print {
-      @page {
-        size: A4 portrait;
-        margin: 10mm 12mm 10mm 12mm !important;
-      }
-      body {
-        background: white !important;
-        color: black !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
+      @page { size: A4 portrait; margin: 10mm 12mm !important; }
+      body { background: white !important; color: black !important; }
       .no-print { display: none !important; }
-      .print-area {
-        display: block !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-      }
+      .print-area { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; border: none !important; }
       .print-header-box { display: block !important; }
-      .page-break-before {
-        page-break-before: always !important;
-        break-before: page !important;
-      }
-      .exam-columns-2 {
-        column-count: 2 !important;
-        column-gap: 24px !important;
-        column-rule: 0.8px solid #94a3b8 !important;
-      }
-      .question-block {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-        margin-bottom: 18px !important;
-      }
-      .passage-box {
-        border: 1px solid #1e293b !important;
-        padding: 6px 10px !important;
-        font-size: 11.5px !important;
-        line-height: 1.55 !important;
-        background: #ffffff !important;
-        text-align: justify !important;
-        text-justify: inter-word !important;
-      }
+      .page-break-before { page-break-before: always !important; }
+      .exam-columns-2 { column-count: 2 !important; column-gap: 24px !important; column-rule: 0.8px solid #94a3b8 !important; }
+      .question-block { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 18px !important; }
+      .passage-box { border: 1px solid #1e293b !important; padding: 6px 10px !important; font-size: 11.5px !important; line-height: 1.55 !important; background: #ffffff !important; }
     }
   </style>
 </head>
@@ -285,7 +89,6 @@
   </div>
 
   <div id="appContainer" class="flex flex-1 min-h-screen">
-
     <aside class="no-print w-64 bg-slate-950 text-white flex flex-col shrink-0 border-r border-slate-800">
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
         <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm cursor-pointer" onclick="switchView('examList')">
@@ -316,17 +119,14 @@
 
         <div id="adminMenuSection" class="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
           <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
-          
           <button onclick="switchView('adminPanel')" id="nav-adminPanel" class="nav-item">
             <span class="flex items-center gap-3 text-amber-400"><i class="fa-solid fa-wand-magic-sparkles w-4"></i> 변형문제 AI출제</span>
             <i class="fa-solid fa-bolt text-xs text-amber-400"></i>
           </button>
-
           <button onclick="switchView('mockRegisterPanel')" id="nav-mockRegisterPanel" class="nav-item">
             <span class="flex items-center gap-3 text-teal-400"><i class="fa-solid fa-list-check w-4"></i> 모의고사 DB등록</span>
             <i class="fa-solid fa-plus text-xs text-teal-400"></i>
           </button>
-
           <button onclick="switchView('pdfParserPanel')" id="nav-pdfParserPanel" class="nav-item">
             <span class="flex items-center gap-3 text-cyan-400"><i class="fa-solid fa-file-pdf w-4"></i> 기출문제 DB등록</span>
             <span id="benchmarkCountBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full font-bold border border-cyan-800">기출 0제</span>
@@ -346,8 +146,6 @@
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
-
-      <!-- VIEW 1: 모의고사 목록 -->
       <section id="view-examList" class="p-8 space-y-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
@@ -374,473 +172,93 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 세분화 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <button onclick="switchView('examList')" class="w-9 h-9 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 flex items-center justify-center shadow-sm">
+            <button onclick="switchView('examList')" class="w-9 h-9 bg-white border border-slate-200 rounded-xl text-slate-600 flex items-center justify-center">
               <i class="fa-solid fa-arrow-left"></i>
             </button>
-            <div>
-              <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">2026년 3월 학력평가 (고1)</h2>
-              <p class="text-xs text-slate-500">원하시는 난이도, 출제 유형, 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
-            </div>
+            <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">모의고사 세트</h2>
           </div>
         </div>
-
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-          <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-layer-group text-cyan-600"></i> 출제 난이도 필터 선택
-          </span>
-          <div class="flex items-center gap-2">
-            <button type="button" onclick="setSelectDifficulty('상')" id="filterDiff_상" class="filter-diff-btn">상 (고난도)</button>
-            <button type="button" onclick="setSelectDifficulty('중')" id="filterDiff_중" class="filter-diff-btn">중 (표준)</button>
-            <button type="button" onclick="setSelectDifficulty('하')" id="filterDiff_하" class="filter-diff-btn">하 (기본)</button>
-            <button type="button" onclick="setSelectDifficulty('혼합')" id="filterDiff_혼합" class="filter-diff-btn active-filter-diff">혼합 (상/중/하 전체)</button>
-          </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-          <div class="flex items-center justify-between border-b pb-3">
-            <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
-              <i class="fa-solid fa-tags text-amber-500"></i> 출제 유형별 문항수 선택
-            </span>
-            <div class="flex items-center gap-2">
-              <button onclick="toggleAllTypes(true)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 선택</button>
-              <button onclick="toggleAllTypes(false)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 해제</button>
-            </div>
-          </div>
-          <div id="typeChipContainer" class="flex flex-wrap items-center gap-2 pt-1"></div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-          <div class="flex items-center justify-between border-b pb-3">
-            <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
-              <i class="fa-solid fa-list-ol text-teal-600"></i> 지문별 선택 (지문 번호 옆 숫자는 생성된 문제수)
-            </span>
-            <div class="flex items-center gap-2">
-              <button onclick="toggleAllPassages(true)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 선택</button>
-              <button onclick="toggleAllPassages(false)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 해제</button>
-            </div>
-          </div>
-          <div id="passageChipContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1"></div>
-        </div>
-
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-300 flex items-center justify-between">
-          <div class="flex items-center gap-4 text-sm font-black text-slate-800">
-            <span class="bg-slate-900 text-slate-100 px-2.5 py-1 rounded text-xs font-bold"><i class="fa-solid fa-print"></i> 최종 인쇄 설정</span>
-            <span>출력할 문항 갯수 :</span>
-            <input type="number" id="limitCount" value="50" class="w-24 p-2 border-2 border-slate-800 rounded-lg text-center font-bold text-slate-900 text-base shadow-inner focus:outline-none" />
-            <span class="text-xs text-slate-500 font-medium">(현재 위 필터로 매칭된 풀: <strong id="selectedTotalCount" class="text-cyan-600 font-bold text-sm">0</strong>개)</span>
-          </div>
-
-          <button onclick="generateExamPaper()" class="bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500 font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
-            <i class="fa-solid fa-print"></i> 선택된 문제 출력
-          </button>
-        </div>
+        <div id="typeChipContainer" class="bg-white p-6 rounded-2xl border flex flex-wrap gap-2"></div>
+        <div id="passageChipContainer" class="bg-white p-6 rounded-2xl border grid grid-cols-6 gap-2"></div>
+        <button onclick="generateExamPaper()" class="bg-slate-900 text-cyan-400 font-black px-8 py-3.5 rounded-xl shadow-lg"><i class="fa-solid fa-print mr-2"></i>선택된 문제 출력</button>
       </section>
 
-      <!-- VIEW 3: 2단 인쇄용 정밀 시험지 및 정답/해설지 -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
-        <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
-              <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
-              <input type="checkbox" id="chkIncludeAns" checked onchange="renderPaper()" class="w-4 h-4 text-slate-900 rounded focus:ring-slate-800" />
-              <span>정답 및 해설지 포함 인쇄</span>
-            </label>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <button onclick="togglePaperMode('all')" id="btnShowAllPaper" class="px-3.5 py-2 text-xs font-bold bg-slate-900 text-white rounded-xl shadow-sm">전체 (문제+해설)</button>
-            <button onclick="togglePaperMode('questions')" id="btnShowQOnly" class="px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl">문제지만 보기</button>
-            <button onclick="togglePaperMode('answers')" id="btnShowAOnly" class="px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl">정답/해설지만 보기</button>
-            
-            <button onclick="window.print()" class="bg-slate-900 text-cyan-400 border border-cyan-500 hover:bg-slate-800 text-xs px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md">
-              <i class="fa-solid fa-print"></i> 인쇄 및 PDF 저장
-            </button>
-          </div>
+        <div class="no-print bg-white p-5 rounded-2xl border flex justify-between">
+          <button onclick="switchView('typeSelect')" class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold"><i class="fa-solid fa-arrow-left mr-1"></i>뒤로가기</button>
+          <button onclick="window.print()" class="bg-slate-900 text-cyan-400 px-5 py-2.5 rounded-xl text-xs font-bold"><i class="fa-solid fa-print mr-2"></i>인쇄 / PDF 저장</button>
         </div>
-
-        <div class="print-area bg-white p-8 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto space-y-12">
-          
-          <!-- [PART 1] 문제지 영역 -->
-          <div id="paperQuestionSection">
-            <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
-              <div class="flex items-end justify-between">
-                <div>
-                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH ACADEMY</span>
-                  <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제</h1>
-                </div>
-                <div class="flex items-center gap-3 text-xs">
-                  <div class="border border-slate-900 px-3 py-1.5 font-bold">점수 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / 100점</div>
-                  <div class="border border-slate-900 px-4 py-1.5 font-bold">이름 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                </div>
-              </div>
-            </div>
-            <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
-          </div>
-
-          <!-- [PART 2] 정답 및 상세 해설지 세트 영역 -->
-          <div id="paperAnswerSection" class="page-break-before pt-6 border-t-2 border-dashed border-slate-300">
-            <div class="border-b-2 border-slate-900 pb-3 mb-6">
-              <div class="flex items-end justify-between">
-                <div>
-                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH ACADEMY - ANSWER & EXPLANATION</span>
-                  <h1 id="answerHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">정답 및 상세 해설지</h1>
-                </div>
-                <div class="border border-slate-900 px-3 py-1 text-xs font-bold">SDH ACADEMY</div>
-              </div>
-            </div>
-
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-300 mb-6 text-xs">
-              <h3 class="font-black text-slate-900 mb-2">[빠른 정답표]</h3>
-              <div id="quickAnswerGrid" class="grid grid-cols-5 md:grid-cols-10 gap-2 font-mono text-center"></div>
-            </div>
-
-            <div id="answerDetailContent" class="exam-columns-2 text-slate-900 text-xs"></div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- VIEW 4: 모의고사 DB등록 -->
-      <section id="view-mockRegisterPanel" class="p-8 space-y-6 hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-          <div class="flex items-center justify-between border-b pb-4">
-            <div>
-              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-list-check text-teal-600"></i> 모의고사 지문 DB 등록
-              </h2>
-              <p class="text-xs text-slate-500 mt-0.5">상단 모의고사 정보 설정 후 각 지문 번호에 맞게 영어 본문만 붙여넣으세요.</p>
-            </div>
-            <button onclick="clearPassageArchiveDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">지문 DB 전체 초기화</button>
-          </div>
-
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
-              <span>등록할 모의고사 설정:</span>
-              <select id="regYear" class="border rounded-lg px-3 py-2 bg-white font-bold text-teal-700 border-teal-300"></select>
-              <select id="regMonth" class="border rounded-lg px-3 py-2 bg-white font-bold text-teal-700 border-teal-300"></select>
-              <select id="regGrade" class="border rounded-lg px-3 py-2 bg-white font-bold text-teal-700 border-teal-300"></select>
-            </div>
-            <button onclick="saveAll25Passages()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-floppy-disk"></i> 입력된 지문 일괄 DB 저장
-            </button>
-          </div>
-          <div id="passageInputsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-2"></div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-3">
-          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-database text-teal-600"></i> 현재 학원 지문 ARCHIVE DB 목록 (<span id="totalArchivedCount">0</span>개 적재됨)
-          </h3>
-          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm max-h-72 overflow-y-auto">
-            <table class="w-full text-left text-xs">
-              <thead>
-                <tr class="bg-slate-900 text-slate-200 font-bold border-b sticky top-0">
-                  <th class="py-2.5 px-4 w-16 text-center">연도</th><th class="py-2.5 px-4 w-16 text-center">시행월</th>
-                  <th class="py-2.5 px-4 w-20 text-center">학년</th><th class="py-2.5 px-4 w-24 text-center">지문 번호</th>
-                  <th class="py-2.5 px-4">지문 첫 문장 / 미리보기</th><th class="py-2.5 px-4 w-24 text-center">상태</th><th class="py-2.5 px-4 w-28 text-center">관리</th>
-                </tr>
-              </thead>
-              <tbody id="passageArchiveTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
-            </table>
+        <div class="print-area bg-white p-8 rounded-2xl border max-w-5xl mx-auto space-y-8">
+          <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
+          <div id="paperAnswerSection" class="page-break-before pt-6 border-t-2 border-dashed">
+            <h3 class="font-black text-slate-900 mb-4">[빠른 정답표]</h3>
+            <div id="quickAnswerGrid" class="grid grid-cols-10 gap-2 text-center mb-6"></div>
+            <div id="answerDetailContent" class="exam-columns-2 text-xs"></div>
           </div>
         </div>
       </section>
 
-      <!-- VIEW 5: 변형문제 AI 출제 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div class="flex items-center justify-between border-b pb-4 mb-4">
-            <div>
-              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 변형문제 AI 출제 엔진
-              </h2>
-              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 출제할 세부 유형을 체크하세요.</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 border border-slate-200">
-                <i class="fa-solid fa-key text-amber-500"></i> API Key 설정
-              </button>
-              <span id="apiKeyStatusBadge" class="text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-bold">API Key 미설정</span>
-            </div>
+        <div class="bg-white p-6 rounded-2xl border space-y-4">
+          <div class="flex items-center justify-between border-b pb-4">
+            <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-2"></i>변형문제 AI 출제 엔진</h2>
+            <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg font-bold border"><i class="fa-solid fa-key text-amber-500 mr-1"></i>API Key 설정</button>
           </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-6 space-y-5">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">
-                  <i class="fa-solid fa-database text-teal-600"></i> 출제할 모의고사 세트 선택
-                </label>
-                <select id="selectMockSet" class="w-full p-3 border rounded-xl text-xs font-bold bg-white focus:outline-blue-600 shadow-sm">
-                  <option value="">-- DB에 저장된 모의고사 세트 목록 (선택) --</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1.5">출제 난이도 선택</label>
-                <div class="flex gap-2">
-                  <button type="button" onclick="setDifficulty('상')" id="diffBtn_상" class="diff-btn">상 (고난도 킬러)</button>
-                  <button type="button" onclick="setDifficulty('중')" id="diffBtn_중" class="diff-btn active-diff">중 (표준 내신)</button>
-                  <button type="button" onclick="setDifficulty('하')" id="diffBtn_하" class="diff-btn">하 (기본 변형)</button>
-                </div>
-              </div>
-
-              <div class="space-y-3">
-                <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2 font-medium">
-                  <i class="fa-solid fa-shield-halved text-amber-600"></i>
-                  <span>백엔드 고정 정책: AI 품질 최적화를 위해 **구조화 JSON 검증 출제 엔진**이 동작합니다.</span>
-                </div>
-
-                <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 세부 변형문제 유형 선택</label>
-                
-                <div class="space-y-2 text-xs">
-                  <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                    <span class="font-bold text-amber-600 text-[11px] block">[대의파악]</span>
-                    <div class="grid grid-cols-3 gap-2">
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="주제" checked /> 주제</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="제목" checked /> 제목</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="주장" checked /> 주장</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="요지" checked /> 요지</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="목적" checked /> 목적</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="요약" checked /> 요약</label>
-                    </div>
-                  </div>
-
-                  <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                    <span class="font-bold text-teal-600 text-[11px] block">[내용이해]</span>
-                    <div class="grid grid-cols-2 gap-2">
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="일치" checked /> 일치</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="불일치" checked /> 불일치</label>
-                    </div>
-                  </div>
-
-                  <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                    <span class="font-bold text-cyan-600 text-[11px] block">[언어논리]</span>
-                    <div class="grid grid-cols-3 gap-2">
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="함축의미" checked /> 함축의미</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="연결사" checked /> 연결사</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="순서" checked /> 순서</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="삽입" checked /> 삽입</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="흐름" checked /> 흐름</label>
-                    </div>
-                  </div>
-
-                  <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                    <span class="font-bold text-slate-700 text-[11px] block">[어법/어휘]</span>
-                    <div class="grid grid-cols-2 gap-2">
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="어법" checked /> 어법</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="어휘" checked /> 어휘</label>
-                    </div>
-                  </div>
-
-                  <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                    <span class="font-bold text-slate-700 text-[11px] block">[주관식]</span>
-                    <div class="grid grid-cols-2 gap-2">
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="서술형" checked /> 서술형</label>
-                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="단답형" checked /> 단답형</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button onclick="executeFastParallelGenerate()" id="btnAdminGen" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3.5 rounded-xl shadow transition text-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 고품질 분할 AI 변형문제 자동 생성 시작
-              </button>
-            </div>
-
-            <div class="lg:col-span-6 flex flex-col space-y-2">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-                <span>AI 변형문제 생성 진행 상황 (터미널)</span>
-                <span id="genProgressText" class="text-amber-600 font-bold">대기 중</span>
-              </div>
-              <div id="generationLogBox" class="h-[430px] max-h-[430px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800">
-                [SYSTEM READY] 모의고사 세트를 선택하고 생성 시작 버튼을 누르세요...
-              </div>
-            </div>
+          <select id="selectMockSet" class="w-full p-3 border rounded-xl font-bold text-xs"><option value="">-- DB에 저장된 모의고사 세트 목록 --</option></select>
+          <div id="adminGenTypeBox" class="grid grid-cols-4 gap-2 text-xs">
+            <label><input type="checkbox" name="adminGenType" value="주제" checked /> 주제</label>
+            <label><input type="checkbox" name="adminGenType" value="제목" checked /> 제목</label>
+            <label><input type="checkbox" name="adminGenType" value="요지" checked /> 요지</label>
+            <label><input type="checkbox" name="adminGenType" value="일치" checked /> 일치</label>
+            <label><input type="checkbox" name="adminGenType" value="불일치" checked /> 불일치</label>
+            <label><input type="checkbox" name="adminGenType" value="어법" checked /> 어법</label>
+            <label><input type="checkbox" name="adminGenType" value="어휘" checked /> 어휘</label>
+            <label><input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸</label>
+            <label><input type="checkbox" name="adminGenType" value="순서" checked /> 순서</label>
+            <label><input type="checkbox" name="adminGenType" value="삽입" checked /> 삽입</label>
+            <label><input type="checkbox" name="adminGenType" value="함축의미" checked /> 함축의미</label>
+            <label><input type="checkbox" name="adminGenType" value="서술형" checked /> 서술형</label>
+            <label><input type="checkbox" name="adminGenType" value="단답형" checked /> 단답형</label>
           </div>
+          <button onclick="executeFastParallelGenerate()" id="btnAdminGen" class="w-full bg-amber-500 text-slate-950 font-black py-3.5 rounded-xl shadow"><i class="fa-solid fa-bolt mr-2"></i>완전 검증 출제 가동</button>
+          <div id="generationLogBox" class="h-64 bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto"></div>
         </div>
       </section>
 
-      <!-- VIEW 6: 기출문제 DB등록 -->
+      <section id="view-mockRegisterPanel" class="p-8 space-y-6 hidden">
+        <div class="bg-white p-6 rounded-2xl border space-y-4">
+          <h2 class="text-xl font-bold">모의고사 지문 DB 등록</h2>
+          <div id="passageInputsContainer" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto"></div>
+          <button onclick="saveAll25Passages()" class="bg-teal-600 text-white font-bold px-6 py-2.5 rounded-xl shadow">지문 DB 저장</button>
+        </div>
+      </section>
+
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-          <div class="flex items-center justify-between border-b pb-4">
-            <div>
-              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-file-pdf text-cyan-600"></i> 기출문제 DB 등록
-              </h2>
-            </div>
-            <button onclick="resetBenchmarkDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">기출 DB 초기화</button>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-5 space-y-4">
-              <div id="pdfDropZone" 
-                   class="border-2 border-dashed border-cyan-200 rounded-2xl p-6 text-center cursor-pointer transition bg-cyan-50/30 hover:bg-cyan-50/60"
-                   onclick="document.getElementById('pdfFileInput').click()"
-                   ondragover="handleDragOver(event)"
-                   ondragleave="handleDragLeave(event)"
-                   ondrop="handleDrop(event)">
-                <input type="file" id="pdfFileInput" accept="application/pdf" multiple class="hidden" onchange="handleFileInputChange(event)" />
-                <div class="w-14 h-14 bg-cyan-100 text-cyan-700 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
-                  <i class="fa-solid fa-cloud-arrow-up"></i>
-                </div>
-                <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭 (다중 선택 가능)</h4>
-                <div id="pdfUploadStatus" class="mt-2 text-xs font-bold text-cyan-600"></div>
-              </div>
-
-              <div id="queuedFilesContainer" class="hidden bg-slate-50 p-4 rounded-xl border space-y-2">
-                <div class="flex items-center justify-between text-xs font-bold text-slate-800 border-b pb-2">
-                  <span>대기 중인 PDF 목록 (<span id="queuedFileCount" class="text-cyan-600 font-bold">0</span>개)</span>
-                  <button onclick="clearQueuedFiles()" class="text-slate-400 hover:text-rose-500 text-[11px]">목록 비우기</button>
-                </div>
-                <div id="queuedFileList" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
-                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full mt-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
-                  <i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작
-                </button>
-              </div>
-            </div>
-
-            <div class="lg:col-span-7 flex flex-col space-y-2">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-                <span>PDF 텍스트 추출 및 AI 분석 피드</span>
-                <span id="parsedItemCount" class="text-cyan-700 font-bold">분석 대기 중</span>
-              </div>
-              <div id="pdfLogTerminal" class="h-[360px] max-h-[360px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800">
-                [SYSTEM READY] 준비 상태입니다. PDF 시험지를 드래그&드롭하면 동적 AI 분석 피드가 시작됩니다...
-              </div>
-            </div>
-          </div>
-
-          <div class="space-y-3 pt-2">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">0</span>문항)
-              </h3>
-            </div>
-            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-              <table class="w-full text-left text-xs">
-                <thead>
-                  <tr class="bg-slate-900 text-slate-200 font-bold border-b">
-                    <th class="py-2.5 px-4 w-12 text-center">번호</th>
-                    <th class="py-2.5 px-4 w-44">학교 / 시험 구분</th>
-                    <th class="py-2.5 px-4 w-24 text-center">유형</th>
-                    <th class="py-2.5 px-4">문제 발문 / 핵심 킬러 포인트</th>
-                  </tr>
-                </thead>
-                <tbody id="benchmarkTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
-              </table>
-            </div>
-          </div>
+        <div class="bg-white p-6 rounded-2xl border space-y-4">
+          <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-file-pdf text-cyan-600 mr-2"></i>기출문제 DB 등록</h2>
+          <p class="text-xs text-slate-500">학교 시험지 PDF를 업로드하여 기출 킬러 패턴을 축적합니다.</p>
         </div>
       </section>
 
-      <!-- VIEW 7: MY PAGE -->
       <section id="view-myPage" class="p-8 space-y-6 hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-          <div class="flex items-center justify-between border-b pb-4">
-            <div>
-              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-circle-user text-cyan-600"></i> My Page (개인 보관함 & 계정 관리)
-              </h2>
-              <p class="text-xs text-slate-500 mt-0.5">내 계정 정보 및 생성된 계정 목록을 관리하세요.</p>
-            </div>
-            <span id="myRoleBadge" class="text-xs bg-slate-900 text-cyan-300 border border-cyan-800 px-3 py-1 rounded-full font-bold">원장 선생님</span>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-5 space-y-5">
-              <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
-                <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-key text-amber-500"></i> 비밀번호 변경
-                </h3>
-                <div class="space-y-3 text-xs">
-                  <div>
-                    <label class="block text-slate-700 font-bold mb-1">새 비밀번호</label>
-                    <input type="password" id="myNewPw" placeholder="새 비밀번호 입력" class="w-full p-2.5 border rounded-lg bg-white" />
-                  </div>
-                  <button onclick="changePassword()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition">
-                    비밀번호 변경 완료
-                  </button>
-                </div>
-              </div>
-
-              <div id="adminCreateTeacherBox" class="bg-teal-50/40 p-5 rounded-2xl border border-teal-200 space-y-4 hidden">
-                <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                  <i class="fa-solid fa-user-plus text-teal-600"></i> 선생님 계정 신규 생성 (원장님 전용)
-                </h3>
-                <div class="space-y-3 text-xs">
-                  <div>
-                    <label class="block text-slate-900 font-bold mb-1">선생님 ID</label>
-                    <input type="text" id="newTeacherId" placeholder="예: saerom1" class="w-full p-2.5 border rounded-lg bg-white" />
-                  </div>
-                  <div>
-                    <label class="block text-slate-900 font-bold mb-1">초기 비밀번호</label>
-                    <input type="password" id="newTeacherPw" value="1234" class="w-full p-2.5 border rounded-lg bg-white" />
-                  </div>
-                  <button onclick="createTeacherAccount()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-lg shadow transition">
-                    신규 교사 계정 생성
-                  </button>
-                </div>
-
-                <div class="pt-3 border-t border-teal-200">
-                  <h4 class="font-bold text-xs text-slate-900 mb-2 flex items-center gap-1.5">
-                    <i class="fa-solid fa-users-gear text-teal-600"></i> 등록된 선생님 계정 삭제 관리
-                  </h4>
-                  <div class="bg-white rounded-xl border border-slate-200 p-2 max-h-40 overflow-y-auto">
-                    <ul id="teacherAccountList" class="divide-y text-xs text-slate-700"></ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="lg:col-span-7 space-y-3">
-              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-box-archive text-slate-800"></i> 내 최종 출력(인쇄) 문제지 보관함
-              </h3>
-              <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm max-h-96 overflow-y-auto bg-white">
-                <table class="w-full text-left text-xs">
-                  <thead>
-                    <tr class="bg-slate-900 text-slate-200 font-bold border-b sticky top-0">
-                      <th class="py-3 px-4 w-12 text-center">번호</th>
-                      <th class="py-3 px-4">출력 문제집 제목</th>
-                      <th class="py-3 px-4 w-20 text-center">문항 수</th>
-                      <th class="py-3 px-4 w-28 text-center">출력 일자</th>
-                      <th class="py-3 px-4 w-20 text-center">재출력</th>
-                    </tr>
-                  </thead>
-                  <tbody id="myPaperHistoryTable" class="divide-y divide-slate-100 text-slate-700">
-                    <tr><td colspan="5" class="py-6 text-center text-slate-400">출력 이력이 없습니다.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+        <div class="bg-white p-6 rounded-2xl border space-y-4">
+          <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-circle-user text-cyan-600 mr-2"></i>My Page</h2>
+          <p class="text-xs text-slate-500">내 계정 정보 및 출력 이력을 관리합니다.</p>
         </div>
       </section>
-
     </main>
   </div>
 
-  <!-- API Key 설정 모달 -->
   <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-key text-amber-500"></i> Google Gemini API Key 설정
-        </h3>
-        <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
+      <h3 class="font-bold text-base mb-4"><i class="fa-solid fa-key text-amber-500 mr-2"></i>Gemini API Key 설정</h3>
       <input type="password" id="inputApiKey" placeholder="AIzaSy..." class="w-full p-2.5 border rounded-lg text-sm mb-4 font-mono" />
       <div class="flex justify-end gap-2">
-        <button onclick="toggleApiKeyModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold">취소</button>
-        <button onclick="saveApiKey()" class="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold">저장하기</button>
+        <button onclick="toggleApiKeyModal()" class="px-4 py-2 bg-slate-100 text-xs font-bold rounded">취소</button>
+        <button onclick="saveApiKey()" class="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded">저장</button>
       </div>
     </div>
   </div>
@@ -850,292 +268,27 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbW9ncWx1a2t2aWRkanNmeWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjc3NjYsImV4cCI6MjEwMzUwMzc2Nn0.nqWvvphNCdPGMDrEYLilk-wHmNkH2BhPTuvMwaCXqo8';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const passageNumberList = [
-      '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-      '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41-42', '43-45'
-    ];
-
-    let passageArchiveDB = [];
-    let generatedQuestionsPool = [];
-    let mockExams = [];
-    let currentSelectedExam = null;
-    let filteredQuestions = [];
-    let queuedPdfFiles = [];
-
-    let currentUser = null;
-    let userAccountsDB = {
-      'admin': { pw: '1234', role: 'admin', name: '원장 선생님' },
-      'saerom1': { pw: '1234', role: 'teacher', name: 'saerom1 선생님' },
-      'teacher': { pw: '1234', role: 'teacher', name: 'teacher 선생님' }
-    };
-
-    let selectedDifficulty = '중';
-    let selectedFilterDifficulty = '혼합';
+    const passageNumberList = ['18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41-42', '43-45'];
+    let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], filteredQuestions = [];
+    let currentUser = null, userAccountsDB = { 'admin': { pw: '1234', role: 'admin', name: '원장 선생님' } };
 
     const standardTitleMap = {
       '주제': '다음 글의 주제로 가장 적절한 것은?',
       '제목': '다음 글의 제목으로 가장 적절한 것은?',
-      '주장': '다음 글의 주장으로 가장 적절한 것은?',
       '요지': '다음 글의 요지로 가장 적절한 것은?',
-      '목적': '다음 글의 목적으로 가장 적절한 것은?',
-      '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?',
       '일치': '다음 글의 내용과 일치하는 것은?',
       '불일치': '다음 글의 내용과 일치하지 않는 것은?',
       '함축의미': '다음 글의 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?',
       '빈칸': '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
-      '연결사': '다음 글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?',
       '순서': '주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?',
       '삽입': '글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?',
-      '흐름': '다음 글에서 전체 흐름과 관계 없는 문장은?',
       '어법': '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
       '어휘': '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
       '서술형': '[주관식 서술형] 다음 글을 읽고 [조건]에 맞추어 알맞은 답안을 작성하시오.',
       '단답형': '[주관식 단답형] 다음 글의 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 쓰시오.'
     };
 
-    const typeCategories = [
-      { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-amber-500' },
-      { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-teal-600' },
-      { category: '언어 논리', types: ['함축의미', '빈칸', '연결사', '순서', '삽입', '흐름'], bg: 'bg-cyan-600' },
-      { category: '어법/어휘', types: ['어법', '어휘'], bg: 'bg-sky-600' },
-      { category: '주관식', types: ['서술형', '단답형'], bg: 'bg-slate-800' }
-    ];
-
-    let schoolBenchmarkDB = [];
-    let myPaperHistory = [];
-
-    function initDropdownOptions() {
-      const years = Array.from({length: 12}, (_, i) => 2026 - i);
-      const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
-      const grades = [1, 2, 3];
-
-      const regYearEl = document.getElementById('regYear');
-      const regMonthEl = document.getElementById('regMonth');
-      const regGradeEl = document.getElementById('regGrade');
-
-      if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
-      if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
-      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===1?'selected':''}>고${g}</option>`).join('');
-
-      const filterYearEl = document.getElementById('filterYear');
-      const filterMonthEl = document.getElementById('filterMonth');
-      const filterGradeEl = document.getElementById('filterGrade');
-
-      if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
-      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
-      if (filterGradeEl) filterGradeEl.innerHTML = `<option value="">학년 전체</option>` + grades.map(g => `<option value="${g}">고${g}</option>`).join('');
-    }
-
-    async function loadAllSupabaseData() {
-      try {
-        const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
-        if (bData) schoolBenchmarkDB = bData;
-        renderBenchmarkTable();
-
-        const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
-        if (pData) passageArchiveDB = pData;
-        renderPassageArchiveTable();
-
-        const { data: qData } = await supabaseClient.from('generated_questions').select('*').order('created_at', { ascending: false });
-        if (qData) {
-          generatedQuestionsPool = qData;
-          const examMap = {};
-          passageArchiveDB.forEach(p => {
-            const setKey = `${p.year}-${p.month}-${p.grade}`;
-            if (!examMap[setKey]) examMap[setKey] = { id: setKey, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
-          });
-          
-          qData.forEach(q => {
-            const parts = q.id.split('-');
-            if (parts.length > 3) {
-              const setKey = `${parts[1]}-${parts[2]}-${parts[3]}`;
-              if (examMap[setKey]) examMap[setKey].questionCount++;
-            }
-          });
-          
-          mockExams = Object.values(examMap).sort((a,b) => b.year.localeCompare(a.year));
-          renderExamTable();
-        }
-      } catch (err) {
-        console.error("Supabase 로드 에러:", err);
-      }
-    }
-
-    function setDifficulty(diff) {
-      selectedDifficulty = diff;
-      ['상', '중', '하'].forEach(d => {
-        const btn = document.getElementById(`diffBtn_${d}`);
-        if (btn) btn.className = (d === diff) ? 'diff-btn active-diff' : 'diff-btn';
-      });
-    }
-
-    function setSelectDifficulty(diff) {
-      selectedFilterDifficulty = diff;
-      ['상', '중', '하', '혼합'].forEach(d => {
-        const btn = document.getElementById(`filterDiff_${d}`);
-        if (btn) btn.className = (d === diff) ? 'filter-diff-btn active-filter-diff' : 'filter-diff-btn';
-      });
-      renderTypeChips(); renderPassageChips(); updateSelectedCountText();
-    }
-
-    function cleanSchoolInfo(filename) {
-      let name = filename.replace(/\.pdf$/i, '').trim();
-      name = name.replace(/\(개정\)/g, '').replace(/\(기출\)/g, '').replace(/20\d\d년?/g, '').trim();
-      let schoolStr = '학교 미상', examStr = '기출';
-      let schoolMatch = name.match(/([가-힣a-zA-Z0-9]+(고등학교|여고|외고|과고|고|여중|중학교|중))/);
-      if (schoolMatch) schoolStr = schoolMatch[0].replace('고등학교', '고').replace('중학교', '중');
-      else schoolStr = name.split(/[_\-\s]+/)[0] || '학교 기출';
-
-      if (name.includes('1-1') || name.includes('1학기 중간')) examStr = '1-1 중간';
-      else if (name.includes('1-2') || name.includes('1학기 기말')) examStr = '1-1 기말';
-      else if (name.includes('2-1') || name.includes('2학기 중간')) examStr = '2-1 중간';
-      else if (name.includes('2-2') || name.includes('2학기 기말')) examStr = '2-1 기말';
-      else if (name.includes('중간')) examStr = '중간고사';
-      else if (name.includes('기말')) examStr = '기말고사';
-      return { school: schoolStr, exam: examStr };
-    }
-
-    function handleDragOver(e) { e.preventDefault(); }
-    function handleDragLeave(e) { e.preventDefault(); }
-    function handleDrop(e) { e.preventDefault(); addFilesToQueue(Array.from(e.dataTransfer.files)); }
-    function handleFileInputChange(e) { addFilesToQueue(Array.from(e.target.files)); }
-
-    function addFilesToQueue(files) {
-      queuedPdfFiles.push(...files.filter(f => f.name.toLowerCase().endsWith('.pdf')));
-      renderQueuedFiles();
-    }
-
-    function renderQueuedFiles() {
-      const container = document.getElementById('queuedFilesContainer'), list = document.getElementById('queuedFileList'), countEl = document.getElementById('queuedFileCount');
-      if (!container || !list) return;
-      if (countEl) countEl.innerText = queuedPdfFiles.length;
-
-      if (queuedPdfFiles.length === 0) return container.classList.add('hidden');
-      container.classList.remove('hidden');
-      list.innerHTML = queuedPdfFiles.map((file, idx) => `
-        <div class="flex items-center justify-between p-2 bg-white rounded border text-xs">
-          <span class="truncate">${file.name}</span>
-          <button onclick="removeQueuedFile(${idx})" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-      `).join('');
-    }
-
-    function removeQueuedFile(idx) { queuedPdfFiles.splice(idx, 1); renderQueuedFiles(); }
-    function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
-
-    async function startBatchPdfClassification() {
-      const apiKey = getStoredApiKey();
-      if (!apiKey) return toggleApiKeyModal();
-      if (queuedPdfFiles.length === 0) return alert('분석할 PDF 파일이 없습니다.');
-
-      const logBox = document.getElementById('pdfLogTerminal'), btn = document.getElementById('btnStartBatch');
-      btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-bolt fa-spin"></i> 정밀 기출 분석 진행 중...';
-
-      let totalAddedCount = 0;
-      logBox.innerHTML = `<div>[BATCH START] 총 ${queuedPdfFiles.length}개 시험지 정밀 분석 가동... <span class="terminal-cursor"></span></div>`;
-
-      await Promise.all(queuedPdfFiles.map(async (file, i) => {
-        const { school, exam } = cleanSchoolInfo(file.name);
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let fullText = '';
-          for (let p = 1; p <= pdf.numPages; p++) fullText += (await (await pdf.getPage(p)).getTextContent()).items.map(item => item.str).join(' ') + '\n';
-
-          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          logBox.innerHTML += `<div>[${i+1}/${queuedPdfFiles.length}] [${school} ${exam}] 킬러 함정 정밀 추출 중... <span class="terminal-cursor"></span></div>`;
-          logBox.scrollTop = logBox.scrollHeight;
-
-          const parserPrompt = `
-당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
-[학교/시험]: ${school} ${exam}
-[시험지 원문]:
-${fullText.slice(0, 15000)}
-
-출력형식 예시:
-## [어법] 1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
-- 킬러패턴: 준동사(v-ing) vs 본동사 위치 착시 및 수일치 복합 함정
-`;
-          const rawText = await callGeminiUniversal(apiKey, parserPrompt);
-          const parsedArray = parseMarkdownBenchmarkText(rawText, school, exam);
-
-          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-            await supabaseClient.from('school_benchmark').upsert(parsedArray);
-            schoolBenchmarkDB.unshift(...parsedArray);
-            totalAddedCount += parsedArray.length;
-            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school} ${exam}] 분석 완료! +${parsedArray.length}문항 적재</div>`;
-          } else {
-            logBox.innerHTML += `<div class="text-emerald-300">✓ [${school} ${exam}] 분석 완료</div>`;
-          }
-          logBox.scrollTop = logBox.scrollHeight;
-          renderBenchmarkTable();
-        } catch (err) {
-          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ [${school}] 분석 에러: ${err.message}</div>`;
-        }
-      }));
-      logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 기출 패턴 학습 완료! (총 +${totalAddedCount}문항)</div>`;
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
-      clearQueuedFiles();
-    }
-
-    function parseMarkdownBenchmarkText(text, school, exam) {
-      const results = [];
-      text.split(/##\s+/).forEach((block, idx) => {
-        if (!block.trim() || block.includes('전문가') || block.includes('출력형식')) return;
-        const lines = block.trim().split('\n');
-        let type = extractStandardType(lines[0] || '');
-        const cleanedTitle = (lines[0] || '').replace(/\[.*?\]/g, '').trim();
-        let trickText = lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').replace(/킬러패턴:\s*/, '').trim() : '원문 핵심 어구의 패러프레이징 오답 유도';
-        
-        if (cleanedTitle.length > 5) {
-          results.push({ id: 'BM-' + Date.now() + '-' + idx, school, exam, type, title: cleanedTitle, trick: trickText });
-        }
-      });
-      return results;
-    }
-
-    function extractStandardType(str) {
-      if (str.includes('어법')) return '어법'; if (str.includes('어휘')) return '어휘';
-      if (str.includes('함축')) return '함축의미'; if (str.includes('빈칸')) return '빈칸';
-      if (str.includes('연결사')) return '연결사'; if (str.includes('순서')) return '순서';
-      if (str.includes('삽입')) return '삽입'; if (str.includes('흐름')) return '흐름';
-      if (str.includes('불일치')) return '불일치'; if (str.includes('일치')) return '일치';
-      if (str.includes('요약')) return '요약'; if (str.includes('목적')) return '목적';
-      if (str.includes('주장')) return '주장'; if (str.includes('제목')) return '제목';
-      if (str.includes('요지')) return '요지'; if (str.includes('단답형')) return '단답형';
-      if (str.includes('서술형') || str.includes('주관식')) return '서술형'; return '주제';
-    }
-
-    function renderBenchmarkTable() {
-      const tbody = document.getElementById('benchmarkTableBody'), totalCount = document.getElementById('tableTotalCount');
-      const badge = document.getElementById('benchmarkCountBadge');
-      
-      if (totalCount) totalCount.innerText = schoolBenchmarkDB.length;
-      if (badge) badge.innerText = `기출 ${schoolBenchmarkDB.length}제`;
-
-      if (tbody) tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
-          <td class="py-2.5 px-4 font-bold text-slate-800">${item.school} (${item.exam})</td>
-          <td class="py-2.5 px-4 text-center"><span class="bg-cyan-50 text-cyan-800 border border-cyan-200 px-2 py-0.5 rounded font-bold">${item.type}</span></td>
-          <td class="py-2.5 px-4"><div class="font-bold text-slate-800">${item.title}</div><div class="text-[11px] text-emerald-700"><strong>함정 패턴:</strong> ${item.trick}</div></td>
-        </tr>
-      `).join('');
-    }
-
-    async function resetBenchmarkDB() { 
-      if(confirm('정말 기출 DB를 전체 초기화하시겠습니까? (클라우드 데이터 포함)')) {
-        await supabaseClient.from('school_benchmark').delete().neq('id', 'dummy');
-        schoolBenchmarkDB = []; 
-        renderBenchmarkTable(); 
-      }
-    }
-
     function getStoredApiKey() { return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim(); }
-
     function checkApiKeyStatus() {
       const key = getStoredApiKey(), badge = document.getElementById('apiKeyStatusBadge');
       if (badge) {
@@ -1143,59 +296,40 @@ ${fullText.slice(0, 15000)}
         else { badge.className = 'text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-bold cursor-pointer'; badge.innerText = 'API Key 미설정 (클릭)'; }
       }
     }
-
-    function toggleApiKeyModal() {
-      document.getElementById('inputApiKey').value = getStoredApiKey();
-      document.getElementById('apiKeyModal').classList.toggle('hidden');
-    }
-
+    function toggleApiKeyModal() { document.getElementById('apiKeyModal')?.classList.toggle('hidden'); }
     function saveApiKey() {
       const input = document.getElementById('inputApiKey').value.trim();
-      if (!input) return alert('API Key를 입력해 주세요.');
-      localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
+      if (!input) return alert('API Key를 입력하세요.');
+      localStorage.setItem('SDH_GEMINI_API_KEY', input);
+      toggleApiKeyModal(); checkApiKeyStatus(); alert('API Key 저장 완료!');
     }
 
     async function callGeminiUniversal(apiKey, prompt) {
-      const apiEndpoints = [
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-      ];
-      let lastError = null;
-      for (let url of apiEndpoints) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } })
-          });
-          if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
-        } catch (e) { lastError = e; }
-      }
-      throw lastError || new Error('API 통신 실패');
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } })
+      });
+      if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
+      throw new Error('API 통신 실패');
     }
 
-    // 🎯 로그인 로직
+    // 🎯 로그인 정상화 처리
     function handleLogin(e) {
       if (e) e.preventDefault();
-      const loginId = document.getElementById('loginId').value.trim();
-      const loginPw = document.getElementById('loginPw').value.trim();
+      const id = document.getElementById('loginId').value.trim();
+      const pw = document.getElementById('loginPw').value.trim();
 
-      const targetUser = userAccountsDB[loginId];
-
-      if (!targetUser) {
-        alert('존재하지 않는 아이디입니다.');
-        return;
+      if (id === 'admin' && pw === '1234') {
+        currentUser = { id: 'admin', role: 'admin', name: '원장 선생님' };
+        sessionStorage.setItem('SDH_LOGGED_USER', JSON.stringify(currentUser));
+        document.getElementById('loginModal').classList.add('hidden');
+        updateSidebarRoleUI();
+        loadAllSupabaseData();
+        switchView('examList');
+      } else {
+        alert('아이디 또는 비밀번호가 틀립니다.');
       }
-
-      if (targetUser.pw !== loginPw) {
-        alert('비밀번호가 일치하지 않습니다.');
-        return;
-      }
-
-      currentUser = { id: loginId, role: targetUser.role, name: targetUser.name };
-      sessionStorage.setItem('SDH_LOGGED_USER', JSON.stringify(currentUser));
-      updateSidebarRoleUI();
-      document.getElementById('loginModal').classList.add('hidden');
-      switchView('examList');
     }
 
     function handleLogout() {
@@ -1207,11 +341,12 @@ ${fullText.slice(0, 15000)}
     }
 
     function checkLoggedUserSession() {
-      const savedUser = sessionStorage.getItem('SDH_LOGGED_USER');
-      if (savedUser) {
-        currentUser = JSON.parse(savedUser);
+      const saved = sessionStorage.getItem('SDH_LOGGED_USER');
+      if (saved) {
+        currentUser = JSON.parse(saved);
         document.getElementById('loginModal').classList.add('hidden');
         updateSidebarRoleUI();
+        loadAllSupabaseData();
       } else {
         document.getElementById('loginModal').classList.remove('hidden');
       }
@@ -1219,32 +354,12 @@ ${fullText.slice(0, 15000)}
 
     function updateSidebarRoleUI() {
       if (!currentUser) return;
-      const badgeEl = document.getElementById('userBadge');
-      const currentUserNameEl = document.getElementById('currentUserName');
-      const adminSection = document.getElementById('adminMenuSection');
-      const adminCreateTeacherBox = document.getElementById('adminCreateTeacherBox');
-      const myRoleBadge = document.getElementById('myRoleBadge');
-
-      if (currentUser.role === 'admin') {
-        if (badgeEl) badgeEl.innerText = '관리자 모드';
-        if (currentUserNameEl) currentUserNameEl.innerText = currentUser.name;
-        if (adminSection) adminSection.classList.remove('hidden');
-        if (adminCreateTeacherBox) adminCreateTeacherBox.classList.remove('hidden');
-        if (myRoleBadge) myRoleBadge.innerText = '관리자 계정';
-      } else {
-        if (badgeEl) badgeEl.innerText = '선생님 모드';
-        if (currentUserNameEl) currentUserNameEl.innerText = currentUser.name;
-        if (adminSection) adminSection.classList.add('hidden');
-        if (adminCreateTeacherBox) adminCreateTeacherBox.classList.add('hidden');
-        if (myRoleBadge) myRoleBadge.innerText = '선생님 계정';
-      }
-      renderTeacherAccountList();
+      document.getElementById('currentUserName').innerText = currentUser.name;
     }
 
     function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
       let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
-      let finalPassage = origPassage;
-      let givenBoxText = '', conditionText = '', summaryText = '';
+      let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
 
       if (qType === '어법' || qType === '어휘') {
         if (Array.isArray(item.target_words) && item.target_words.length === 5) {
@@ -1294,7 +409,7 @@ ${fullText.slice(0, 15000)}
 
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
-      if (!apiKey) return toggleApiKeyModal();
+      if (!apiKey) return alert('API Key를 설정하세요.');
       const setKey = document.getElementById('selectMockSet').value;
       if (!setKey) return alert('모의고사 세트를 선택하세요.');
 
@@ -1303,19 +418,14 @@ ${fullText.slice(0, 15000)}
       const logBox = document.getElementById('generationLogBox');
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 출제 엔진 가동 (${setKey})...</div>`;
+      logBox.innerHTML = `<div>🚀 완전 검증 출제 가동 (${setKey})...</div>`;
 
       await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
       generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
 
       let totalCount = 0;
-
-      const BATCH_SIZE = 3;
-      for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
-        const chunk = targetPassages.slice(i, i + BATCH_SIZE);
-
-        await Promise.all(chunk.map(async (pObj) => {
-          const prompt = `
+      for (let pObj of targetPassages) {
+        const prompt = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 아래 [영어 지문]에 대해 [요청 유형들]의 정밀 변형 데이터를 JSON 배열로 출제하십시오.
 
@@ -1336,23 +446,22 @@ JSON 출력 예시:
   }
 ]
 `;
-          try {
-            const rawJson = await callGeminiUniversal(apiKey, prompt);
-            const parsed = JSON.parse(rawJson);
-            if (Array.isArray(parsed)) {
-              const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
-              await supabaseClient.from('generated_questions').upsert(verifiedItems);
-              generatedQuestionsPool.unshift(...verifiedItems);
-              totalCount += verifiedItems.length;
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 적재 완료 (+${verifiedItems.length}문항)</div>`;
-            }
-          } catch (e) { console.error(e); }
-        }));
+        try {
+          const rawJson = await callGeminiUniversal(apiKey, prompt);
+          let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanedJson);
+          if (Array.isArray(parsed)) {
+            const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
+            await supabaseClient.from('generated_questions').upsert(verifiedItems);
+            generatedQuestionsPool.unshift(...verifiedItems);
+            totalCount += verifiedItems.length;
+            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 적재 완료 (+${verifiedItems.length}문항)</div>`;
+          }
+        } catch (e) { console.error(e); }
       }
-
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 완벽 적재</div>`;
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재</div>`;
       alert('🎉 출제 완료!');
-      renderExamTable();
+      loadAllSupabaseData();
     }
 
     function renderPaper() {
@@ -1405,9 +514,9 @@ JSON 출력 예시:
       const tbody = document.getElementById('examTableBody');
       if (tbody) tbody.innerHTML = mockExams.map(e => `
         <tr class="hover:bg-slate-50">
-          <td class="py-3 px-6">${e.year}년</td><td class="py-3 px-6">${e.month}월</td><td class="py-3 px-6 font-bold">${e.title}</td>
-          <td class="py-3 px-6 text-center font-bold text-cyan-600">${e.questionCount}문항</td>
-          <td class="py-3 px-6 text-center"><button onclick="openExamTypeSelector('${e.id}')" class="text-cyan-600 font-bold"><i class="fa-solid fa-folder-open"></i></button></td>
+          <td class="py-3.5 px-6">${e.year}년</td><td class="py-3.5 px-6">${e.month}월</td><td class="py-3.5 px-6 font-bold text-slate-900">${e.title}</td>
+          <td class="py-3.5 px-6 font-bold text-cyan-600 text-center">${e.questionCount}문항</td>
+          <td class="py-3.5 px-6 text-center"><button onclick="openExamTypeSelector('${e.id}')" class="text-cyan-600 font-bold p-2"><i class="fa-solid fa-folder-open text-lg"></i></button></td>
         </tr>
       `).join('');
     }
@@ -1432,9 +541,31 @@ JSON 출력 예시:
       document.getElementById('nav-' + v)?.classList.add('active-nav');
     }
 
+    function initDropdownOptions() {
+      const years = Array.from({length: 12}, (_, i) => 2026 - i);
+      const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
+      const grades = [1, 2, 3];
+
+      const regYearEl = document.getElementById('regYear');
+      const regMonthEl = document.getElementById('regMonth');
+      const regGradeEl = document.getElementById('regGrade');
+
+      if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
+      if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
+      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===1?'selected':''}>고${g}</option>`).join('');
+
+      const filterYearEl = document.getElementById('filterYear');
+      const filterMonthEl = document.getElementById('filterMonth');
+      const filterGradeEl = document.getElementById('filterGrade');
+
+      if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
+      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
+      if (filterGradeEl) filterGradeEl.innerHTML = `<option value="">학년 전체</option>` + grades.map(g => `<option value="${g}">고${g}</option>`).join('');
+    }
+
     function render25PassageInputForms() {
       const c = document.getElementById('passageInputsContainer');
-      if (c) c.innerHTML = passageNumberList.map(n => `<textarea id="inputP_${n}" rows="3" class="w-full p-2 border text-xs" placeholder="${n}번 지문"></textarea>`).join('');
+      if (c) c.innerHTML = passageNumberList.map(n => `<textarea id="inputP_${n}" rows="3" class="w-full p-2 border text-xs font-mono" placeholder="${n}번 영어 지문 복사..."></textarea>`).join('');
     }
 
     async function saveAll25Passages() {
@@ -1444,11 +575,11 @@ JSON 출력 예시:
       const upsertData = [];
       passageNumberList.forEach(num => {
         const text = document.getElementById(`inputP_${num}`)?.value.trim();
-        if (text) upsertData.push({ key: `${year}-${month}-${grade}-${num}`, year, month, grade, passage_num: num, sample: text.substring(0, 30), text });
+        if (text) upsertData.push({ key: `${year}-${month}-${grade}-${num}`, year, month, grade, passage_num: num, sample: text.substring(0, 30) + '...', text });
       });
       if (upsertData.length > 0) {
         await supabaseClient.from('passage_archive').upsert(upsertData);
-        alert('지문 DB 저장 완료');
+        alert('🎉 지문 DB 저장 완료!');
         loadAllSupabaseData();
       }
     }
@@ -1470,15 +601,21 @@ JSON 출력 예시:
     function updateMockSetDropdown() {
       const selectEl = document.getElementById('selectMockSet'), setMap = {};
       passageArchiveDB.forEach(p => { const k = `${p.year}-${p.month}-${p.grade}`; setMap[k] = (setMap[k] || 0) + 1; });
-      if (selectEl) selectEl.innerHTML = '<option value="">-- 모의고사 세트 선택 --</option>' + Object.keys(setMap).map(k => `<option value="${k}">[${k}] 모의고사 세트</option>`).join('');
+      if (selectEl) selectEl.innerHTML = '<option value="">-- 모의고사 세트 선택 --</option>' + Object.keys(setMap).map(k => `<option value="${k}">[${k}] 모의고사 세트 (${setMap[k]}개 지문)</option>`).join('');
+    }
+
+    async function deleteSinglePassage(key) {
+      await supabaseClient.from('passage_archive').delete().eq('key', key);
+      passageArchiveDB = passageArchiveDB.filter(p => p.key !== key);
+      renderPassageArchiveTable();
     }
 
     async function loadAllSupabaseData() {
-      const { data: pData } = await supabaseClient.from('passage_archive').select('*');
+      const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
       if (pData) passageArchiveDB = pData;
       renderPassageArchiveTable();
 
-      const { data: qData } = await supabaseClient.from('generated_questions').select('*');
+      const { data: qData } = await supabaseClient.from('generated_questions').select('*').order('created_at', { ascending: false });
       if (qData) {
         generatedQuestionsPool = qData;
         const examMap = {};
@@ -1501,7 +638,6 @@ JSON 출력 예시:
     document.addEventListener('DOMContentLoaded', () => {
       checkLoggedUserSession();
       initDropdownOptions();
-      loadAllSupabaseData();
       render25PassageInputForms();
       checkApiKeyStatus();
     });
