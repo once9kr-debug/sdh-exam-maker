@@ -232,7 +232,6 @@
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <!-- 라벨 간소화 반영: ID -->
           <label class="block text-xs font-bold text-slate-700 mb-1">ID</label>
           <div class="relative">
             <i class="fa-solid fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
@@ -240,7 +239,6 @@
           </div>
         </div>
         <div>
-          <!-- 라벨 간소화 반영: PW -->
           <label class="block text-xs font-bold text-slate-700 mb-1">PW</label>
           <div class="relative">
             <i class="fa-solid fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
@@ -673,7 +671,7 @@
         </div>
       </section>
 
-      <!-- VIEW 7: MY PAGE (아이디별 보관함 & 비번 변경) -->
+      <!-- VIEW 7: MY PAGE -->
       <section id="view-myPage" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -1161,36 +1159,117 @@ ${fullText.slice(0, 15000)}
       renderTypeChips(); renderPassageChips(); updateSelectedCountText(); switchView('typeSelect');
     }
 
+    // 🎯 [실시간 상호 교차 필터링] 지문 체크 상태를 반영하여 유형별 수량 동적 계산
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
-      const pool = generatedQuestionsPool.filter(q => selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+
+      // 현재 체크되어 있는 지문 목록 추출
+      const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
+
+      const pool = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
+        return isCurrentExam && diffMatch && passageMatch;
+      });
+
       const typeCounts = {}; pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
       let html = '';
       typeCategories.forEach(cat => {
         html += `<span class="text-xs font-bold ${cat.bg} text-white px-3 py-1.5 rounded-full shadow-sm">${cat.category}</span>`;
         cat.types.forEach(t => {
-          html += `<label class="type-chip"><input type="checkbox" name="qTypeFilter" value="${t}" checked onchange="updateSelectedCountText()" /><span>${t}</span><span class="count-badge">${typeCounts[t] || 0}</span></label>`;
+          html += `<label class="type-chip"><input type="checkbox" name="qTypeFilter" value="${t}" checked onchange="onTypeFilterChange()" /><span>${t}</span><span class="count-badge">${typeCounts[t] || 0}</span></label>`;
         });
       });
       container.innerHTML = html;
     }
 
+    // 🎯 [실시간 상호 교차 필터링] 유형 체크 상태를 반영하여 지문별 수량 동적 계산
     function renderPassageChips() {
       const container = document.getElementById('passageChipContainer');
       if (!container) return;
-      const pool = generatedQuestionsPool.filter(q => selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+
+      // 현재 체크되어 있는 유형 목록 추출
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
+
+      const pool = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
+        return isCurrentExam && diffMatch && typeMatch;
+      });
+
       const passageCounts = {}; pool.forEach(q => { passageCounts[q.passage_num] = (passageCounts[q.passage_num] || 0) + 1; });
       container.innerHTML = passageNumberList.map(num => `
         <label class="passage-chip flex items-center justify-between">
-          <div class="flex items-center gap-1.5"><input type="checkbox" name="passageFilter" value="${num}" checked onchange="updateSelectedCountText()" /><span>${num}번</span></div>
+          <div class="flex items-center gap-1.5"><input type="checkbox" name="passageFilter" value="${num}" checked onchange="onPassageFilterChange()" /><span>${num}번</span></div>
           <span class="p-badge">${passageCounts[num] || 0}</span>
         </label>
       `).join('');
     }
 
-    function toggleAllTypes(checked) { document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => cb.checked = checked); updateSelectedCountText(); }
-    function toggleAllPassages(checked) { document.querySelectorAll('input[name="passageFilter"]').forEach(cb => cb.checked = checked); updateSelectedCountText(); }
+    // 🎯 [실시간 연동 이벤트] 유형 클릭 시 지문 칩 카운터 재계산
+    function onTypeFilterChange() {
+      updatePassageChipCountsOnly();
+      updateSelectedCountText();
+    }
+
+    // 🎯 [실시간 연동 이벤트] 지문 클릭 시 유형 칩 카운터 재계산
+    function onPassageFilterChange() {
+      updateTypeChipCountsOnly();
+      updateSelectedCountText();
+    }
+
+    function updateTypeChipCountsOnly() {
+      const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
+      const pool = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const passageMatch = selectedPassages.includes(q.passage_num);
+        return isCurrentExam && diffMatch && passageMatch;
+      });
+
+      const typeCounts = {}; pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
+
+      document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => {
+        const chipLabel = cb.closest('.type-chip');
+        if (chipLabel) {
+          const badge = chipLabel.querySelector('.count-badge');
+          if (badge) badge.innerText = typeCounts[cb.value] || 0;
+        }
+      });
+    }
+
+    function updatePassageChipCountsOnly() {
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
+      const pool = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const typeMatch = selectedTypes.includes(q.type);
+        return isCurrentExam && diffMatch && typeMatch;
+      });
+
+      const passageCounts = {}; pool.forEach(q => { passageCounts[q.passage_num] = (passageCounts[q.passage_num] || 0) + 1; });
+
+      document.querySelectorAll('input[name="passageFilter"]').forEach(cb => {
+        const chipLabel = cb.closest('.passage-chip');
+        if (chipLabel) {
+          const badge = chipLabel.querySelector('.p-badge');
+          if (badge) badge.innerText = passageCounts[cb.value] || 0;
+        }
+      });
+    }
+
+    function toggleAllTypes(checked) { 
+      document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => cb.checked = checked); 
+      onTypeFilterChange();
+    }
+    
+    function toggleAllPassages(checked) { 
+      document.querySelectorAll('input[name="passageFilter"]').forEach(cb => cb.checked = checked); 
+      onPassageFilterChange();
+    }
 
     function updateSelectedCountText() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
