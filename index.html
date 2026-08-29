@@ -123,6 +123,7 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
+    /* 터미널 커서 스타일 */
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -132,7 +133,7 @@
       width: 8px;
       height: 14px;
       background-color: #10b981;
-      margin-left: 4px;
+      margin-left: 6px;
       vertical-align: middle;
       animation: blink 0.8s infinite;
     }
@@ -462,7 +463,7 @@
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 모의고사 세트별 대량 변형문제 AI 출제 엔진
               </h2>
-              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 세분화된 유형별로 출제합니다.</p>
+              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 세분화된 유형별로 일괄 출제합니다.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
@@ -766,7 +767,7 @@
     function removeQueuedFile(idx) { queuedPdfFiles.splice(idx, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
-    // 🚀 [보완] 구체적 함정 정밀 분석 지침이 강화된 PDF 분석 엔진
+    // PDF 파싱 엔진 (완료 시 커서 제거 적용)
     async function startBatchPdfClassification() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -795,10 +796,11 @@
             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
           }
 
-          logBox.innerHTML += `<div class="text-cyan-300">[${i+1}/${queuedPdfFiles.length}] [${school} ${exam}] 킬러 함정 정밀 추출 중... <span class="terminal-cursor"></span></div>`;
+          // 커서 태그 이전 줄에서 제거
+          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
+          logBox.innerHTML += `<div>[${i+1}/${queuedPdfFiles.length}] [${school} ${exam}] 킬러 함정 정밀 추출 중... <span class="terminal-cursor"></span></div>`;
           logBox.scrollTop = logBox.scrollHeight;
 
-          // 💡 [핵심 보완] 일반 대체 문구 방지 및 세부 킬러 포인트 필수 추출 프롬프트
           const parserPrompt = `
 당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
 주어진 [영어 시험지 텍스트]를 분석하여 개별 기출 문항들을 추출하고, 각 문항의 **구체적인 내신 오답 함정 메커니즘(킬러 포인트)**을 명확히 명시하십시오.
@@ -806,7 +808,7 @@
 [출력 규격 지침]:
 1. 오직 기출 문제 발문만 추출하십시오. 안내 문구나 설명은 절대로 포함하지 마십시오.
 2. 유형은 반드시 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나로 정밀 매칭하십시오.
-3. **[핵심] 킬러패턴 지침**: '학교 기출 핵심 패턴' 같은 추상적/기본 문구를 절대로 출력하지 마십시오. 반드시 실제 시험지 문항을 보고 "원문 유의어 패러프레이징", "관계대명사 vs 접속사 착시", "반의어 어휘 교체 함정", "분사구문 주어 생략 변형", "조건부 영작 어순배열" 등 **실제 오답 유도 매커니즘을 구체적으로 작성**하십시오.
+3. 킬러패턴 지침: 반드시 실제 시험지 문항을 보고 "원문 유의어 패러프레이징", "관계대명사 vs 접속사 착시", "반의어 어휘 교체 함정" 등 실제 오답 유도 매커니즘을 작성하십시오.
 
 [학교/시험]: ${school} ${exam}
 [시험지 원문]:
@@ -820,6 +822,8 @@ ${fullText.slice(0, 15000)}
           const rawText = await callGeminiUniversal(apiKey, parserPrompt);
           const parsedArray = parseMarkdownBenchmarkText(rawText, school, exam);
 
+          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
+
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
             schoolBenchmarkDB.unshift(...parsedArray);
             totalAddedCount += parsedArray.length;
@@ -831,11 +835,13 @@ ${fullText.slice(0, 15000)}
           renderBenchmarkTable();
 
         } catch (err) {
+          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ [${school}] 분석 에러: ${err.message}</div>`;
           logBox.scrollTop = logBox.scrollHeight;
         }
       }));
 
+      logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
       logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모든 기출 PDF 킬러 패턴 학습 완료! (총 +${totalAddedCount}문항 적재)</div>`;
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
@@ -843,7 +849,6 @@ ${fullText.slice(0, 15000)}
       clearQueuedFiles();
     }
 
-    // 🎯 [보완] 구체적 함정 키워드 파싱 및 백업 텍스트 세분화
     function parseMarkdownBenchmarkText(text, school, exam) {
       const results = [];
       const blocks = text.split(/##\s+/);
@@ -858,28 +863,9 @@ ${fullText.slice(0, 15000)}
         const lines = block.trim().split('\n');
         const firstLine = lines[0] || '';
         
-        let type = '주제';
-        if (firstLine.includes('어법')) type = '어법';
-        else if (firstLine.includes('어휘')) type = '어휘';
-        else if (firstLine.includes('함축')) type = '함축의미';
-        else if (firstLine.includes('빈칸')) type = '빈칸';
-        else if (firstLine.includes('연결사')) type = '연결사';
-        else if (firstLine.includes('순서')) type = '순서';
-        else if (firstLine.includes('삽입')) type = '삽입';
-        else if (firstLine.includes('흐름')) type = '흐름';
-        else if (firstLine.includes('불일치')) type = '불일치';
-        else if (firstLine.includes('일치')) type = '일치';
-        else if (firstLine.includes('요약')) type = '요약';
-        else if (firstLine.includes('목적')) type = '목적';
-        else if (firstLine.includes('주장')) type = '주장';
-        else if (firstLine.includes('제목')) type = '제목';
-        else if (firstLine.includes('요지')) type = '요지';
-        else if (firstLine.includes('단답형')) type = '단답형';
-        else if (firstLine.includes('서술형') || firstLine.includes('주관식')) type = '서술형';
-
+        let type = extractStandardType(firstLine);
         const cleanedTitle = firstLine.replace(/\[.*?\]/g, '').trim();
 
-        // 구체적인 함정 패턴 파싱 (없을 시 유형별 구체적 고난도 기출 포인트 자동 부여)
         let trickText = lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').replace(/킬러패턴:\s*/, '').trim() : '';
         
         if (!trickText || trickText.includes('학교 기출 핵심 패턴')) {
@@ -904,6 +890,28 @@ ${fullText.slice(0, 15000)}
       });
 
       return results;
+    }
+
+    // 19개 세부 유형 매칭 헬퍼 함수
+    function extractStandardType(str) {
+      if (str.includes('어법')) return '어법';
+      if (str.includes('어휘')) return '어휘';
+      if (str.includes('함축')) return '함축의미';
+      if (str.includes('빈칸')) return '빈칸';
+      if (str.includes('연결사')) return '연결사';
+      if (str.includes('순서')) return '순서';
+      if (str.includes('삽입')) return '삽입';
+      if (str.includes('흐름')) return '흐름';
+      if (str.includes('불일치')) return '불일치';
+      if (str.includes('일치')) return '일치';
+      if (str.includes('요약')) return '요약';
+      if (str.includes('목적')) return '목적';
+      if (str.includes('주장')) return '주장';
+      if (str.includes('제목')) return '제목';
+      if (str.includes('요지')) return '요지';
+      if (str.includes('단답형')) return '단답형';
+      if (str.includes('서술형') || str.includes('주관식')) return '서술형';
+      return '주제';
     }
 
     function renderBenchmarkTable() {
@@ -970,24 +978,7 @@ ${fullText.slice(0, 15000)}
           const l = line.trim();
           if (l.startsWith('유형:')) {
             const typeStr = l.replace('유형:', '').trim();
-            if (typeStr.includes('어법')) type = '어법';
-            else if (typeStr.includes('어휘')) type = '어휘';
-            else if (typeStr.includes('함축')) type = '함축의미';
-            else if (typeStr.includes('빈칸')) type = '빈칸';
-            else if (typeStr.includes('연결사')) type = '연결사';
-            else if (typeStr.includes('순서')) type = '순서';
-            else if (typeStr.includes('삽입')) type = '삽입';
-            else if (typeStr.includes('흐름')) type = '흐름';
-            else if (typeStr.includes('불일치')) type = '불일치';
-            else if (typeStr.includes('일치')) type = '일치';
-            else if (typeStr.includes('요약')) type = '요약';
-            else if (typeStr.includes('목적')) type = '목적';
-            else if (typeStr.includes('주장')) type = '주장';
-            else if (typeStr.includes('제목')) type = '제목';
-            else if (typeStr.includes('요지')) type = '요지';
-            else if (typeStr.includes('단답형')) type = '단답형';
-            else if (typeStr.includes('서술형') || typeStr.includes('주관식')) type = '서술형';
-            else type = '주제';
+            type = extractStandardType(typeStr);
           }
           else if (l.startsWith('발문:')) title = l.replace('발문:', '').trim();
           else if (l.startsWith('정답:')) answer = l.replace('정답:', '').trim();
@@ -1272,7 +1263,7 @@ ${fullText.slice(0, 15000)}
       alert('Gemini API Key 저장 완료!');
     }
 
-    // 🚀 [보완] 기출 DB 축적된 학교별 킬러 함정 패턴을 AI 프롬프트에 동적 학습 시키는 출제 로직
+    // AI 변형문제 출제 엔진 (완료 시 커서 제거 적용)
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1291,13 +1282,12 @@ ${fullText.slice(0, 15000)}
       const logBox = document.getElementById('generationLogBox');
       const progressText = document.getElementById('genProgressText');
 
-      // 💡 [동적 학습] 기출 DB에 축적된 정밀 킬러 함정 정보 주입
       const benchmarkTricksSection = schoolBenchmarkDB.length > 0
         ? schoolBenchmarkDB.slice(0, 6).map(bm => `- [${bm.school} ${bm.type} 기출]: ${bm.trick}`).join('\n')
         : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [FAST BATCH] 기출 DB 킬러 패턴 학습 연동 출제 가동 (${setKey})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [FAST BATCH] 세분화된 유형 100% 매칭 출제 시작 (${setKey})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
       let totalGeneratedCount = 0;
@@ -1310,7 +1300,7 @@ ${fullText.slice(0, 15000)}
         await Promise.all(chunk.map(async (pObj) => {
           const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-아래 [축적된 실제 학교 기출 킬러 함정 패턴]을 깊이 학습하여, [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 변형문제를 제작하십시오.
+주어진 [영어 지문]에 대해 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 세부 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 변형문제를 제작하십시오.
 
 [축적된 실제 학교 기출 킬러 함정 패턴]:
 ${benchmarkTricksSection}
@@ -1318,13 +1308,15 @@ ${benchmarkTricksSection}
 [영어 지문 (${pObj.passageNum}번)]:
 ${pObj.text}
 
-[요청된 출제 유형]:
+[요청된 세부 출제 유형]:
 ${selectedTypes.join(', ')}
 
-[출력 형식 규칙 (마크다운 규격 필수)]:
+[출력 규격 필수 규칙]:
+- '유형:' 항목에는 요청된 세부 유형 명칭 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나를 오직 단어로만 정확히 기재하십시오.
+
 ## [문항 1]
-유형: 어법
-발문: 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
+유형: 빈칸
+발문: 다음 빈칸에 들어갈 말로 가장 적절한 것은?
 지문: ${pObj.text}
 ① 보기1
 ② 보기2
@@ -1339,17 +1331,25 @@ ${selectedTypes.join(', ')}
             const rawText = await callGeminiUniversal(apiKey, prompt);
             const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text);
 
+            logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
+
             if (parsedQuestions.length > 0) {
               generatedQuestionsPool.unshift(...parsedQuestions);
               totalGeneratedCount += parsedQuestions.length;
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공 (+${parsedQuestions.length}문항) <span class="terminal-cursor"></span></div>`;
+              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공 (+${parsedQuestions.length}문항)</div>`;
+            } else {
+              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공</div>`;
             }
             logBox.scrollTop = logBox.scrollHeight;
           } catch (err) {
+            logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
             logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passageNum}번 실패</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
           }
         }));
       }
+
+      logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
 
       const parts = setKey.split('-');
       const examId = `${parts[0]}-${parts[1]}-${parts[2]}`;
@@ -1370,7 +1370,8 @@ ${selectedTypes.join(', ')}
 
       renderExamTable();
       btn.disabled = false;
-      alert(`🎉 킬러 패턴 학습 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 고품질 변형문제가 생성되었습니다.`);
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 세부 유형 출제 완료! (총 +${totalGeneratedCount}문항 생성)</div>`;
+      alert(`🎉 세부 유형 반영 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 변형문제가 성공적으로 생성되었습니다.`);
     }
 
     function clearPassageArchiveDB() {
