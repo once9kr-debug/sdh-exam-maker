@@ -91,6 +91,55 @@
       border-radius: 3px;
     }
 
+    .page-btn {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .page-btn:hover {
+      background-color: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .page-btn.active {
+      background-color: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      font-weight: 800;
+    }
+
+    /* 난이도 토글 버튼 스타일 */
+    .diff-btn {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .diff-btn:hover {
+      background-color: #f1f5f9;
+    }
+    .diff-btn.active-diff {
+      background-color: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+    }
+
     @media print {
       body {
         background: white !important;
@@ -314,11 +363,12 @@
             <label class="type-chip"><input type="checkbox" name="qType" value="주제" checked /> 주제</label>
             <label class="type-chip"><input type="checkbox" name="qType" value="제목" checked /> 제목</label>
             <label class="type-chip"><input type="checkbox" name="qType" value="요지" checked /> 요지</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="요약" checked /> 요약문 완성</label>
 
             <span class="text-xs font-bold bg-amber-500 text-white px-3 py-1.5 rounded-full ml-2">언어 논리</span>
             <label class="type-chip"><input type="checkbox" name="qType" value="빈칸" checked /> 빈칸</label>
             <label class="type-chip"><input type="checkbox" name="qType" value="순서" checked /> 순서</label>
-            <label class="type-chip"><input type="checkbox" name="qType" value="삽입" checked /> 삽입</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="삽입" checked /> 문장 삽입</label>
 
             <span class="text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-full ml-2">어법/어휘</span>
             <label class="type-chip"><input type="checkbox" name="qType" value="어법" checked /> 어법</label>
@@ -441,15 +491,15 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 관리자 대량 실전 출제 모드 -->
+      <!-- VIEW 5: 모의고사 1세트 일괄 변형문제 AI 출제 엔진 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 지문별 대량 변형문제 AI 출제 엔진
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 모의고사 세트별 대량 변형문제 AI 출제 엔진
               </h2>
-              <p class="text-xs text-slate-500">지문 DB에서 저장된 순수 지문을 불러와 유형별 3~10개씩 과제용 변형문제를 출제합니다.</p>
+              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 난이도 및 유형을 지정하여 일괄 출제합니다.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
@@ -460,36 +510,30 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-6 space-y-4">
-              <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-slate-700 shrink-0"><i class="fa-solid fa-database text-teal-600"></i> 지문 DB에서 선택</span>
-                <select id="selectRegisteredPassage" onchange="loadPassageFromArchive(this.value)" class="w-full p-2 border rounded-lg text-xs font-medium bg-white focus:outline-blue-500">
-                  <option value="">-- DB에서 저장된 지문 불러오기 (선택) --</option>
+            <!-- 좌측 패널: 세트 선택, 난이도 토글, 유형 선택 -->
+            <div class="lg:col-span-6 space-y-5">
+              <!-- 모의고사 세트 선택 드롭다운 -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                  <i class="fa-solid fa-database text-teal-600"></i> 출제할 모의고사 세트 선택
+                </label>
+                <select id="selectMockSet" class="w-full p-3 border rounded-xl text-xs font-bold bg-white text-slate-800 focus:outline-blue-500 shadow-sm">
+                  <option value="">-- DB에 저장된 모의고사 세트 목록 (선택) --</option>
                 </select>
               </div>
 
+              <!-- 출제 난이도 토글 버튼 바 -->
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">모의고사 / 시험 분류</label>
-                <div class="grid grid-cols-3 gap-2">
-                  <input type="text" id="adminYear" value="2026" class="p-2 border rounded-lg text-xs" placeholder="년도" />
-                  <input type="text" id="adminMonth" value="3" class="p-2 border rounded-lg text-xs" placeholder="월" />
-                  <input type="text" id="adminGrade" value="1" class="p-2 border rounded-lg text-xs" placeholder="학년" />
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">출제 난이도 선택</label>
+                <div class="flex gap-2">
+                  <button type="button" onclick="setDifficulty('상')" id="diffBtn_상" class="diff-btn">상 (고난도 킬러)</button>
+                  <button type="button" onclick="setDifficulty('중')" id="diffBtn_중" class="diff-btn active-diff">중 (표준 내신)</button>
+                  <button type="button" onclick="setDifficulty('하')" id="diffBtn_하" class="diff-btn">하 (기본 변형)</button>
                 </div>
               </div>
 
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">지문 번호 (예: 18)</label>
-                <input type="text" id="adminPassageNum" value="18" class="w-full p-2 border rounded-lg text-xs" placeholder="지문 번호" />
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">영어 지문 원문</label>
-                <textarea id="adminPassageText" rows="10" class="w-full p-3 border rounded-lg text-xs leading-relaxed focus:outline-blue-500 font-mono" placeholder="지문을 선택하거나 직접 입력하세요..."></textarea>
-              </div>
-            </div>
-
-            <div class="lg:col-span-6 space-y-4 flex flex-col justify-between">
-              <div class="space-y-3">
+              <!-- 출제 유형 선택 -->
+              <div class="space-y-2">
                 <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 flex items-center justify-between">
                   <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
                     <i class="fa-solid fa-layer-group text-amber-600"></i> 지문 1개당 유형별 출제 수량
@@ -498,26 +542,31 @@
                     <option value="1">유형당 1문제씩 (기본)</option>
                     <option value="2">유형당 2문제씩 (패러프레이징)</option>
                     <option value="3" selected>유형당 3문제씩 (대량 과제용)</option>
-                    <option value="5">유형당 5문제씩 (집중 훈련용)</option>
                   </select>
                 </div>
 
-                <label class="block text-xs font-bold text-slate-700">자동 생성할 변형문제 유형 선택</label>
+                <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 변형문제 유형 선택</label>
                 <div class="grid grid-cols-2 gap-2 text-xs">
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" name="adminGenType" value="주제" checked /> 대의파악 (주제/제목/요지)
                   </label>
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="어법" checked /> 어법상 틀린 것 찾기 (밑줄 5개)
+                    <input type="checkbox" name="adminGenType" value="어법" checked /> 어법상 틀린 것 찾기
                   </label>
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" name="adminGenType" value="어휘" checked /> 문맥상 적절하지 않은 어휘
                   </label>
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸 추론 (핵심어구 패러프레이징)
+                    <input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸 추론 (핵심어구)
                   </label>
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" name="adminGenType" value="순서" checked /> 글의 순서 배열 (A-B-C)
+                  </label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="adminGenType" value="삽입" checked /> 문장 삽입
+                  </label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="adminGenType" value="요약" checked /> 요약문 완성
                   </label>
                   <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" name="adminGenType" value="주관식" checked /> 서술형 조건 영작
@@ -525,19 +574,28 @@
                 </div>
               </div>
 
-              <div id="generationLogBox" class="hidden bg-slate-900 text-emerald-400 p-3 rounded-xl text-xs font-mono max-h-28 overflow-y-auto space-y-1"></div>
-
               <div class="bg-slate-50 p-4 rounded-xl border space-y-2">
-                <button onclick="executeGeminiBatchGenerate()" id="btnAdminGen" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow transition text-sm flex items-center justify-center gap-2">
+                <button onclick="executeBatchMockSetGenerate()" id="btnAdminGen" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow transition text-sm flex items-center justify-center gap-2">
                   <i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작
                 </button>
+              </div>
+            </div>
+
+            <!-- 우측 패널: 진행 상황 실시간 터미널 -->
+            <div class="lg:col-span-6 flex flex-col space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span>AI 변형문제 생성 진행 상황 (터미널)</span>
+                <span id="genProgressText" class="text-blue-600 font-bold">대기 중</span>
+              </div>
+              <div id="generationLogBox" class="h-[430px] max-h-[430px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800 terminal-scroll">
+                [SYSTEM READY] 모의고사 세트를 선택하고 생성 시작 버튼을 누르면 실시간으로 25개 지문 변형문제가 순차 생성됩니다...
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ==================== VIEW 6: 학교 기출 PDF 자동분류 & DB 빌더 (완전 복구) ==================== -->
+      <!-- VIEW 6: 학교 기출 PDF 자동분류 & DB 빌더 -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -559,7 +617,6 @@
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-5 space-y-4">
-              <!-- Drag & Drop Zone -->
               <div id="pdfDropZone" 
                    class="border-2 border-dashed border-slate-300 hover:border-cyan-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50"
                    onclick="document.getElementById('pdfFileInput').click()"
@@ -575,7 +632,6 @@
                 <div id="pdfUploadStatus" class="mt-3 text-xs font-bold text-cyan-600"></div>
               </div>
 
-              <!-- 대기 중인 파일 목록 -->
               <div id="queuedFilesContainer" class="hidden bg-slate-50 p-4 rounded-xl border space-y-2">
                 <div class="flex items-center justify-between text-xs font-bold text-slate-800 border-b pb-2">
                   <span>대기 중인 PDF 목록 (<span id="queuedFileCount">0</span>개)</span>
@@ -588,7 +644,6 @@
               </div>
             </div>
 
-            <!-- 터미널 로그 창 -->
             <div class="lg:col-span-7 flex flex-col space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                 <span>PDF 텍스트 추출 및 AI 분석 피드</span>
@@ -600,12 +655,19 @@
             </div>
           </div>
 
-          <!-- 기출 DB 목록 표 -->
           <div class="space-y-3 pt-2">
             <div class="flex items-center justify-between">
               <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">3</span>문항)
               </h3>
+              <div class="flex items-center gap-2 text-xs text-slate-500">
+                <span>페이지당 목록:</span>
+                <select id="itemsPerPageSelect" onchange="changeItemsPerPage(this.value)" class="border rounded px-2 py-1 bg-white font-bold text-slate-700">
+                  <option value="10" selected>10개씩 보기</option>
+                  <option value="20">20개씩 보기</option>
+                  <option value="50">50개씩 보기</option>
+                </select>
+              </div>
             </div>
 
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -622,6 +684,8 @@
                 <tbody id="benchmarkTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
               </table>
             </div>
+
+            <div id="paginationBar" class="flex items-center justify-center gap-1.5 pt-3 pb-2"></div>
           </div>
 
         </div>
@@ -662,6 +726,12 @@
     let filteredQuestions = [];
     let queuedPdfFiles = [];
 
+    // 현재 선택된 난이도 상태 (기본: 중)
+    let selectedDifficulty = '중';
+
+    let currentPage = 1;
+    let itemsPerPage = 10;
+
     let schoolBenchmarkDB = [
       {
         id: 'BM-1',
@@ -689,7 +759,21 @@
       }
     ];
 
-    // PDF 파서 파일 관련 드래그앤드롭 로직
+    // 난이도 선택 토글
+    function setDifficulty(diff) {
+      selectedDifficulty = diff;
+      ['상', '중', '하'].forEach(d => {
+        const btn = document.getElementById(`diffBtn_${d}`);
+        if (btn) {
+          if (d === diff) {
+            btn.className = 'diff-btn active-diff';
+          } else {
+            btn.className = 'diff-btn';
+          }
+        }
+      });
+    }
+
     function cleanSchoolInfo(filename) {
       let name = filename.replace(/\.pdf$/i, '').trim();
       let schoolStr = '';
@@ -781,7 +865,6 @@
       renderQueuedFiles();
     }
 
-    // PDF 파싱 및 AI 학습 DB 적재
     async function startBatchPdfClassification() {
       const apiKey = getStoredApiKey();
       if (!apiKey) {
@@ -857,6 +940,7 @@ ${fullText.slice(0, 15000)}
 
             totalAddedCount += parsedArray.length;
             logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school}] 분석 완료! +${parsedArray.length}문항 적재</div>`;
+            currentPage = 1;
             renderBenchmarkTable();
           }
           logBox.scrollTop = logBox.scrollHeight;
@@ -882,9 +966,18 @@ ${fullText.slice(0, 15000)}
       if (badge) badge.innerText = `기출 ${schoolBenchmarkDB.length}제`;
       if (!tbody) return;
 
-      tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
+      const totalItems = schoolBenchmarkDB.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const pageData = schoolBenchmarkDB.slice(startIndex, startIndex + itemsPerPage);
+
+      tbody.innerHTML = pageData.map((item, idx) => `
         <tr class="hover:bg-slate-50 transition">
-          <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="py-2.5 px-4 text-center font-bold text-slate-400">${startIndex + idx + 1}</td>
           <td class="py-2.5 px-4">
             <span class="inline-block font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200">${item.school}</span>
             <span class="text-[11px] text-slate-500 ml-1 font-medium">${item.exam}</span>
@@ -899,11 +992,49 @@ ${fullText.slice(0, 15000)}
           </td>
         </tr>
       `).join('');
+
+      renderPaginationBar(totalPages);
+    }
+
+    function renderPaginationBar(totalPages) {
+      const pBar = document.getElementById('paginationBar');
+      if (!pBar) return;
+
+      let html = '';
+      html += `<button onclick="goToPage(${currentPage - 1})" class="page-btn ${currentPage === 1 ? 'opacity-40 cursor-not-allowed' : ''}" ${currentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-angle-left"></i></button>`;
+
+      const maxButtons = 10;
+      let startP = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+      let endP = Math.min(totalPages, startP + maxButtons - 1);
+
+      if (endP - startP + 1 < maxButtons) {
+        startP = Math.max(1, endP - maxButtons + 1);
+      }
+
+      for (let p = startP; p <= endP; p++) {
+        html += `<button onclick="goToPage(${p})" class="page-btn ${p === currentPage ? 'active' : ''}">${p}</button>`;
+      }
+
+      html += `<button onclick="goToPage(${currentPage + 1})" class="page-btn ${currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : ''}" ${currentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-angle-right"></i></button>`;
+
+      pBar.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      renderBenchmarkTable();
+    }
+
+    function changeItemsPerPage(val) {
+      itemsPerPage = parseInt(val) || 10;
+      currentPage = 1;
+      renderBenchmarkTable();
     }
 
     function resetBenchmarkDB() {
       if (confirm('기출 벤치마크 DB를 초기 상태로 리셋하시겠습니까?')) {
         schoolBenchmarkDB = schoolBenchmarkDB.slice(0, 3);
+        currentPage = 1;
         renderBenchmarkTable();
       }
     }
@@ -1043,6 +1174,7 @@ ${fullText.slice(0, 15000)}
       }
 
       renderPassageArchiveTable();
+      updateMockSetDropdown(); // 출제용 세트 목록 갱신
       alert(`🎉 DB 저장 완료!\n신규 등록: ${addedCount}개 / 덮어쓰기 수정: ${overwrittenCount}개`);
     }
 
@@ -1071,13 +1203,34 @@ ${fullText.slice(0, 15000)}
         </tr>
       `).join('');
 
-      const selectEl = document.getElementById('selectRegisteredPassage');
-      if (selectEl) {
-        selectEl.innerHTML = '<option value="">-- DB에서 저장된 지문 불러오기 (선택) --</option>' +
-          passageArchiveDB.map(p => `
-            <option value="${p.key}">[${p.year}년 ${p.month}월 고${p.grade}] ${p.passageNum}번 지문 - ${p.sample.substring(0, 30)}...</option>
-          `).join('');
+      updateMockSetDropdown();
+    }
+
+    // 💡 저장된 DB를 기반으로 모의고사 세트(25개 묶음) 드롭다운 갱신
+    function updateMockSetDropdown() {
+      const selectEl = document.getElementById('selectMockSet');
+      if (!selectEl) return;
+
+      const setMap = {};
+      passageArchiveDB.forEach(p => {
+        const setKey = `${p.year}-${p.month}-${p.grade}`;
+        if (!setMap[setKey]) {
+          setMap[setKey] = { year: p.year, month: p.month, grade: p.grade, count: 0 };
+        }
+        setMap[setKey].count++;
+      });
+
+      const setKeys = Object.keys(setMap);
+      if (setKeys.length === 0) {
+        selectEl.innerHTML = '<option value="">-- DB에서 저장된 모의고사 세트 선택 (현재 DB 비어있음) --</option>';
+        return;
       }
+
+      selectEl.innerHTML = '<option value="">-- DB에 저장된 모의고사 세트 선택 --</option>' +
+        setKeys.map(k => {
+          const item = setMap[k];
+          return `<option value="${k}">[${item.year}년 ${item.month}월 고${item.grade}] 모의고사 세트 (${item.count}개 지문 등록됨)</option>`;
+        }).join('');
     }
 
     function editSinglePassage(key) {
@@ -1105,18 +1258,6 @@ ${fullText.slice(0, 15000)}
       if (confirm(`[${target.year}년 ${target.month}월 고${target.grade}] ${target.passageNum}번 지문을 정말 삭제하시겠습니까?`)) {
         passageArchiveDB = passageArchiveDB.filter(p => p.key !== key);
         renderPassageArchiveTable();
-      }
-    }
-
-    function loadPassageFromArchive(key) {
-      if (!key) return;
-      const target = passageArchiveDB.find(p => p.key === key);
-      if (target) {
-        document.getElementById('adminYear').value = target.year;
-        document.getElementById('adminMonth').value = target.month;
-        document.getElementById('adminGrade').value = target.grade;
-        document.getElementById('adminPassageNum').value = target.passageNum;
-        document.getElementById('adminPassageText').value = target.text.replace(/\n\s*\n\s*\n+/g, '\n\n');
       }
     }
 
@@ -1236,48 +1377,66 @@ ${fullText.slice(0, 15000)}
       alert('Gemini API Key가 성공적으로 저장되었습니다!');
     }
 
-    async function executeGeminiBatchGenerate() {
+    // ⚡ 모의고사 1세트(25개 지문) 일괄 순차 AI 출제 처리 (과부하 방지 비동기 순회)
+    async function executeBatchMockSetGenerate() {
       const apiKey = getStoredApiKey();
-      
       if (!apiKey) {
-        alert('Gemini API Key가 설정되지 않았습니다. API Key 입력 창을 엽니다.');
+        alert('Gemini API Key가 설정되지 않았습니다.');
         toggleApiKeyModal();
         return;
       }
 
-      const adminYear = document.getElementById('adminYear').value.trim() || '2026';
-      const adminMonth = document.getElementById('adminMonth').value.trim() || '3';
-      const adminGrade = document.getElementById('adminGrade').value.trim() || '1';
-      const passage = document.getElementById('adminPassageText').value.trim();
-      const passageNum = document.getElementById('adminPassageNum').value.trim() || '18';
-      const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
-      const countPerType = parseInt(document.getElementById('questionsPerType').value) || 3;
+      const setKey = document.getElementById('selectMockSet').value;
+      if (!setKey) {
+        alert('출제할 모의고사 세트를 선택해 주세요.');
+        return;
+      }
 
-      if (!passage) return alert('영어 지문을 선택하거나 입력해 주세요.');
+      const targetPassages = passageArchiveDB.filter(p => `${p.year}-${p.month}-${p.grade}` === setKey);
+      if (targetPassages.length === 0) {
+        alert('선택하신 세트에 저장된 지문이 없습니다.');
+        return;
+      }
+
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
       if (selectedTypes.length === 0) return alert('생성할 변형문제 유형을 선택해 주세요.');
 
+      const countPerType = parseInt(document.getElementById('questionsPerType').value) || 3;
       const btn = document.getElementById('btnAdminGen');
       const logBox = document.getElementById('generationLogBox');
-      
+      const progressText = document.getElementById('genProgressText');
+
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>⚡ Gemini AI 대량 출제 가동 (유형당 ${countPerType}개씩 총 ${selectedTypes.length * countPerType}문항 생성 지시)...</div>`;
+      logBox.innerHTML = `<div>🚀 [MOCK SET BATCH START] 선택 세트: ${setKey} | 총 ${targetPassages.length}개 지문 순차 생성 시작...</div>`;
       
-      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Gemini AI 변형문제 생성 중... (약 10~15초 소요)';
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 모의고사 세트 변형문제 일괄 생성 중...';
       btn.disabled = true;
 
-      const systemPrompt = `
-당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-주어진 [영어 지문]에 대해 [요청된 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 변형문제를 제작하십시오.
+      let totalGeneratedCount = 0;
 
-[영어 지문]:
-${passage}
+      // 지문별 순차 순회 호출로 AI 과부하 완전 방지
+      for (let i = 0; i < targetPassages.length; i++) {
+        const pObj = targetPassages[i];
+        const statusMsg = `[${i+1}/${targetPassages.length}] ${pObj.passageNum}번 지문 (${selectedDifficulty} 난이도) AI 출제 중...`;
+        
+        if (progressText) progressText.innerText = `${i+1}/${targetPassages.length} 지문 진행 중`;
+        logBox.innerHTML += `<div class="text-cyan-300 mt-1">${statusMsg}</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
+
+        const systemPrompt = `
+당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
+주어진 [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 변형문제를 제작하십시오.
+
+[영어 지문 (${pObj.passageNum}번)]:
+${pObj.text}
 
 [요청된 출제 유형]:
 ${selectedTypes.join(', ')}
 
-[대량 출제 지침]:
-1. 각 유형별로 **${countPerType}개씩** 문제를 만드십시오.
-2. 선택지(①~⑤) 오답과 정답을 고품질 패러프레이징으로 다변화하십시오.
+[난이도 지침: ${selectedDifficulty}]:
+- 상: 고급 어휘 치환, 비유적 패러프레이징, 까다로운 어법 함정 5개
+- 중: 표준 고교 내신 수준 어휘 및 문법
+- 하: 직관적 어구 및 쉬운 보기구성
 
 반드시 마크다운 없이 순수 JSON Array 형태로만 출력하십시오.
 [
@@ -1292,59 +1451,61 @@ ${selectedTypes.join(', ')}
 ]
 `;
 
-      try {
-        const rawText = await callGeminiUniversal(apiKey, systemPrompt, (msg) => {
-          logBox.innerHTML += `<div>${msg}</div>`;
-        });
-        
-        const parsedQuestions = extractJsonFromText(rawText);
+        try {
+          const rawText = await callGeminiUniversal(apiKey, systemPrompt);
+          const parsedQuestions = extractJsonFromText(rawText);
 
-        const formatted = parsedQuestions.map((q, i) => ({
-          id: 'Q-' + passageNum + '-' + (q.type || '변형') + '-' + Date.now() + '-' + i,
-          passageNum: passageNum,
-          type: q.type || '변형',
-          title: q.title || `[${passageNum}번 변형문제]`,
-          passage: q.passage || passage,
-          options: q.options || [],
-          answer: q.answer || '',
-          explanation: q.explanation || ''
-        }));
+          const formatted = parsedQuestions.map((q, idx) => ({
+            id: 'Q-' + pObj.passageNum + '-' + (q.type || '변형') + '-' + Date.now() + '-' + idx,
+            passageNum: pObj.passageNum,
+            type: q.type || '변형',
+            title: q.title || `[${pObj.passageNum}번 변형]`,
+            passage: q.passage || pObj.text,
+            options: q.options || [],
+            answer: q.answer || '',
+            explanation: q.explanation || ''
+          }));
 
-        generatedQuestionsPool.unshift(...formatted);
+          generatedQuestionsPool.unshift(...formatted);
+          totalGeneratedCount += formatted.length;
 
-        const examId = `${adminYear}-${adminMonth}-${adminGrade}`;
-        let existingExam = mockExams.find(e => e.id === examId);
-        
-        if (existingExam) {
-          existingExam.questionCount = (existingExam.questionCount || 0) + formatted.length;
-        } else {
-          mockExams.unshift({
-            id: examId,
-            year: adminYear,
-            month: adminMonth,
-            title: `${adminYear}년 ${adminMonth}월 학력평가`,
-            grade: `고${adminGrade}`,
-            questionCount: formatted.length
-          });
+          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 완료 (+${formatted.length}문항)</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
+
+        } catch (err) {
+          logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passageNum}번 생성 실패: ${err.message}</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
         }
-
-        renderExamTable();
-
-        logBox.innerHTML += `<div class="text-emerald-300 font-bold">🎉 성공! 대량 출제된 ${formatted.length}개 변형문제가 완벽 생성되었습니다.</div>`;
-
-        setTimeout(() => {
-          alert(`축하합니다! 총 ${formatted.length}문항의 대량 변형문제가 완벽하게 생성되어 [모의고사] 목록에 추가되었습니다.`);
-          btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
-          btn.disabled = false;
-        }, 500);
-
-      } catch (err) {
-        console.error('Gemini API Error:', err);
-        logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ 오류 발생: ${err.message}</div>`;
-        alert(`출제 실패: ${err.message}\nAPI Key가 정확한지 다시 확인해 주세요.`);
-        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
-        btn.disabled = false;
       }
+
+      // 모의고사 메인 표 카운트 업데이트
+      const parts = setKey.split('-');
+      const examId = `${parts[0]}-${parts[1]}-${parts[2]}`;
+      let existingExam = mockExams.find(e => e.id === examId);
+
+      if (existingExam) {
+        existingExam.questionCount = (existingExam.questionCount || 0) + totalGeneratedCount;
+      } else {
+        mockExams.unshift({
+          id: examId,
+          year: parts[0],
+          month: parts[1],
+          title: `${parts[0]}년 ${parts[1]}월 학력평가`,
+          grade: `고${parts[2]}`,
+          questionCount: totalGeneratedCount
+        });
+      }
+
+      renderExamTable();
+
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모의고사 1세트 일괄 출제 완수! 총 ${totalGeneratedCount}문항 생성됨.</div>`;
+      if (progressText) progressText.innerText = '출제 완료';
+
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
+      btn.disabled = false;
+
+      // 완료 팝업창
+      alert(`🎉 출제 완료!\n[${setKey}] 모의고사 세트에서 총 ${totalGeneratedCount}개의 변형문제가 성공적으로 생성되어 모의고사 목록에 등록되었습니다.`);
     }
 
     function clearPassageArchiveDB() {
