@@ -289,7 +289,79 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 2: 25개 지문 직접 입력 모드 ==================== -->
+      <!-- ==================== VIEW 2: 유형 및 지문 선택 ==================== -->
+      <section id="view-typeSelect" class="p-8 space-y-6 hidden">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button onclick="switchView('examList')" class="w-9 h-9 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 flex items-center justify-center shadow-sm">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div>
+              <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">2026년 3월 학력평가 (고1)</h2>
+              <p class="text-xs text-slate-500">원하시는 출제 유형과 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <div class="flex items-center justify-between border-b pb-3">
+            <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-tags text-blue-600"></i> 출제 유형 필터링
+            </span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <span class="text-xs font-bold bg-teal-500 text-white px-3 py-1.5 rounded-full">대의 파악</span>
+            <label class="type-chip"><input type="checkbox" name="qType" value="주제" checked /> 주제</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="제목" checked /> 제목</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="요지" checked /> 요지</label>
+
+            <span class="text-xs font-bold bg-amber-500 text-white px-3 py-1.5 rounded-full ml-2">언어 논리</span>
+            <label class="type-chip"><input type="checkbox" name="qType" value="빈칸" checked /> 빈칸</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="순서" checked /> 순서</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="삽입" checked /> 삽입</label>
+
+            <span class="text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-full ml-2">어법/어휘</span>
+            <label class="type-chip"><input type="checkbox" name="qType" value="어법" checked /> 어법</label>
+            <label class="type-chip"><input type="checkbox" name="qType" value="어휘" checked /> 어휘</label>
+            
+            <span class="text-xs font-bold bg-indigo-600 text-white px-3 py-1.5 rounded-full ml-2">서술형</span>
+            <label class="type-chip"><input type="checkbox" name="qType" value="주관식" checked /> 서술형/영작</label>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-4 text-xs">
+            <span class="font-bold text-slate-700">출제 문항 수 제한</span>
+            <input type="number" id="limitCount" value="50" class="w-24 p-2 border rounded-lg text-center font-bold text-blue-600" />
+          </div>
+
+          <button onclick="generateExamPaper()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
+            <i class="fa-solid fa-book-bookmark"></i> 과제 문제집 출제
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: 2단 인쇄용 시험지 ==================== -->
+      <section id="view-paperView" class="p-8 space-y-6 hidden">
+        <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow">
+            <i class="fa-solid fa-print"></i> 인쇄 및 PDF 저장
+          </button>
+        </div>
+
+        <div class="print-area bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
+          <h1 id="examSheetMainTitle" class="text-xl font-black text-slate-950 tracking-tight mb-6 pb-2 border-b-2 border-slate-900">
+            영어과 과제용 변형문제집
+          </h1>
+          <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 4: 25개 지문 직접 입력 모드 ==================== -->
       <section id="view-mockRegisterPanel" class="p-8 space-y-6">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -373,7 +445,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 3: 관리자 대량 실전 출제 모드 ==================== -->
+      <!-- ==================== VIEW 5: 관리자 대량 실전 출제 모드 ==================== -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -500,9 +572,9 @@
 
     let passageArchiveDB = [];
     let generatedQuestionsPool = [];
-    let mockExams = [
-      { id: '2026-3-1', year: '2026', month: '3', title: '2026년 3월 학력평가', grade: '고1', questionCount: 0 }
-    ];
+    let mockExams = [];
+    let currentSelectedExam = null;
+    let filteredQuestions = [];
 
     // 1. 범용 Gemini API 통신 지원 함수
     async function callGeminiUniversal(apiKey, prompt, onLog) {
@@ -756,8 +828,51 @@
       `).join('');
     }
 
+    // 🎯 폴더 아이콘 클릭 시 유형 및 지문 선택 화면으로 즉시 전환
     function openExamTypeSelector(examId) {
-      alert('출제된 변형문제 선택 화면으로 이동합니다.');
+      currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
+      if (currentSelectedExam) {
+        document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade})`;
+      }
+      switchView('typeSelect');
+    }
+
+    function generateExamPaper() {
+      const limit = parseInt(document.getElementById('limitCount').value) || 50;
+      filteredQuestions = generatedQuestionsPool.slice(0, limit);
+
+      if (filteredQuestions.length === 0) {
+        alert('출제할 문제 데이터가 존재하지 않습니다.');
+        return;
+      }
+
+      renderPaper();
+      switchView('paperView');
+    }
+
+    function renderPaper() {
+      const container = document.getElementById('paperContent');
+      if (!container) return;
+
+      container.innerHTML = filteredQuestions.map((q, idx) => `
+        <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[13px]">
+          <div class="font-bold text-[14px] flex items-start gap-1">
+            <span class="font-black text-slate-950">${idx + 1}.</span>
+            <span>${q.title}</span>
+            <span class="text-[10px] text-slate-500 font-sans ml-auto shrink-0">[${q.passageNum}번]</span>
+          </div>
+
+          <div class="passage-box exam-eng-font text-slate-800">
+            ${q.passage.replace(/\n/g, '<br/>')}
+          </div>
+
+          ${q.options && q.options.length > 0 ? `
+            <div class="grid grid-cols-1 gap-0.5 pl-2 mt-2 text-[12.5px] exam-eng-font text-slate-800">
+              ${q.options.map(opt => `<div>${opt}</div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
     }
 
     function getStoredApiKey() {
@@ -891,7 +1006,7 @@ ${selectedTypes.join(', ')}
           });
         }
 
-        renderExamTable(); // 모의고사 목록 표 즉시 갱신
+        renderExamTable();
 
         logBox.innerHTML += `<div class="text-emerald-300 font-bold">🎉 성공! 대량 출제된 ${formatted.length}개 변형문제가 완벽 생성되었습니다.</div>`;
 
@@ -924,7 +1039,7 @@ ${selectedTypes.join(', ')}
     }
 
     function switchView(viewName) {
-      ['examList', 'adminPanel', 'mockRegisterPanel'].forEach(v => {
+      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView'].forEach(v => {
         const el = document.getElementById('view-' + v);
         if (el) el.classList.add('hidden');
       });
@@ -934,7 +1049,7 @@ ${selectedTypes.join(', ')}
 
       const navMock = document.getElementById('nav-mock');
       if (navMock) {
-        navMock.className = (viewName === 'examList')
+        navMock.className = (viewName === 'examList' || viewName === 'typeSelect' || viewName === 'paperView')
           ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition'
           : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
       }
