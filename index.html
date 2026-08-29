@@ -593,7 +593,13 @@
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } })
+        body: JSON.stringify({
+  contents: [{ parts: [{ text: prompt }] }],
+  generationConfig: { 
+    temperature: 0.1,
+    responseMimeType: "application/json" // 🎯 AI가 오직 유효한 JSON만 반환하도록 강제
+  }
+})
       });
       if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
       throw new Error('API 통신 실패');
