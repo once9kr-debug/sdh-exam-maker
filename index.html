@@ -689,9 +689,10 @@
   </div>
 
   <script>
+    // 🚀 [수정됨] Supabase 변수명 충돌 방지 (supabaseClient 사용)
     const SUPABASE_URL = 'https://kqmogqlukkviddjsfyeb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbW9ncWx1a2t2aWRkanNmeWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjc3NjYsImV4cCI6MjEwMzUwMzc2Nn0.nqWvvphNCdPGMDrEYLilk-wHmNkH2BhPTuvMwaCXqo8';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const passageNumberList = [
       '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
@@ -718,35 +719,39 @@
 
     let schoolBenchmarkDB = [];
 
-    // 🚀 Supabase 데이터 로드 & 좌측 뱃지 자동 동적 갱신
+    // 🚀 Supabase 데이터 로드 로직
     async function loadAllSupabaseData() {
-      const { data: bData } = await supabase.from('school_benchmark').select('*').order('created_at', { ascending: false });
-      if (bData) schoolBenchmarkDB = bData;
-      renderBenchmarkTable();
+      try {
+        const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
+        if (bData) schoolBenchmarkDB = bData;
+        renderBenchmarkTable();
 
-      const { data: pData } = await supabase.from('passage_archive').select('*').order('created_at', { ascending: false });
-      if (pData) passageArchiveDB = pData;
-      renderPassageArchiveTable();
+        const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
+        if (pData) passageArchiveDB = pData;
+        renderPassageArchiveTable();
 
-      const { data: qData } = await supabase.from('generated_questions').select('*').order('created_at', { ascending: false });
-      if (qData) {
-        generatedQuestionsPool = qData;
-        const examMap = {};
-        passageArchiveDB.forEach(p => {
-          const setKey = `${p.year}-${p.month}-${p.grade}`;
-          if (!examMap[setKey]) examMap[setKey] = { id: setKey, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
-        });
-        
-        qData.forEach(q => {
-          const parts = q.id.split('-');
-          if (parts.length > 3) {
-            const setKey = `${parts[1]}-${parts[2]}-${parts[3]}`;
-            if (examMap[setKey]) examMap[setKey].questionCount++;
-          }
-        });
-        
-        mockExams = Object.values(examMap).sort((a,b) => b.year.localeCompare(a.year));
-        renderExamTable();
+        const { data: qData } = await supabaseClient.from('generated_questions').select('*').order('created_at', { ascending: false });
+        if (qData) {
+          generatedQuestionsPool = qData;
+          const examMap = {};
+          passageArchiveDB.forEach(p => {
+            const setKey = `${p.year}-${p.month}-${p.grade}`;
+            if (!examMap[setKey]) examMap[setKey] = { id: setKey, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
+          });
+          
+          qData.forEach(q => {
+            const parts = q.id.split('-');
+            if (parts.length > 3) {
+              const setKey = `${parts[1]}-${parts[2]}-${parts[3]}`;
+              if (examMap[setKey]) examMap[setKey].questionCount++;
+            }
+          });
+          
+          mockExams = Object.values(examMap).sort((a,b) => b.year.localeCompare(a.year));
+          renderExamTable();
+        }
+      } catch (err) {
+        console.error("Supabase 로드 에러:", err);
       }
     }
 
@@ -794,12 +799,10 @@
       renderQueuedFiles();
     }
 
-    // 🎯 [수정됨] 대기 중인 PDF 목록 숫자 동적 업데이트
     function renderQueuedFiles() {
       const container = document.getElementById('queuedFilesContainer'), list = document.getElementById('queuedFileList'), countEl = document.getElementById('queuedFileCount');
       if (!container || !list) return;
-      
-      if (countEl) countEl.innerText = queuedPdfFiles.length; // 대기 개수 실시간 반영
+      if (countEl) countEl.innerText = queuedPdfFiles.length;
 
       if (queuedPdfFiles.length === 0) return container.classList.add('hidden');
       container.classList.remove('hidden');
@@ -852,7 +855,7 @@ ${fullText.slice(0, 15000)}
 
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-            await supabase.from('school_benchmark').upsert(parsedArray);
+            await supabaseClient.from('school_benchmark').upsert(parsedArray);
             schoolBenchmarkDB.unshift(...parsedArray);
             totalAddedCount += parsedArray.length;
             logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school} ${exam}] 분석 완료! +${parsedArray.length}문항 적재</div>`;
@@ -900,13 +903,12 @@ ${fullText.slice(0, 15000)}
       if (str.includes('서술형') || str.includes('주관식')) return '서술형'; return '주제';
     }
 
-    // 🎯 [수정됨] 좌측 메뉴 뱃지 '기출 X제' 및 대시보드 문항 수 실시간 연동
     function renderBenchmarkTable() {
       const tbody = document.getElementById('benchmarkTableBody'), totalCount = document.getElementById('tableTotalCount');
-      const badge = document.getElementById('benchmarkCountBadge'); // 좌측 메뉴 뱃지
+      const badge = document.getElementById('benchmarkCountBadge');
       
       if (totalCount) totalCount.innerText = schoolBenchmarkDB.length;
-      if (badge) badge.innerText = `기출 ${schoolBenchmarkDB.length}제`; // 동적 반영
+      if (badge) badge.innerText = `기출 ${schoolBenchmarkDB.length}제`;
 
       if (tbody) tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
         <tr class="hover:bg-slate-50">
@@ -920,7 +922,7 @@ ${fullText.slice(0, 15000)}
 
     async function resetBenchmarkDB() { 
       if(confirm('정말 기출 DB를 전체 초기화하시겠습니까? (클라우드 데이터 포함)')) {
-        await supabase.from('school_benchmark').delete().neq('id', 'dummy');
+        await supabaseClient.from('school_benchmark').delete().neq('id', 'dummy');
         schoolBenchmarkDB = []; 
         renderBenchmarkTable(); 
       }
@@ -993,7 +995,7 @@ ${fullText.slice(0, 15000)}
       });
       
       if (upsertData.length > 0) {
-        await supabase.from('passage_archive').upsert(upsertData);
+        await supabaseClient.from('passage_archive').upsert(upsertData);
         renderPassageArchiveTable(); 
         alert('🎉 클라우드 DB 저장 완료!');
       } else {
@@ -1023,7 +1025,7 @@ ${fullText.slice(0, 15000)}
     }
 
     async function deleteSinglePassage(key) { 
-      await supabase.from('passage_archive').delete().eq('key', key);
+      await supabaseClient.from('passage_archive').delete().eq('key', key);
       passageArchiveDB = passageArchiveDB.filter(p => p.key !== key); 
       renderPassageArchiveTable(); 
     }
@@ -1223,7 +1225,7 @@ ${groupTypes.join(', ')}
               const rawText = await callGeminiUniversal(apiKey, prompt);
               const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passage_num, pObj.text, selectedDifficulty, setKey);
               if (parsedQuestions.length > 0) {
-                await supabase.from('generated_questions').upsert(parsedQuestions);
+                await supabaseClient.from('generated_questions').upsert(parsedQuestions);
                 generatedQuestionsPool.unshift(...parsedQuestions);
                 totalGeneratedCount += parsedQuestions.length;
               }
@@ -1253,14 +1255,23 @@ ${groupTypes.join(', ')}
 
     async function clearPassageArchiveDB() { 
       if (confirm('지문 DB를 전체 초기화하시겠습니까? (클라우드 포함)')) { 
-        await supabase.from('passage_archive').delete().neq('id', 'dummy');
+        await supabaseClient.from('passage_archive').delete().neq('id', 'dummy');
         passageArchiveDB = []; 
         renderPassageArchiveTable(); 
       } 
     }
 
-    function handleLogin(e) { if (e) e.preventDefault(); document.getElementById('loginModal').classList.add('hidden'); switchView('mockRegisterPanel'); }
-    function handleLogout() { document.getElementById('loginModal').classList.remove('hidden'); }
+    // 🎯 [수정됨] 로그인 폼 제출 시 실행되는 함수
+    function handleLogin(e) { 
+      if (e) e.preventDefault(); 
+      document.getElementById('loginModal').classList.add('hidden'); 
+      switchView('mockRegisterPanel'); 
+    }
+
+    function handleLogout() { 
+      document.getElementById('loginModal').classList.remove('hidden'); 
+    }
+
     function switchView(viewName) {
       ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel'].forEach(v => { const el = document.getElementById('view-' + v); if (el) el.classList.add('hidden'); });
       const target = document.getElementById('view-' + viewName); if (target) target.classList.remove('hidden');
