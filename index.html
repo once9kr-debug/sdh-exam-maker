@@ -485,7 +485,6 @@
               </div>
             </div>
 
-            <!-- 🎯 빠른 정답표 (객관식 번호 및 서술형 뱃지 정렬 고정) -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-300 mb-6 text-xs">
               <h3 class="font-black text-slate-900 mb-2">[빠른 정답표]</h3>
               <div id="quickAnswerGrid" class="grid grid-cols-5 md:grid-cols-10 gap-2 font-mono text-center"></div>
@@ -863,6 +862,28 @@
     let selectedDifficulty = '중';
     let selectedFilterDifficulty = '혼합';
 
+    // 🎯 대한민국 내신 고정 표준 발문 맵
+    const standardTitleMap = {
+      '주제': '다음 글의 주제로 가장 적절한 것은?',
+      '제목': '다음 글의 제목으로 가장 적절한 것은?',
+      '주장': '다음 글의 주장으로 가장 적절한 것은?',
+      '요지': '다음 글의 요지로 가장 적절한 것은?',
+      '목적': '다음 글의 목적으로 가장 적절한 것은?',
+      '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?',
+      '일치': '다음 글의 내용과 일치하는 것은?',
+      '불일치': '다음 글의 내용과 일치하지 않는 것은?',
+      '함축의미': '다음 글의 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?',
+      '빈칸': '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
+      '연결사': '다음 글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?',
+      '순서': '주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?',
+      '삽입': '글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?',
+      '흐름': '다음 글에서 전체 흐름과 관계 없는 문장은?',
+      '어법': '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
+      '어휘': '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
+      '서술형': '[주관식 서술형] 다음 글을 읽고 [조건]에 맞추어 알맞은 답안을 작성하시오.',
+      '단답형': '[주관식 단답형] 다음 글의 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 쓰시오.'
+    };
+
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-amber-500' },
       { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-teal-600' },
@@ -1122,36 +1143,43 @@ ${fullText.slice(0, 15000)}
       throw lastError || new Error('API 통신 실패');
     }
 
-    // 🎯 [정밀 파서] 오답 해설 및 보기 분리 파서
+    // 🎯 [완전 개편 파서] 지문 보복원 + 하드코딩 발문 치환 + 보기 정제
     function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey, targetType) {
       const results = [];
       rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
         if (!block.trim()) return;
-        let title = '', options = [], answer = '', explanation = '', type = targetType || '주제', passage = defaultPassage;
+        let title = '', options = [], answer = '', explanation = '', type = targetType || '주제', passage = '';
         
         block.trim().split('\n').forEach(l => {
-          let t = l.trim();
-          t = t.replace(/\*/g, '');
+          let t = l.trim().replace(/\*/g, '');
 
           if (t.startsWith('유형:')) type = extractStandardType(t.replace('유형:', ''));
           else if (t.startsWith('발문:')) title = t.replace('발문:', '');
-          else if (t.startsWith('지문:')) passage = t.replace('지문:', '');
+          else if (t.startsWith('지문:')) passage = t.replace('지문:', '').trim();
           else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
           else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
           else if (t.match(/^[①②③④⑤]/) || t.match(/^[12345][\.\)]/)) {
-            // 보기 기호 표준화 (①~⑤)
             let optStr = t.replace(/^[12345][\.\)]\s*/, '').replace(/^[①②③④⑤]\s*/, '');
             const numSymbols = ['①', '②', '③', '④', '⑤'];
             const sym = numSymbols[options.length] || '①';
 
-            if (t.includes('는 ') || t.includes('은 ') || t.includes('해설') || t.includes('적절하지')) {
-              explanation += ' ' + t;
-            } else {
+            if (!t.includes('는 ') && !t.includes('은 ') && !t.includes('해설')) {
               options.push(`${sym} ${optStr}`);
+            } else {
+              explanation += ' ' + t;
             }
           }
         });
 
+        // 🎯 1. 지문 누락 방지 2중 안전장치: AI가 지문 추출에 실패했을 경우 원문 지문으로 자동 대체 복원
+        if (!passage || passage.length < 10 || passage === 'EMPTY') {
+          passage = defaultPassage;
+        }
+
+        // 🎯 2. 발문 하드코딩 고정: 한국 고교 내신 전용 표준 발문 매핑 적용
+        const fixedTitle = standardTitleMap[type] || standardTitleMap[targetType] || `다음 글의 ${type}으로 가장 적절한 것은?`;
+
+        // 🎯 3. 서술형 보기는 강제 제거
         const isSubjectiveType = (type === '서술형' || type === '단답형');
         if (isSubjectiveType) {
           options = [];
@@ -1163,7 +1191,7 @@ ${fullText.slice(0, 15000)}
         results.push({
           id: uniqueId,
           passage_num: defaultPassageNum, type, difficulty: difficulty || '중',
-          title: title || `[${defaultPassageNum}번 변형문항]`, passage, options, answer: answer || '①', explanation
+          title: fixedTitle, passage, options, answer: answer || '①', explanation
         });
       });
       return results;
@@ -1341,6 +1369,7 @@ ${fullText.slice(0, 15000)}
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
         const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const typeMatch = selectedTypes.includes(q.type);
         return isCurrentExam && diffMatch && typeMatch;
       });
 
@@ -1412,7 +1441,7 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
-    // 🎯 [완전 교정] 빠른 정답표 서식 붕괴 방지 + 문제 및 해설 정밀 렌더링
+    // 🎯 [정밀 시험지 및 정답표 렌더링]
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const aContainer = document.getElementById('answerDetailContent');
@@ -1428,7 +1457,6 @@ ${fullText.slice(0, 15000)}
         if (ansHeaderTitle) ansHeaderTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 정답 및 상세 해설지`;
       }
 
-      // 1) 문제지 렌더링
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
 
@@ -1513,11 +1541,11 @@ ${fullText.slice(0, 15000)}
       }
       if (ansSection) ansSection.classList.remove('hidden');
 
-      // 🎯 [해결] 빠른 정답표 내 서술형 답안 텍스트 짤림 및 그리드 깨짐 방지
+      // 🎯 빠른 정답표 그리드 고정 (서술형은 깔끔한 뱃지만 출력)
       if (quickAnswerGrid) {
         quickAnswerGrid.innerHTML = filteredQuestions.map((q, idx) => {
           const isSubjective = (q.type === '서술형' || q.type === '단답형');
-          const ansText = isSubjective ? `<span class="text-[9px] bg-slate-200 text-slate-800 px-1 rounded font-bold">서술형</span>` : `<span class="font-black text-slate-900">${q.answer || '①'}</span>`;
+          const ansText = isSubjective ? `<span class="text-[9px] bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-bold">서술형</span>` : `<span class="font-black text-slate-900 text-sm">${q.answer || '①'}</span>`;
 
           return `
             <div class="border border-slate-300 p-1.5 rounded bg-white flex flex-col justify-center items-center h-12">
@@ -1625,7 +1653,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
-    // 🎯 [대한민국 고교 내신 전용 정밀 AI 프롬프트 엔진]
+    // 🎯 [대한민국 내신 기출 RAG 연동 고품질 AI 출제 엔진]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1637,12 +1665,17 @@ ${fullText.slice(0, 15000)}
       if (selectedTypes.length === 0) return alert('생성할 변형문제 유형을 선택해 주세요.');
 
       const btn = document.getElementById('btnAdminGen'), logBox = document.getElementById('generationLogBox'), progressText = document.getElementById('genProgressText');
-      const benchmarkTricksSection = schoolBenchmarkDB.length > 0 ? schoolBenchmarkDB.slice(0, 6).map(bm => `- [${bm.school} ${bm.type} 기출]: ${bm.trick}`).join('\n') : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
+
+      // 🎯 기출문제 DB RAG 실제 연동: 축적된 학교 기출 킬러 패턴 불러오기
+      const benchmarkTricksSection = schoolBenchmarkDB.length > 0 
+        ? schoolBenchmarkDB.slice(0, 8).map(bm => `- [${bm.school} ${bm.type} 기출패턴]: ${bm.trick}`).join('\n') 
+        : '- 원문 핵심 어구 패러프레이징 및 본동사 vs 준동사 수일치 어법 함정 적용';
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [HIGH-QUALITY BATCH] 대한민국 고교 내신 전용 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [REAL HIGH-QUALITY] 실전 내신 규격 AI 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
+      // 🎯 기존 모의고사 세트 문제 DB 자동 청소 (불량 데이터 누적 방지)
       try {
         logBox.innerHTML += `<div class="text-amber-300">🧹 기존 모의고사 세트(${setKey}) 문제 DB 자동 청소 중...</div>`;
         await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
@@ -1662,12 +1695,12 @@ ${fullText.slice(0, 15000)}
           for (let tIdx = 0; tIdx < selectedTypes.length; tIdx++) {
             const targetType = selectedTypes[tIdx];
 
-            // 🎯 대한민국 고등학교 내신 기출 전용 정밀 프롬프트
+            // 🎯 내신 실전형 프롬프트: 지문 전체 유지 및 내신형 서술형 통제
             const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-주어진 [영어 지문]에 대해 고등학교 내신 시험 난이도 **'${selectedDifficulty}'** 수준으로 **'${targetType}'** 변형문제 **정확히 1문제**를 제작하십시오.
+주어진 [영어 지문] 전체를 활용하여 난이도 **'${selectedDifficulty}'** 수준의 **'${targetType}'** 변형문제 **정확히 1문제**를 제작하십시오.
 
-[축적된 실제 학교 기출 킬러 함정 패턴]:
+[축적된 실제 학교 기출 킬러 함정 패턴 학습]:
 ${benchmarkTricksSection}
 
 [영어 지문 (${pObj.passage_num}번)]:
@@ -1676,25 +1709,27 @@ ${pObj.text}
 [요청된 단독 출제 세부 유형]:
 ${targetType}
 
-[대한민국 내신 기출 엄격 규격 지침]:
-1. **[어법] 문제 규칙:**
-   - 지문 내 어법 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문 내에 직접 적용하십시오.
-2. **[어휘] 문제 규칙:**
-   - 지문 내 어휘 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문 내에 직접 적용하십시오.
-3. **[빈칸/연결사] 문제 규칙:**
-   - 정답 어구를 지문 내에서 찾아 반드시 **(A)** 또는 **__________** 형태로 빈칸을 뚫은 변경 지문을 '지문:' 항목에 출력하십시오.
-4. **[순서] 문제 규칙:**
-   - 지문 제시문 아래에 글을 **(A), (B), (C)** 3개 단락으로 정확히 나누어 지문을 재구성하십시오.
-5. **[서술형/단답형] 문제 필수 규칙 (매우 중요):**
-   - 50-70단어 에세이 작성을 절대 요구하지 마십시오! 실제 내신 유형인 **"본문 단어 활용 빈칸 완성", "조건에 따른 10단어 이내 영작", "어법상 틀린 2곳 찾아 고치기"** 중 하나로 출제하십시오.
-   - 서술형에는 객관식 보기(①~⑤)를 절대로 생성하지 마십시오.
-6. **[객관식 보기 규칙]:**
-   - 보기 항목에는 ①, ②, ③, ④, ⑤ 기호 뒤에 깔끔한 선택지 단어/문장만 넣고, 한글 해설이나 오답 풀이를 절대로 보기에 기재하지 마십시오. 오답 설명은 오직 '해설:' 칸에만 기재하십시오.
+[대한민국 고교 내신 엄격 출제 지침]:
+1. **지문 보존 필수:** 영문 지문 전체를 생략 없이 반드시 '지문:' 항목에 출력하십시오.
+2. **[어법] 문제 규칙:**
+   - 지문 내 어법 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문에 직접 그어 출력하십시오.
+3. **[어휘] 문제 규칙:**
+   - 지문 내 어휘 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문에 직접 그어 출력하십시오.
+4. **[빈칸/연결사] 문제 규칙:**
+   - 정답 어구를 지문 내에서 찾아 반드시 **(A)** 또는 **__________** 형태로 빈칸을 뚫은 지문을 '지문:' 항목에 출력하십시오.
+5. **[순서] 문제 규칙:**
+   - 지문을 제시문과 **(A), (B), (C)** 3개 단락으로 정확히 나누어 지문을 재구성하십시오.
+6. **[서술형/단답형] 내신 실전 규칙 (필수):**
+   - 50단어 이상의 긴 영작 문제(에세이)를 절대 내지 마십시오!
+   - 반드시 **"본문 단어 활용 빈칸 요약문 완성"** 또는 **"조건부 10단어 이내 어형 변화 영작"** 형태로 출제하십시오.
+   - 서술형에는 객관식 보기(①~⑤)를 절대로 출력하지 마십시오.
+7. **[객관식 보기 규칙]:**
+   - 보기 항목에는 ①~⑤ 번호 뒤에 깔끔한 선택지 단어/문장만 넣고, 한글 해설이나 오답 풀이를 절대로 보기에 포함하지 마십시오.
 
 ## [문항 1]
 유형: ${targetType}
 발문: 다음 글의 ${targetType}으로 가장 적절한 것은?
-지문: (변형 적용된 지문)
+지문: ${pObj.text}
 ① 선택지 1
 ② 선택지 2
 ③ 선택지 3
