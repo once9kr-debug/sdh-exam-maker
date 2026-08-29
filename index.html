@@ -723,55 +723,47 @@
       switchView('typeSelect');
     }
 
-    function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
-      let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
-      let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
+function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
+  let finalPassage = origPassage; // 🎯 1. 원문 지문 100% 보존
+  let givenBoxText = '';
+  let conditionText = '';
+  let summaryText = '';
 
-      if (qType === '어법' || qType === '어휘') {
-        if (Array.isArray(item.target_words) && item.target_words.length === 5) {
-          let p = origPassage;
-          item.target_words.forEach((w, i) => {
-            const sym = ['①', '②', '③', '④', '⑤'][i];
-            p = p.replace(w.orig || w, `${sym} <u>${w.mod || w.orig || w}</u>`);
-          });
-          finalPassage = p;
-        }
-      } else if (qType === '빈칸' || qType === '단답형') {
-        if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
-          finalPassage = origPassage.replace(item.target_blank_word, '__________');
-        } else {
-          finalPassage = origPassage.replace(/(\w+){1}(\s+\w+){0,2}$/, '__________');
-        }
-      } else if (qType === '함축의미') {
-        if (item.target_phrase && origPassage.includes(item.target_phrase)) {
-          finalPassage = origPassage.replace(item.target_phrase, `<u>${item.target_phrase}</u>`);
-        }
-      } else if (qType === '순서') {
-        const sentences = origPassage.split('. ');
-        givenBoxText = sentences.slice(0, 2).join('. ') + '.';
-        const remainPart = sentences.slice(2).join('. ');
-        const third = Math.floor(remainPart.length / 3);
-        finalPassage = `(A) ${remainPart.substring(0, third)}\n(B) ${remainPart.substring(third, third*2)}\n(C) ${remainPart.substring(third*2)}`;
-      } else if (qType === '삽입') {
-        givenBoxText = item.given_sentence || '주어진 문장 예시';
-        const s = origPassage.split('. ');
-        if (s.length >= 5) {
-          finalPassage = `${s[0]}. ( ① ) ${s[1]}. ( ② ) ${s[2]}. ( ③ ) ${s[3]}. ( ④ ) ${s[4]}. ( ⑤ ) ${s.slice(5).join('. ')}`;
-        }
-      } else if (qType === '서술형') {
-        conditionText = item.condition_text || '[조건] 본문에서 알맞은 단어를 찾아 문맥에 맞게 쓰시오.';
-        summaryText = item.summary_text || 'Summary: The passage indicates that __________ is essential.';
-      }
+  // 🎯 2. 어법/어휘: 서버가 직접 ①~⑤ 밑줄(<u>) 태그 주입
+  if ((qType === '어법' || qType === '어휘') && Array.isArray(item.target_words)) {
+    let p = origPassage;
+    item.target_words.slice(0, 5).forEach((w, i) => {
+      const sym = ['①', '②', '③', '④', '⑤'][i];
+      p = p.replace(w.orig, `${sym} <u>${w.mod || w.orig}</u>`);
+    });
+    finalPassage = p;
+  } 
+  // 🎯 3. 순서/삽입: 서버가 [주어진 글] 상단 박스 강제 분리
+  else if (qType === '순서' || qType === '삽입') {
+    const sentences = origPassage.split('. ');
+    givenBoxText = item.given_sentence || (sentences.slice(0, 2).join('. ') + '.');
+    finalPassage = sentences.slice(2).join('. ');
+  } 
+  // 🎯 4. 서술형: [조건] 및 [요약문] 박스 독립 결합
+  else if (qType === '서술형' || qType === '단답형') {
+    conditionText = item.condition_text || '[조건] 본문에서 알맞은 단어를 찾아 쓰시오.';
+    summaryText = item.summary_text || '';
+  }
 
-      return {
-        id: `Q-${setKey}-${passageNum}-${qType}-${idx+1}-${Math.random().toString(36).substring(2,7)}`,
-        passage_num: passageNum, type: qType, difficulty: selectedDifficulty,
-        title: finalTitle, passage: finalPassage,
-        given_box: givenBoxText, condition_box: conditionText, summary_box: summaryText,
-        options: Array.isArray(item.options) ? item.options : [],
-        answer: item.answer || '①', explanation: item.explanation || '본문의 핵심 문맥에 따른 해설입니다.'
-      };
-    }
+  return {
+    id: `Q-${setKey}-${passageNum}-${qType}-${idx+1}`,
+    passage_num: passageNum,
+    type: qType,
+    title: standardTitleMap[qType], // 표준 한국어 발문 고정
+    passage: finalPassage,
+    given_box: givenBoxText,
+    condition_box: conditionText,
+    summary_box: summaryText,
+    options: item.options || [],
+    answer: item.answer || '①',
+    explanation: item.explanation || ''
+  };
+}
 
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
