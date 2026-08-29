@@ -583,7 +583,6 @@
               <div class="space-y-3">
                 <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2 font-medium">
                   <i class="fa-solid fa-shield-halved text-amber-600"></i>
-                  <!-- 🎯 최적 정책 안내문 업데이트 (유형당 1문제씩) -->
                   <span>백엔드 고정 정책: AI 품질 최적화를 위해 **유형당 최적 수량(1문제씩)**으로 분할 자동 출제됩니다.</span>
                 </div>
 
@@ -1122,6 +1121,7 @@ ${fullText.slice(0, 15000)}
       throw lastError || new Error('API 통신 실패');
     }
 
+    // 🎯 [정밀 파서 강화] 오답 해설 및 불량 텍스트 완벽 분리 파싱
     function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey, targetType) {
       const results = [];
       rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
@@ -1138,7 +1138,8 @@ ${fullText.slice(0, 15000)}
           else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
           else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
           else if (t.match(/^[①②③④⑤]/)) {
-            if (t.includes('는 ') || t.includes('은 ') || t.includes('해설')) {
+            // 보기에 한글 설명이나 해설 문장이 포함될 경우 해설로 분리
+            if (t.includes('는 ') || t.includes('은 ') || t.includes('해설') || t.includes('적절하지')) {
               explanation += ' ' + t;
             } else {
               options.push(t);
@@ -1612,7 +1613,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
-    // 🎯 [수정] 유형당 정확히 1문제만 단독 출제하도록 프롬프트 수량 설정 변경
+    // 🎯 [정밀 AI 출제 엔진 - 고품질 단독 프롬프트 및 기존 문제 자동 청소]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1627,8 +1628,17 @@ ${fullText.slice(0, 15000)}
       const benchmarkTricksSection = schoolBenchmarkDB.length > 0 ? schoolBenchmarkDB.slice(0, 6).map(bm => `- [${bm.school} ${bm.type} 기출]: ${bm.trick}`).join('\n') : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [ACCURATE BATCH] 유형당 1문제 정밀 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [HIGH-QUALITY BATCH] 고품질 유형당 1문항 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
+
+      // 🎯 기존 모의고사 세트 문제 DB 자동 청소 (불량 데이터 누적 방지)
+      try {
+        logBox.innerHTML += `<div class="text-amber-300">🧹 기존 모의고사 세트(${setKey}) 문제 DB 자동 청소 중...</div>`;
+        await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
+        generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
+      } catch (e) {
+        console.error("기존 데이터 삭제 오류:", e);
+      }
 
       let totalGeneratedCount = 0;
 
@@ -1641,10 +1651,10 @@ ${fullText.slice(0, 15000)}
           for (let tIdx = 0; tIdx < selectedTypes.length; tIdx++) {
             const targetType = selectedTypes[tIdx];
 
-            // 🎯 프롬프트 내에 정확히 1문제 생성을 지시
+            // 🎯 품질 극대화용 고정 단독 프롬프트
             const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-주어진 [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 오직 **'${targetType}'** 유형으로만 **정확히 1문제**를 제작하십시오.
+주어진 [영어 지문] 전체를 세심히 분석하여 난이도 **'${selectedDifficulty}'** 수준에 맞춘 **'${targetType}'** 변형문제 **정확히 1문제**를 제작하십시오.
 
 [축적된 실제 학교 기출 킬러 함정 패턴]:
 ${benchmarkTricksSection}
@@ -1655,28 +1665,30 @@ ${pObj.text}
 [요청된 단독 출제 세부 유형]:
 ${targetType}
 
-[지문 변형 필수 규격 지침 (엄격 준수)]:
-1. **[빈칸/어휘/연결사] 문제 규칙:**
-   - 정답 어구를 지문에서 뚫어서 반드시 **(A)** 또는 **__________** 형태로 빈칸을 뚫어 변형된 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 놔두지 마십시오!
-2. **[어법] 문제 규칙:**
-   - 지문 내 어법 출제 요소 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 형태로 밑줄과 번호를 적용한 지문을 출력하십시오.
-3. **[순서] 문제 규칙:**
-   - 지문을 제시문과 **(A), (B), (C)** 3개 단락으로 나누어 구성하십시오.
-4. **[서술형/단답형] 문제 규칙:**
-   - 서술형에는 객관식 보기(①~⑤)를 절대로 생성하지 마십시오.
-5. 보기에 해설 텍스트나 오답 설명을 절대로 포함시키지 마십시오. 오답 설명은 오직 '해설:' 칸에만 기재하십시오.
+[지문 변형 및 출력 규격 지칙 (위반 시 출력 오류)]:
+1. 지문 전체 원문을 절대 생략하거나 중간에 두 줄 이상 생략하지 마십시오.
+2. **[빈칸/어휘/연결사] 문제:**
+   - 정답 어구를 지문 내에서 찾아 반드시 **(A)** 또는 **__________** 형태로 빈칸을 뚫은 변경 지문을 '지문:' 항목에 출력하십시오. 원문 지문을 그대로 내보내면 안 됩니다!
+3. **[어법] 문제:**
+   - 지문 내 어법 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문에 직접 적용하십시오.
+4. **[순서] 문제:**
+   - 지문을 제시문과 **(A), (B), (C)** 단락으로 정확히 나누어 지문을 구성하십시오.
+5. **[서술형/단답형] 문제:**
+   - 객관식 보기(①~⑤)를 절대로 출력하지 마십시오.
+6. **[보기 규칙]:**
+   - 보기 항목에는 해설 문장이나 한글 설명을 절대 넣지 말고, 오직 5개의 답안 선택지(①~⑤)만 작성하십시오.
 
 ## [문항 1]
 유형: ${targetType}
 발문: 다음 글의 ${targetType}으로 가장 적절한 것은?
 지문: (변형 적용된 지문)
-① 보기1
-② 보기2
-③ 보기3
-④ 보기4
-⑤ 보기5
+① 선택지 1
+② 선택지 2
+③ 선택지 3
+④ 선택지 4
+⑤ 선택지 5
 정답: ①
-해설: 상세 해설
+해설: 상세 한글 해설
 `;
             try {
               const rawText = await callGeminiUniversal(apiKey, prompt);
@@ -1690,7 +1702,7 @@ ${targetType}
           }
 
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 ${selectedTypes.length}개 세부 유형 완수 (+${selectedTypes.length}문항)</div>`;
+          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 고품질 출제 완료 (+${selectedTypes.length}문항)</div>`;
           logBox.scrollTop = logBox.scrollHeight;
         }));
       }
@@ -1701,14 +1713,14 @@ ${targetType}
       let existingExam = mockExams.find(e => e.id === examId);
 
       if (existingExam) {
-        existingExam.questionCount = (existingExam.questionCount || 0) + totalGeneratedCount;
+        existingExam.questionCount = totalGeneratedCount;
       } else {
         mockExams.unshift({ id: examId, year: parts[0], month: parts[1], title: `${parts[0]}년 ${parts[1]}월 학력평가`, grade: `고${parts[2]}`, questionCount: totalGeneratedCount });
       }
 
       renderExamTable(); btn.disabled = false;
       logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 100% 누락 없는 정밀 출제 완전 완료! (총 +${totalGeneratedCount}문항 클라우드 적재)</div>`;
-      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 단 한 개도 누락 없이 클라우드에 완벽 생성되었습니다.`);
+      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 기존 불량 데이터를 청소하고, 총 ${totalGeneratedCount}개의 고품질 문항이 누락 없이 새로 적재되었습니다.`);
     }
 
     async function clearPassageArchiveDB() { 
