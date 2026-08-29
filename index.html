@@ -12,7 +12,6 @@
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     }
   </script>
-  <!-- Supabase 라이브러리 연동 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@800;900&family=Roboto:wght@400;500;700&display=swap');
@@ -307,15 +306,10 @@
             <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded">교재 선택</span>
             <span class="text-xs font-bold text-blue-600">고등</span>
             <select id="filterCategory" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"><option>모의고사</option></select>
-            <select id="filterYear" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option value="">년도 전체</option><option value="2026">2026년</option><option value="2025">2025년</option>
-            </select>
-            <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option value="">월 전체</option><option value="3">3월</option><option value="6">6월</option>
-            </select>
-            <select id="filterGrade" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option value="">학년 전체</option><option value="1">고1</option><option value="2">고2</option>
-            </select>
+            <!-- 🎯 연도/월/학년 필터 드롭다운 동적 생성 -->
+            <select id="filterYear" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
+            <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
+            <select id="filterGrade" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
             <button onclick="renderExamTable()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-lg font-bold"><i class="fa-solid fa-arrows-rotate"></i></button>
           </div>
         </div>
@@ -443,15 +437,10 @@
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
               <span>등록할 모의고사 설정:</span>
-              <select id="regYear" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="2026" selected>2026년</option><option value="2025">2025년</option>
-              </select>
-              <select id="regMonth" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="3" selected>3월</option><option value="6">6월</option>
-              </select>
-              <select id="regGrade" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="1" selected>고1</option><option value="2">고2</option>
-              </select>
+              <!-- 🎯 [확장] 2026~2015년 / 3~12월 / 고1~고3 선택 드롭다운 -->
+              <select id="regYear" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600"></select>
+              <select id="regMonth" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600"></select>
+              <select id="regGrade" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600"></select>
             </div>
             <button onclick="saveAll25Passages()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition flex items-center gap-2">
               <i class="fa-solid fa-floppy-disk"></i> 입력된 지문 일괄 DB 저장
@@ -689,7 +678,6 @@
   </div>
 
   <script>
-    // 🚀 [수정됨] Supabase 변수명 충돌 방지 (supabaseClient 사용)
     const SUPABASE_URL = 'https://kqmogqlukkviddjsfyeb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbW9ncWx1a2t2aWRkanNmeWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjc3NjYsImV4cCI6MjEwMzUwMzc2Nn0.nqWvvphNCdPGMDrEYLilk-wHmNkH2BhPTuvMwaCXqo8';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -719,7 +707,31 @@
 
     let schoolBenchmarkDB = [];
 
-    // 🚀 Supabase 데이터 로드 로직
+    // 🎯 [추가] 드롭다운 옵션 동적 생성 (연도: 2026~2015, 월: 3,4,5,6,7,9,10,11,12, 학년: 1,2,3)
+    function initDropdownOptions() {
+      const years = Array.from({length: 12}, (_, i) => 2026 - i); // 2026 ~ 2015
+      const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
+      const grades = [1, 2, 3];
+
+      // 1) 등록용 드롭다운
+      const regYearEl = document.getElementById('regYear');
+      const regMonthEl = document.getElementById('regMonth');
+      const regGradeEl = document.getElementById('regGrade');
+
+      if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
+      if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
+      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===1?'selected':''}>고${g}</option>`).join('');
+
+      // 2) 모의고사 목록 필터용 드롭다운
+      const filterYearEl = document.getElementById('filterYear');
+      const filterMonthEl = document.getElementById('filterMonth');
+      const filterGradeEl = document.getElementById('filterGrade');
+
+      if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
+      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
+      if (filterGradeEl) filterGradeEl.innerHTML = `<option value="">학년 전체</option>` + grades.map(g => `<option value="${g}">고${g}</option>`).join('');
+    }
+
     async function loadAllSupabaseData() {
       try {
         const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
@@ -1030,9 +1042,21 @@ ${fullText.slice(0, 15000)}
       renderPassageArchiveTable(); 
     }
 
+    // 🎯 [수정] 필터링 연동된 모의고사 목록 렌더링
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
-      if (tbody) tbody.innerHTML = mockExams.map(exam => `
+      const yearFilter = document.getElementById('filterYear')?.value || '';
+      const monthFilter = document.getElementById('filterMonth')?.value || '';
+      const gradeFilter = document.getElementById('filterGrade')?.value || '';
+
+      const filteredExams = mockExams.filter(e => {
+        const matchYear = !yearFilter || e.year === yearFilter;
+        const matchMonth = !monthFilter || e.month === monthFilter;
+        const matchGrade = !gradeFilter || e.grade === `고${gradeFilter}`;
+        return matchYear && matchMonth && matchGrade;
+      });
+
+      if (tbody) tbody.innerHTML = filteredExams.map(exam => `
         <tr class="hover:bg-slate-50">
           <td class="py-4 px-6 font-semibold">${exam.year}년</td><td class="py-4 px-6 font-semibold">${exam.month}월</td>
           <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td><td class="py-4 px-6">${exam.grade}</td>
@@ -1261,7 +1285,6 @@ ${groupTypes.join(', ')}
       } 
     }
 
-    // 🎯 [수정됨] 로그인 폼 제출 시 실행되는 함수
     function handleLogin(e) { 
       if (e) e.preventDefault(); 
       document.getElementById('loginModal').classList.add('hidden'); 
@@ -1278,6 +1301,7 @@ ${groupTypes.join(', ')}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      initDropdownOptions(); // 드롭다운 옵션 동적 렌더링
       loadAllSupabaseData();
       render25PassageInputForms(); checkApiKeyStatus();
     });
