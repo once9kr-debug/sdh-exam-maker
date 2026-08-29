@@ -235,14 +235,14 @@
           <label class="block text-xs font-bold text-slate-700 mb-1">ID</label>
           <div class="relative">
             <i class="fa-solid fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-            <input type="text" id="loginId" value="admin" required class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <input type="text" id="loginId" placeholder="아이디 입력" required class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">PW</label>
           <div class="relative">
             <i class="fa-solid fa-lock absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-            <input type="password" id="loginPw" value="1234" required class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <input type="password" id="loginPw" placeholder="비밀번호 입력" required class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
         </div>
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
@@ -671,15 +671,15 @@
         </div>
       </section>
 
-      <!-- VIEW 7: MY PAGE -->
+      <!-- VIEW 7: MY PAGE (계정 관리 & 삭제 추가) -->
       <section id="view-myPage" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-circle-user text-blue-600"></i> My Page (개인 보관함 & 계정 설정)
+                <i class="fa-solid fa-circle-user text-blue-600"></i> My Page (개인 보관함 & 계정 관리)
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">내 계정 정보 및 출력한 과제집 보관함을 확인하세요.</p>
+              <p class="text-xs text-slate-500 mt-0.5">내 계정 정보 및 생성된 계정 목록을 관리하세요.</p>
             </div>
             <span id="myRoleBadge" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-bold">원장 선생님</span>
           </div>
@@ -701,6 +701,7 @@
                 </div>
               </div>
 
+              <!-- 관리자 전용: 교사 계정 생성 & 계정 삭제 목록 -->
               <div id="adminCreateTeacherBox" class="bg-blue-50 p-5 rounded-2xl border border-blue-200 space-y-4 hidden">
                 <h3 class="font-bold text-sm text-blue-900 flex items-center gap-2">
                   <i class="fa-solid fa-user-plus text-blue-600"></i> 선생님 계정 신규 생성 (원장님 전용)
@@ -708,7 +709,7 @@
                 <div class="space-y-3 text-xs">
                   <div>
                     <label class="block text-blue-900 font-bold mb-1">선생님 ID</label>
-                    <input type="text" id="newTeacherId" placeholder="예: teacher2" class="w-full p-2.5 border rounded-lg bg-white" />
+                    <input type="text" id="newTeacherId" placeholder="예: saerom1" class="w-full p-2.5 border rounded-lg bg-white" />
                   </div>
                   <div>
                     <label class="block text-blue-900 font-bold mb-1">초기 비밀번호</label>
@@ -717,6 +718,16 @@
                   <button onclick="createTeacherAccount()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow transition">
                     신규 교사 계정 생성
                   </button>
+                </div>
+
+                <!-- 🎯 [추가] 교사 계정 삭제 및 관리 목록 -->
+                <div class="pt-3 border-t border-blue-200">
+                  <h4 class="font-bold text-xs text-blue-900 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-users-gear"></i> 등록된 선생님 계정 삭제 관리
+                  </h4>
+                  <div class="bg-white rounded-xl border border-blue-200 p-2 max-h-40 overflow-y-auto">
+                    <ul id="teacherAccountList" class="divide-y text-xs text-slate-700"></ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -783,7 +794,10 @@
     let filteredQuestions = [];
     let queuedPdfFiles = [];
 
-    let currentUser = { id: 'admin', role: 'admin', name: '원장 선생님' };
+    // 계정 기본 세팅
+    let currentUser = null;
+    let registeredTeacherList = ['saerom1', 'teacher']; // 기본 샘플 생성 교사 리스트
+
     let selectedDifficulty = '중';
     let selectedFilterDifficulty = '혼합';
 
@@ -1159,12 +1173,10 @@ ${fullText.slice(0, 15000)}
       renderTypeChips(); renderPassageChips(); updateSelectedCountText(); switchView('typeSelect');
     }
 
-    // 🎯 [실시간 상호 교차 필터링] 지문 체크 상태를 반영하여 유형별 수량 동적 계산
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
 
-      // 현재 체크되어 있는 지문 목록 추출
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
 
       const pool = generatedQuestionsPool.filter(q => {
@@ -1185,12 +1197,10 @@ ${fullText.slice(0, 15000)}
       container.innerHTML = html;
     }
 
-    // 🎯 [실시간 상호 교차 필터링] 유형 체크 상태를 반영하여 지문별 수량 동적 계산
     function renderPassageChips() {
       const container = document.getElementById('passageChipContainer');
       if (!container) return;
 
-      // 현재 체크되어 있는 유형 목록 추출
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
 
       const pool = generatedQuestionsPool.filter(q => {
@@ -1209,13 +1219,11 @@ ${fullText.slice(0, 15000)}
       `).join('');
     }
 
-    // 🎯 [실시간 연동 이벤트] 유형 클릭 시 지문 칩 카운터 재계산
     function onTypeFilterChange() {
       updatePassageChipCountsOnly();
       updateSelectedCountText();
     }
 
-    // 🎯 [실시간 연동 이벤트] 지문 클릭 시 유형 칩 카운터 재계산
     function onPassageFilterChange() {
       updateTypeChipCountsOnly();
       updateSelectedCountText();
@@ -1462,6 +1470,7 @@ ${groupTypes.join(', ')}
       } 
     }
 
+    // 🎯 [세션 보존 구현] 로그인 처리 및 브라우저 SessionStorage 저장
     function handleLogin(e) { 
       if (e) e.preventDefault();
       const loginId = document.getElementById('loginId').value.trim();
@@ -1472,16 +1481,37 @@ ${groupTypes.join(', ')}
         currentUser = { id: loginId, role: 'teacher', name: `${loginId} 선생님` };
       }
 
+      // 세션 저장소에 로그인 유저 정보 저장 (새로고침 유지)
+      sessionStorage.setItem('SDH_LOGGED_USER', JSON.stringify(currentUser));
+
       updateSidebarRoleUI();
       document.getElementById('loginModal').classList.add('hidden'); 
       switchView('examList'); 
     }
 
+    // 🎯 [세션 보존 구현] 로그아웃 시 세션 제거
     function handleLogout() { 
+      sessionStorage.removeItem('SDH_LOGGED_USER');
+      currentUser = null;
+      document.getElementById('loginId').value = '';
+      document.getElementById('loginPw').value = '';
       document.getElementById('loginModal').classList.remove('hidden'); 
     }
 
+    // 🎯 [세션 체크] 페이지 새로고침 시 자동 세션 복원
+    function checkLoggedUserSession() {
+      const savedUser = sessionStorage.getItem('SDH_LOGGED_USER');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById('loginModal').classList.add('hidden');
+        updateSidebarRoleUI();
+      } else {
+        document.getElementById('loginModal').classList.remove('hidden');
+      }
+    }
+
     function updateSidebarRoleUI() {
+      if (!currentUser) return;
       const badgeEl = document.getElementById('userBadge');
       const currentUserNameEl = document.getElementById('currentUserName');
       const adminSection = document.getElementById('adminMenuSection');
@@ -1501,6 +1531,8 @@ ${groupTypes.join(', ')}
         if (adminCreateTeacherBox) adminCreateTeacherBox.classList.add('hidden');
         if (myRoleBadge) myRoleBadge.innerText = '선생님 계정';
       }
+
+      renderTeacherAccountList();
     }
 
     function switchView(viewName) {
@@ -1526,12 +1558,49 @@ ${groupTypes.join(', ')}
       document.getElementById('myNewPw').value = '';
     }
 
+    // 🎯 [교사 계정 생성]
     function createTeacherAccount() {
       const id = document.getElementById('newTeacherId').value.trim();
-      const pw = document.getElementById('newTeacherPw').value.trim();
       if (!id) return alert('선생님 ID를 입력하세요.');
-      alert(`🎉 [${id}] 선생님 계정이 정상 생성되었습니다! (초기 PW: ${pw})`);
+      if (registeredTeacherList.includes(id)) return alert('이미 존재하는 교사 ID입니다.');
+
+      registeredTeacherList.push(id);
+      renderTeacherAccountList();
+      alert(`🎉 [${id}] 선생님 계정이 생성되었습니다!`);
       document.getElementById('newTeacherId').value = '';
+    }
+
+    // 🎯 [교사 계정 삭제 기능 추가] My Page 내 계정 목록 렌더링
+    function renderTeacherAccountList() {
+      const listEl = document.getElementById('teacherAccountList');
+      if (!listEl) return;
+
+      if (registeredTeacherList.length === 0) {
+        listEl.innerHTML = `<li class="py-2 text-slate-400 text-center">등록된 교사 계정이 없습니다.</li>`;
+        return;
+      }
+
+      listEl.innerHTML = registeredTeacherList.map((id, idx) => `
+        <li class="py-2 px-2 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-user-tie text-blue-500"></i>
+            <span class="font-bold text-slate-800">${id}</span>
+          </div>
+          <button onclick="deleteTeacherAccount(${idx})" class="text-xs text-rose-600 hover:bg-rose-50 px-2 py-1 rounded font-bold">
+            삭제
+          </button>
+        </li>
+      `).join('');
+    }
+
+    // 🎯 [교사 계정 삭제 기능]
+    function deleteTeacherAccount(idx) {
+      const targetId = registeredTeacherList[idx];
+      if (confirm(`정말 [${targetId}] 선생님 계정을 삭제하시겠습니까?`)) {
+        registeredTeacherList.splice(idx, 1);
+        renderTeacherAccountList();
+        alert(`[${targetId}] 계정이 삭제되었습니다.`);
+      }
     }
 
     function renderMyPaperHistoryTable() {
@@ -1565,11 +1634,11 @@ ${groupTypes.join(', ')}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      checkLoggedUserSession(); // 로그인 세션 확인 및 복원
       initDropdownOptions();
       loadAllSupabaseData();
       render25PassageInputForms(); 
       checkApiKeyStatus();
-      updateSidebarRoleUI();
     });
   </script>
 </body>
