@@ -50,16 +50,25 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
+  <!-- 로그인 팝업 모달 -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
         <h2 class="text-2xl font-black text-slate-900">SDH STUDIO</h2>
-        <p class="text-xs text-slate-500 font-medium mt-1">고등부 영어 변형문제 자동 생성 시스템</p>
+        <p class="text-xs text-slate-500 font-medium mt-1">고등부 영어 변형문제 자동 생성 및 출제 시스템</p>
       </div>
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-        <input type="text" id="loginId" placeholder="아이디 입력" required class="w-full p-3 border border-slate-300 rounded-lg text-sm" />
-        <input type="password" id="loginPw" placeholder="비밀번호 입력" required class="w-full p-3 border border-slate-300 rounded-lg text-sm" />
-        <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg text-sm">로그인</button>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">ID</label>
+          <input type="text" id="loginId" value="admin" required class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">PW</label>
+          <input type="password" id="loginPw" value="1234" required class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" />
+        </div>
+        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
+          SDH STUDIO 로그인
+        </button>
       </form>
     </div>
   </div>
@@ -74,7 +83,7 @@
           <button onclick="switchView('mockRegisterPanel')" id="nav-mockRegisterPanel" class="nav-item text-teal-400"><span><i class="fa-solid fa-list-check mr-2"></i>모의고사 DB등록</span></button>
         </div>
       </nav>
-      <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400"><i class="fa-solid fa-arrow-right-from-bracket mr-1"></i>로그아웃</button>
+      <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400 transition"><i class="fa-solid fa-arrow-right-from-bracket mr-1"></i>로그아웃</button>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
@@ -185,15 +194,32 @@
       throw new Error('API 통신 실패');
     }
 
-    // 🎯 [핵심] 서버 결합 파서 엔진: 스크린샷 5대 오류 원천 차단
+    // 🎯 로그인 로직 원상복구
+    function handleLogin(e) {
+      if (e) e.preventDefault();
+      const loginId = document.getElementById('loginId').value.trim();
+      const loginPw = document.getElementById('loginPw').value.trim();
+
+      if (loginId === 'admin' && loginPw === '1234') {
+        currentUser = { id: 'admin', role: 'admin' };
+        document.getElementById('loginModal').classList.add('hidden');
+        switchView('examList');
+      } else {
+        alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+      }
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById('loginModal').classList.remove('hidden');
+    }
+
+    // 서버 데이터 및 문제 렌더링
     function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
       let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
       let finalPassage = origPassage;
-      let givenBoxText = '';
-      let conditionText = '';
-      let summaryText = '';
+      let givenBoxText = '', conditionText = '', summaryText = '';
 
-      // 1. 어법/어휘: 밑줄 5개 주입 검증
       if (qType === '어법' || qType === '어휘') {
         if (Array.isArray(item.target_words) && item.target_words.length === 5) {
           let p = origPassage;
@@ -203,41 +229,29 @@
           });
           finalPassage = p;
         }
-      } 
-      // 2. 빈칸/단답형: 빈칸 뚫기 강제 적용
-      else if (qType === '빈칸' || qType === '단답형') {
+      } else if (qType === '빈칸' || qType === '단답형') {
         if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
           finalPassage = origPassage.replace(item.target_blank_word, '__________');
         } else {
           finalPassage = origPassage.replace(/(\w+){1}(\s+\w+){0,2}$/, '__________');
         }
-      } 
-      // 3. 함축의미: 밑줄 강제 적용
-      else if (qType === '함축의미') {
+      } else if (qType === '함축의미') {
         if (item.target_phrase && origPassage.includes(item.target_phrase)) {
           finalPassage = origPassage.replace(item.target_phrase, `<u>${item.target_phrase}</u>`);
         }
-      } 
-      // 4. 순서: 주어진 글 상단 독립 박스 분리 + (A)(B)(C) 분할
-      else if (qType === '순서') {
+      } else if (qType === '순서') {
         const sentences = origPassage.split('. ');
-        const givenPart = sentences.slice(0, 2).join('. ') + '.';
+        givenBoxText = sentences.slice(0, 2).join('. ') + '.';
         const remainPart = sentences.slice(2).join('. ');
         const third = Math.floor(remainPart.length / 3);
-        
-        givenBoxText = givenPart;
         finalPassage = `(A) ${remainPart.substring(0, third)}\n(B) ${remainPart.substring(third, third*2)}\n(C) ${remainPart.substring(third*2)}`;
-      } 
-      // 5. 삽입: 주어진 문장 상단 독립 박스 분리 + 지문 내 ①~⑤ 삽입 위치 보장
-      else if (qType === '삽입') {
+      } else if (qType === '삽입') {
         givenBoxText = item.given_sentence || '주어진 문장 예시';
         const s = origPassage.split('. ');
         if (s.length >= 5) {
           finalPassage = `${s[0]}. ( ① ) ${s[1]}. ( ② ) ${s[2]}. ( ③ ) ${s[3]}. ( ④ ) ${s[4]}. ( ⑤ ) ${s.slice(5).join('. ')}`;
         }
-      }
-      // 6. 서술형: [조건] 및 [요약문] 독립 박스 강제 결합
-      else if (qType === '서술형') {
+      } else if (qType === '서술형') {
         conditionText = item.condition_text || '[조건] 본문에서 알맞은 단어를 찾아 문맥에 맞게 쓰시오.';
         summaryText = item.summary_text || 'Summary: The passage indicates that __________ is essential.';
       }
@@ -245,18 +259,13 @@
       return {
         id: `Q-${setKey}-${passageNum}-${qType}-${idx+1}-${Math.random().toString(36).substring(2,7)}`,
         passage_num: passageNum, type: qType, difficulty: '중',
-        title: finalTitle,
-        passage: finalPassage,
-        given_box: givenBoxText,
-        condition_box: conditionText,
-        summary_box: summaryText,
+        title: finalTitle, passage: finalPassage,
+        given_box: givenBoxText, condition_box: conditionText, summary_box: summaryText,
         options: Array.isArray(item.options) ? item.options : [],
-        answer: item.answer || '①',
-        explanation: item.explanation || '본문의 핵심 문맥에 따른 해설입니다.'
+        answer: item.answer || '①', explanation: item.explanation || '본문의 핵심 문맥에 따른 해설입니다.'
       };
     }
 
-    // 🎯 [출제 실행] 구조화 JSON 결합 출제
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return alert('API Key를 먼저 설정하세요.');
@@ -267,13 +276,11 @@
       const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
       const logBox = document.getElementById('generationLogBox');
 
-      logBox.innerHTML = `<div>🚀 [SERVER-JOIN BATCH] 완전 검증 출제 엔진 가동 (${setKey})...</div>`;
-
+      logBox.innerHTML = `<div>🚀 출제 엔진 가동 (${setKey})...</div>`;
       await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
       generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
 
       let totalCount = 0;
-
       for (let pObj of targetPassages) {
         const prompt = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
@@ -285,13 +292,6 @@ ${pObj.text}
 [요청 유형들]:
 ${selectedTypes.join(', ')}
 
-[유형별 JSON 변형 지침]:
-1. '어법'/'어휘': 'target_words' 배열에 본문 내 단어 5개를 [{ "orig": "원문단어", "mod": "변형단어" }] 형태로 내보내십시오.
-2. '빈칸'/'단답형': 'target_blank_word' 필드에 빈칸으로 뚫을 본문 영문 단어를 적으십시오.
-3. '함축의미': 'target_phrase' 필드에 밑줄을 그을 본문 구절을 적으십시오.
-4. '삽입': 'given_sentence' 필드에 상단 박스에 넣을 주어진 문장을 작성하십시오.
-5. '서술형': 'condition_text' 필드에 [조건] 지침, 'summary_text' 필드에 [요약문 영문장]을 작성하십시오.
-
 JSON 출력 예시:
 [
   {
@@ -299,7 +299,7 @@ JSON 출력 예시:
     "target_words": [{"orig":"efficient", "mod":"efficiently"}],
     "options": ["① efficient", "② efficiently", "③ tripled", "④ doubled", "⑤ desired"],
     "answer": "②",
-    "explanation": "치명적 어법 해설"
+    "explanation": "상세 어법 해설"
   }
 ]
 `;
@@ -311,18 +311,15 @@ JSON 출력 예시:
             await supabaseClient.from('generated_questions').upsert(verifiedItems);
             generatedQuestionsPool.unshift(...verifiedItems);
             totalCount += verifiedItems.length;
-            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완전 검증 적재 완료 (+${verifiedItems.length}문항)</div>`;
+            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 적재 완료 (+${verifiedItems.length}문항)</div>`;
           }
-        } catch (e) {
-          console.error(e);
-        }
+        } catch (e) { console.error(e); }
       }
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 완벽 적재</div>`;
-      alert('🎉 출제 완료! 스크린샷의 5대 오류가 백엔드 검증 단에서 완벽 해결되었습니다.');
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재</div>`;
+      alert('🎉 출제 완료!');
       renderExamTable();
     }
 
-    // 🎯 [시험지 인쇄 렌더링] 스크린샷 5대 오류 완벽 조립
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const quickGrid = document.getElementById('quickAnswerGrid');
@@ -338,24 +335,13 @@ JSON 출력 예시:
               <span>${idx + 1}. ${q.title}</span>
               <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type}]</span>
             </div>
-
-            <!-- 🎯 8번/10번 오류 해결: [주어진 글 / 주어진 문장] 독립 박스 상단 배치 -->
             ${q.given_box ? `<div class="given-box exam-eng-font font-medium"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
-
-            <!-- 🎯 지문 박스 -->
             <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
-
-            <!-- 🎯 12번 오류 해결: [서술형 조건] 및 [요약문] 독립 박스 표시 -->
             ${isSubjective ? `
               ${q.condition_box ? `<div class="text-[11px] font-bold text-slate-800 my-1">${q.condition_box}</div>` : ''}
               ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-              <div class="mt-2 border p-3 rounded bg-white font-sans">
-                <span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span>
-                <div class="border-b border-dashed h-5"></div>
-              </div>
+              <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
             ` : ''}
-
-            <!-- 객관식 보기 -->
             ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${o}</div>`).join('')}</div>` : ''}
           </div>
         `;
@@ -407,9 +393,6 @@ JSON 출력 예시:
       document.getElementById('view-' + v)?.classList.remove('hidden');
     }
 
-    function handleLogin(e) { if (e) e.preventDefault(); currentUser = { id: 'admin' }; switchView('examList'); }
-    function handleLogout() { currentUser = null; document.getElementById('loginModal').classList.remove('hidden'); }
-
     document.addEventListener('DOMContentLoaded', () => {
       loadAllSupabaseData();
       render25PassageInputForms();
@@ -451,7 +434,7 @@ JSON 출력 예시:
     }
 
     async function saveAll25Passages() {
-      const year = document.getElementById('regYear')?.value || '2024', month = document.getElementById('regMonth')?.value || '6', grade = document.getElementById('regGrade')?.value || '1';
+      const year = '2024', month = '6', grade = '1';
       const upsertData = [];
       passageNumberList.forEach(num => {
         const text = document.getElementById(`inputP_${num}`)?.value.trim();
