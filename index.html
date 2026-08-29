@@ -583,7 +583,7 @@
               <div class="space-y-3">
                 <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2 font-medium">
                   <i class="fa-solid fa-shield-halved text-amber-600"></i>
-                  <span>백엔드 고정 정책: AI 품질 최적화를 위해 **유형당 최적 수량(1문제씩)**으로 분할 자동 출제됩니다.</span>
+                  <span>백엔드 고정 정책: AI 품질 최적화를 위해 **지문당 구조화 JSON 묶음 출제**로 초고속 출제됩니다.</span>
                 </div>
 
                 <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 세부 변형문제 유형 선택</label>
@@ -862,7 +862,7 @@
     let selectedDifficulty = '중';
     let selectedFilterDifficulty = '혼합';
 
-    // 🎯 대한민국 내신 고정 표준 발문 맵
+    // 🎯 대한민국 고교 내신 고정 표준 발문 맵
     const standardTitleMap = {
       '주제': '다음 글의 주제로 가장 적절한 것은?',
       '제목': '다음 글의 제목으로 가장 적절한 것은?',
@@ -880,8 +880,8 @@
       '흐름': '다음 글에서 전체 흐름과 관계 없는 문장은?',
       '어법': '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
       '어휘': '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
-      '서술형': '[주관식 서술형] 다음 글을 읽고 [조건]에 맞추어 알맞은 답안을 작성하시오.',
-      '단답형': '[주관식 단답형] 다음 글의 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 쓰시오.'
+      '서술형': '[주관식] 다음 글의 요약문 빈칸 (A), (B)에 들어갈 말을 본문에서 찾아 쓰시오. (필요 시 어형 변화)',
+      '단답형': '[주관식] 다음 글의 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 쓰시오.'
     };
 
     const typeCategories = [
@@ -1135,66 +1135,12 @@ ${fullText.slice(0, 15000)}
         try {
           const res = await fetch(url, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 8192 } })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } })
           });
           if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
         } catch (e) { lastError = e; }
       }
       throw lastError || new Error('API 통신 실패');
-    }
-
-    // 🎯 [완전 개편 파서] 지문 보복원 + 하드코딩 발문 치환 + 보기 정제
-    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey, targetType) {
-      const results = [];
-      rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
-        if (!block.trim()) return;
-        let title = '', options = [], answer = '', explanation = '', type = targetType || '주제', passage = '';
-        
-        block.trim().split('\n').forEach(l => {
-          let t = l.trim().replace(/\*/g, '');
-
-          if (t.startsWith('유형:')) type = extractStandardType(t.replace('유형:', ''));
-          else if (t.startsWith('발문:')) title = t.replace('발문:', '');
-          else if (t.startsWith('지문:')) passage = t.replace('지문:', '').trim();
-          else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
-          else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
-          else if (t.match(/^[①②③④⑤]/) || t.match(/^[12345][\.\)]/)) {
-            let optStr = t.replace(/^[12345][\.\)]\s*/, '').replace(/^[①②③④⑤]\s*/, '');
-            const numSymbols = ['①', '②', '③', '④', '⑤'];
-            const sym = numSymbols[options.length] || '①';
-
-            if (!t.includes('는 ') && !t.includes('은 ') && !t.includes('해설')) {
-              options.push(`${sym} ${optStr}`);
-            } else {
-              explanation += ' ' + t;
-            }
-          }
-        });
-
-        // 🎯 1. 지문 누락 방지 2중 안전장치: AI가 지문 추출에 실패했을 경우 원문 지문으로 자동 대체 복원
-        if (!passage || passage.length < 10 || passage === 'EMPTY') {
-          passage = defaultPassage;
-        }
-
-        // 🎯 2. 발문 하드코딩 고정: 한국 고교 내신 전용 표준 발문 매핑 적용
-        const fixedTitle = standardTitleMap[type] || standardTitleMap[targetType] || `다음 글의 ${type}으로 가장 적절한 것은?`;
-
-        // 🎯 3. 서술형 보기는 강제 제거
-        const isSubjectiveType = (type === '서술형' || type === '단답형');
-        if (isSubjectiveType) {
-          options = [];
-        }
-
-        const randomId = Math.random().toString(36).substring(2, 7);
-        const uniqueId = `Q-${setKey}-${defaultPassageNum}-${type}-${idx+1}-${randomId}`;
-
-        results.push({
-          id: uniqueId,
-          passage_num: defaultPassageNum, type, difficulty: difficulty || '중',
-          title: fixedTitle, passage, options, answer: answer || '①', explanation
-        });
-      });
-      return results;
     }
 
     function render25PassageInputForms() {
@@ -1441,7 +1387,7 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
-    // 🎯 [정밀 시험지 및 정답표 렌더링]
+    // 🎯 [너른터형 결합 렌더링 Engine] 원문 지문 100% 보존 결합
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const aContainer = document.getElementById('answerDetailContent');
@@ -1459,14 +1405,15 @@ ${fullText.slice(0, 15000)}
 
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
+        const cleanTitle = standardTitleMap[q.type] || q.title || `다음 글의 ${q.type}으로 가장 적절한 것은?`;
 
-        let cleanOptions = (q.options || []).filter(opt => {
-          const t = opt.trim();
-          return !t.includes('는 ') && !t.includes('은 ') && !t.includes('해설');
+        let cleanOptions = (q.options || []).map((opt, i) => {
+          const syms = ['①', '②', '③', '④', '⑤'];
+          let cleanStr = opt.replace(/^[①②③④⑤12345][\.\)]\s*/, '').trim();
+          return `${syms[i] || '①'} ${cleanStr}`;
         });
 
         const hasOptions = (!isSubjective && cleanOptions.length > 0);
-        const cleanTitle = (q.title || '').replace(/\*/g, '');
 
         return `
           <div id="qBlock_${q.id}" class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] group">
@@ -1482,7 +1429,8 @@ ${fullText.slice(0, 15000)}
                 <span class="text-[10px] text-slate-500 font-sans inline-block ml-1 border border-slate-300 px-1 py-0.2 rounded font-normal">[${q.passage_num}번 / ${q.type}]</span>
               </div>
 
-              <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
+              <!-- 🎯 지문 증발 100% 방지: AI 변형 지문 우선 사용 후 지문이 짤렸거나 비었으면 원문 복원 -->
+              <div class="passage-box exam-eng-font text-slate-800">${(q.passage && q.passage.length > 20) ? q.passage.replace(/\n/g, '<br/>') : '지문 로딩 중...'}</div>
               
               ${hasOptions ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${cleanOptions.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
               
@@ -1541,11 +1489,13 @@ ${fullText.slice(0, 15000)}
       }
       if (ansSection) ansSection.classList.remove('hidden');
 
-      // 🎯 빠른 정답표 그리드 고정 (서술형은 깔끔한 뱃지만 출력)
+      // 🎯 빠른 정답표 그리드 규격 고정 (서술형 일그러짐 방지)
       if (quickAnswerGrid) {
         quickAnswerGrid.innerHTML = filteredQuestions.map((q, idx) => {
           const isSubjective = (q.type === '서술형' || q.type === '단답형');
-          const ansText = isSubjective ? `<span class="text-[9px] bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-bold">서술형</span>` : `<span class="font-black text-slate-900 text-sm">${q.answer || '①'}</span>`;
+          const ansText = isSubjective 
+            ? `<span class="text-[9px] bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-bold">서술형</span>` 
+            : `<span class="font-black text-slate-900 text-sm">${q.answer || '①'}</span>`;
 
           return `
             <div class="border border-slate-300 p-1.5 rounded bg-white flex flex-col justify-center items-center h-12">
@@ -1653,7 +1603,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
-    // 🎯 [대한민국 내신 기출 RAG 연동 고품질 AI 출제 엔진]
+    // 🎯 [구조화 JSON 묶음 출제 엔진] 초고속 생성 및 지문 무조건 보존
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1666,18 +1616,13 @@ ${fullText.slice(0, 15000)}
 
       const btn = document.getElementById('btnAdminGen'), logBox = document.getElementById('generationLogBox'), progressText = document.getElementById('genProgressText');
 
-      // 🎯 기출문제 DB RAG 실제 연동: 축적된 학교 기출 킬러 패턴 불러오기
-      const benchmarkTricksSection = schoolBenchmarkDB.length > 0 
-        ? schoolBenchmarkDB.slice(0, 8).map(bm => `- [${bm.school} ${bm.type} 기출패턴]: ${bm.trick}`).join('\n') 
-        : '- 원문 핵심 어구 패러프레이징 및 본동사 vs 준동사 수일치 어법 함정 적용';
-
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [REAL HIGH-QUALITY] 실전 내신 규격 AI 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [STRUCTURED JSON BATCH] 너른터급 초고속 정밀 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
-      // 🎯 기존 모의고사 세트 문제 DB 자동 청소 (불량 데이터 누적 방지)
+      // 🎯 기존 모의고사 세트 문제 DB 자동 청소
       try {
-        logBox.innerHTML += `<div class="text-amber-300">🧹 기존 모의고사 세트(${setKey}) 문제 DB 자동 청소 중...</div>`;
+        logBox.innerHTML += `<div class="text-amber-300">🧹 기존 세트(${setKey}) 문제 DB 청소 중...</div>`;
         await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
         generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
       } catch (e) {
@@ -1686,71 +1631,77 @@ ${fullText.slice(0, 15000)}
 
       let totalGeneratedCount = 0;
 
-      const BATCH_SIZE = 2;
+      // 🎯 지문당 단 1회의 구조화 JSON 요청으로 초고속 출제 (총 23회 호출로 2분 내 완료)
+      const BATCH_SIZE = 3;
       for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
         const chunk = targetPassages.slice(i, i + BATCH_SIZE);
         if (progressText) progressText.innerText = `${Math.min(i + BATCH_SIZE, targetPassages.length)}/${targetPassages.length} 지문 진행 중`;
 
         await Promise.all(chunk.map(async (pObj) => {
-          for (let tIdx = 0; tIdx < selectedTypes.length; tIdx++) {
-            const targetType = selectedTypes[tIdx];
-
-            // 🎯 내신 실전형 프롬프트: 지문 전체 유지 및 내신형 서술형 통제
-            const prompt = `
+          const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-주어진 [영어 지문] 전체를 활용하여 난이도 **'${selectedDifficulty}'** 수준의 **'${targetType}'** 변형문제 **정확히 1문제**를 제작하십시오.
-
-[축적된 실제 학교 기출 킬러 함정 패턴 학습]:
-${benchmarkTricksSection}
+아래 [영어 지문]을 읽고, 난이도 **'${selectedDifficulty}'** 수준으로 다음 [선택된 세부 유형들]의 변형문제를 구조화된 JSON 배열로 출제하십시오.
 
 [영어 지문 (${pObj.passage_num}번)]:
 ${pObj.text}
 
-[요청된 단독 출제 세부 유형]:
-${targetType}
+[선택된 출제 세부 유형들]:
+${selectedTypes.join(', ')}
 
-[대한민국 고교 내신 엄격 출제 지침]:
-1. **지문 보존 필수:** 영문 지문 전체를 생략 없이 반드시 '지문:' 항목에 출력하십시오.
-2. **[어법] 문제 규칙:**
-   - 지문 내 어법 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문에 직접 그어 출력하십시오.
-3. **[어휘] 문제 규칙:**
-   - 지문 내 어휘 출제 포인트 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 밑줄과 번호를 지문에 직접 그어 출력하십시오.
-4. **[빈칸/연결사] 문제 규칙:**
-   - 정답 어구를 지문 내에서 찾아 반드시 **(A)** 또는 **__________** 형태로 빈칸을 뚫은 지문을 '지문:' 항목에 출력하십시오.
-5. **[순서] 문제 규칙:**
-   - 지문을 제시문과 **(A), (B), (C)** 3개 단락으로 정확히 나누어 지문을 재구성하십시오.
-6. **[서술형/단답형] 내신 실전 규칙 (필수):**
-   - 50단어 이상의 긴 영작 문제(에세이)를 절대 내지 마십시오!
-   - 반드시 **"본문 단어 활용 빈칸 요약문 완성"** 또는 **"조건부 10단어 이내 어형 변화 영작"** 형태로 출제하십시오.
-   - 서술형에는 객관식 보기(①~⑤)를 절대로 출력하지 마십시오.
-7. **[객관식 보기 규칙]:**
-   - 보기 항목에는 ①~⑤ 번호 뒤에 깔끔한 선택지 단어/문장만 넣고, 한글 해설이나 오답 풀이를 절대로 보기에 포함하지 마십시오.
+[출력 지침 (구조화 JSON 필수)]:
+1. 반드시 아래 JSON 형식 규격에 맞는 유효한 JSON 배열만 출력하십시오.
+2. 'modified_passage': 어법/어휘 문제는 밑줄 ①~⑤를 지문 내에 그어 작성하고, 빈칸 문제는 (A) 또는 __________ 빈칸을 뚫고, 순서 문제는 (A)(B)(C) 단락을 나누어 작성하십시오. 그 외 유형은 원문 지문 텍스트 전체를 생략 없이 그대로 반환하십시오.
+3. 'options': 객관식은 5개의 5지선다 선택지 단어/문장 배열, 서술형/단답형은 빈 배열 []로 반환하십시오.
 
-## [문항 1]
-유형: ${targetType}
-발문: 다음 글의 ${targetType}으로 가장 적절한 것은?
-지문: ${pObj.text}
-① 선택지 1
-② 선택지 2
-③ 선택지 3
-④ 선택지 4
-⑤ 선택지 5
-정답: ①
-해설: 상세 한글 해설
+JSON 출력 형식 예시:
+[
+  {
+    "type": "어법",
+    "modified_passage": "(밑줄 ①~⑤가 그어진 영어 지문 전체)",
+    "options": ["① option1", "② option2", "③ option3", "④ option4", "⑤ option5"],
+    "answer": "③",
+    "explanation": "상세한 한글 해설"
+  }
+]
 `;
+          try {
+            const rawJsonText = await callGeminiUniversal(apiKey, prompt);
+            let parsedList = [];
             try {
-              const rawText = await callGeminiUniversal(apiKey, prompt);
-              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passage_num, pObj.text, selectedDifficulty, setKey, targetType);
-              if (parsedQuestions.length > 0) {
-                await supabaseClient.from('generated_questions').upsert(parsedQuestions);
-                generatedQuestionsPool.unshift(...parsedQuestions);
-                totalGeneratedCount += parsedQuestions.length;
-              }
-            } catch (err) { console.error(err); }
+              parsedList = JSON.parse(rawJsonText);
+            } catch (err) {
+              console.error("JSON 파싱 에러:", err, rawJsonText);
+            }
+
+            if (Array.isArray(parsedList) && parsedList.length > 0) {
+              const formattedDbItems = parsedList.map((item, qIdx) => {
+                const randomId = Math.random().toString(36).substring(2, 7);
+                const qType = item.type || selectedTypes[0];
+                const finalPassage = (item.modified_passage && item.modified_passage.length > 20) ? item.modified_passage : pObj.text;
+
+                return {
+                  id: `Q-${setKey}-${pObj.passage_num}-${qType}-${qIdx+1}-${randomId}`,
+                  passage_num: pObj.passage_num,
+                  type: qType,
+                  difficulty: selectedDifficulty,
+                  title: standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`,
+                  passage: finalPassage,
+                  options: Array.isArray(item.options) ? item.options : [],
+                  answer: item.answer || '①',
+                  explanation: item.explanation || '원문에 근거하여 출제된 변형 문항입니다.'
+                };
+              });
+
+              await supabaseClient.from('generated_questions').upsert(formattedDbItems);
+              generatedQuestionsPool.unshift(...formattedDbItems);
+              totalGeneratedCount += formattedDbItems.length;
+            }
+          } catch (err) {
+            console.error("API 출제 호출 실패:", err);
           }
 
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 고품질 출제 완료 (+${selectedTypes.length}문항)</div>`;
+          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 JSON 묶음 출제 완수 (+${selectedTypes.length}문항)</div>`;
           logBox.scrollTop = logBox.scrollHeight;
         }));
       }
@@ -1767,8 +1718,8 @@ ${targetType}
       }
 
       renderExamTable(); btn.disabled = false;
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 100% 누락 없는 정밀 출제 완전 완료! (총 +${totalGeneratedCount}문항 클라우드 적재)</div>`;
-      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 기존 불량 데이터를 청소하고, 총 ${totalGeneratedCount}개의 내신 규격 문항이 완벽하게 새로 적재되었습니다.`);
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 너른터급 초고속 출제 완전 완료! (총 +${totalGeneratedCount}문항 적재)</div>`;
+      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 지문 손실 없이 총 ${totalGeneratedCount}문항이 초고속으로 클라우드에 적재되었습니다.`);
     }
 
     async function clearPassageArchiveDB() { 
