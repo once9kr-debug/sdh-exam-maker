@@ -123,7 +123,6 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
-    /* 터미널 커서 스타일 */
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -455,7 +454,7 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 백엔드 수량 고정 대량 출제 엔진 -->
+      <!-- VIEW 5: 수량 선택 노란색 UI 완전 삭제 및 백엔드 고정 엔진 적용 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -683,7 +682,6 @@
 
     let selectedDifficulty = '중';
 
-    // 세분화 5대 대분류 구조
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-teal-500' },
       { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-sky-500' },
@@ -1255,7 +1253,7 @@ ${fullText.slice(0, 15000)}
       alert('Gemini API Key 저장 완료!');
     }
 
-    // 🚀 [백엔드 수량 고정 + 카테고리 분할 호출 엔진] 짤림 없는 100% 완벽 출제
+    // 🚀 [백엔드 수량 고정 + 카테고리 분할 호출 엔진]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1283,20 +1281,18 @@ ${fullText.slice(0, 15000)}
 
       let totalGeneratedCount = 0;
       
-      // 요청 유형을 대분류 5개 카테고리 단위 그룹으로 자동 분할 (토큰 잘림 차단)
       const typeGroups = [];
       typeCategories.forEach(cat => {
         const matchedInCat = cat.types.filter(t => selectedTypes.includes(t));
         if (matchedInCat.length > 0) typeGroups.push(matchedInCat);
       });
 
-      const BATCH_SIZE = 3; // 안정적인 지문 병렬 수
+      const BATCH_SIZE = 3;
 
       for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
         const chunk = targetPassages.slice(i, i + BATCH_SIZE);
         if (progressText) progressText.innerText = `${Math.min(i + BATCH_SIZE, targetPassages.length)}/${targetPassages.length} 진행 중`;
 
-        // 지문 그룹별로 분할 카테고리 순차 호출
         await Promise.all(chunk.map(async (pObj) => {
           for (let g = 0; g < typeGroups.length; g++) {
             const groupTypes = typeGroups[g];
