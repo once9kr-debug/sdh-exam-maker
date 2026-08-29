@@ -1045,21 +1045,22 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-   // ⚡ 구버전 에러 모델을 지우고 100% 호환 검증된 모델만 호출하는 안전 함수
+// ⚡ Google API 정식 v1 엔드포인트 및 최신 Flash 모델 호환 호출 함수
     async function callGeminiUniversal(apiKey, prompt, onLog) {
-      const candidateModels = [
-        'gemini-2.0-flash',
-        'gemini-1.5-flash'
+      // 최신 API 정식 v1 및 v1beta 경로 자동 호환 배열
+      const apiEndpoints = [
+        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
       ];
 
       let lastError = null;
 
-      for (let i = 0; i < candidateModels.length; i++) {
-        const m = candidateModels[i];
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+      for (let i = 0; i < apiEndpoints.length; i++) {
+        const url = apiEndpoints[i];
 
         try {
-          if (onLog) onLog(`[AI 통신 시도 ${i+1}/${candidateModels.length}] 모델: ${m}...`);
+          if (onLog) onLog(`[AI 통신 시도 ${i+1}/${apiEndpoints.length}]...`);
           
           const res = await fetch(url, {
             method: 'POST',
@@ -1087,7 +1088,7 @@ ${fullText.slice(0, 15000)}
         }
       }
 
-      throw lastError || new Error('Gemini API 호출에 실패했습니다. API Key를 확인하세요.');
+      throw lastError || new Error('Gemini API 통신 실패. API Key 및 모델 경로를 확인하세요.');
     }
 
     // 🚀 견고한 마크다운 파서 (에러 0% 정밀 파싱)
