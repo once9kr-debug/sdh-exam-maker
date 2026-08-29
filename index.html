@@ -123,11 +123,11 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- ==================== 1. 로그인 팝업 모달 ==================== -->
-  <div id="loginModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4">
+  <!-- ==================== 1. 로그인 팝업 모달 (회색 블러 처리 적용) ==================== -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
-        <div class="flex justify-center mb-3">
+        <div class="flex justify-center mb-3 cursor-pointer" onclick="switchView('mockRegisterPanel')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-12 w-auto">
             <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
             <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
@@ -170,10 +170,10 @@
   <!-- ==================== 메인 프레임 ==================== -->
   <div id="appContainer" class="flex flex-1 min-h-screen">
 
-    <!-- LNB (좌측 사이드바) -->
+    <!-- LNB (좌측 사이드바 - 상단 로고에 첫 화면 이동 링크 적용) -->
     <aside class="no-print w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
-        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm">
+        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm cursor-pointer hover:bg-slate-50 transition" onclick="switchView('mockRegisterPanel')" title="첫 화면으로 이동">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-8 w-auto">
             <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
             <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
@@ -828,7 +828,6 @@
       `).join('');
     }
 
-    // 🎯 폴더 아이콘 클릭 시 유형 및 지문 선택 화면으로 즉시 전환
     function openExamTypeSelector(examId) {
       currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
       if (currentSelectedExam) {
@@ -989,7 +988,7 @@ ${selectedTypes.join(', ')}
 
         generatedQuestionsPool.unshift(...formatted);
 
-        // 💡 AI 문제 생성 완료 시 모의고사 목록(mockExams)에 자동 등록/업데이트
+        // AI 문제 생성 완료 시 모의고사 목록(mockExams)에 자동 등록/업데이트
         const examId = `${adminYear}-${adminMonth}-${adminGrade}`;
         let existingExam = mockExams.find(e => e.id === examId);
         
@@ -1036,6 +1035,10 @@ ${selectedTypes.join(', ')}
       if (e) e.preventDefault();
       document.getElementById('loginModal').classList.add('hidden');
       switchView('mockRegisterPanel');
+    }
+
+    function handleLogout() {
+      document.getElementById('loginModal').classList.remove('hidden');
     }
 
     function switchView(viewName) {
