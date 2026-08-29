@@ -123,6 +123,21 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
+    /* 터미널 깜빡이는 커서 애니메이션 */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .terminal-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background-color: #10b981;
+      margin-left: 4px;
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+
     @media print {
       body {
         background: white !important;
@@ -306,7 +321,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 유형 및 지문 선택 (너른터 UX 스타일 완벽 반영) -->
+      <!-- VIEW 2: 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -320,7 +335,6 @@
           </div>
         </div>
 
-        <!-- 1. 유형별 출제 문항수 표시 바 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -331,11 +345,9 @@
               <button onclick="toggleAllTypes(false)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 해제</button>
             </div>
           </div>
-
           <div id="typeChipContainer" class="flex flex-wrap items-center gap-2 pt-1"></div>
         </div>
 
-        <!-- 2. 지문별 출제 문항수 표시 영역 (너른터 방식) -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -346,11 +358,9 @@
               <button onclick="toggleAllPassages(false)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 해제</button>
             </div>
           </div>
-
           <div id="passageChipContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1"></div>
         </div>
 
-        <!-- 하단 출제 버튼 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <div class="flex items-center gap-4 text-xs font-bold text-slate-700">
             <span>선택된 문항 제한:</span>
@@ -498,36 +508,16 @@
 
                 <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 변형문제 유형 선택</label>
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="주제" checked /> 대의파악 (주제)
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="제목" checked /> 대의파악 (제목)
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="요지" checked /> 대의파악 (요지)
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="요약" checked /> 요약문 완성
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="어법" checked /> 어법상 틀린 것 찾기
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="어휘" checked /> 문맥상 어휘
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸 추론
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="순서" checked /> 글의 순서 배열
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="삽입" checked /> 문장 삽입
-                  </label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="adminGenType" value="주관식" checked /> 서술형 조건 영작
-                  </label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="주제" checked /> 대의파악 (주제)</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="제목" checked /> 대의파악 (제목)</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="요지" checked /> 대의파악 (요지)</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="요약" checked /> 요약문 완성</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="어법" checked /> 어법상 틀린 것 찾기</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="어휘" checked /> 문맥상 어휘</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸 추론</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="순서" checked /> 글의 순서 배열</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="삽입" checked /> 문장 삽입</label>
+                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="주관식" checked /> 서술형 조건 영작</label>
                 </div>
               </div>
 
@@ -575,25 +565,39 @@
                 <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
                   <i class="fa-solid fa-cloud-arrow-up"></i>
                 </div>
-                <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭</h4>
+                <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭 (다중 선택 가능)</h4>
+                <div id="pdfUploadStatus" class="mt-2 text-xs font-bold text-cyan-600"></div>
               </div>
 
               <div id="queuedFilesContainer" class="hidden bg-slate-50 p-4 rounded-xl border space-y-2">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-800 border-b pb-2">
+                  <span>대기 중인 PDF 목록 (<span id="queuedFileCount">0</span>개)</span>
+                  <button onclick="clearQueuedFiles()" class="text-slate-400 hover:text-rose-500 text-[11px]">목록 비우기</button>
+                </div>
                 <div id="queuedFileList" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
-                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full mt-2 bg-cyan-600 text-white font-bold py-3 rounded-xl text-xs">
-                  분석 시작
+                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full mt-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+                  <i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작
                 </button>
               </div>
             </div>
 
             <div class="lg:col-span-7 flex flex-col space-y-2">
-              <div id="pdfLogTerminal" class="h-[360px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto">
-                [SYSTEM READY] 준비 상태입니다...
+              <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span>PDF 텍스트 추출 및 AI 분석 피드</span>
+                <span id="parsedItemCount" class="text-cyan-700 font-bold">분석 대기 중</span>
+              </div>
+              <div id="pdfLogTerminal" class="h-[360px] max-h-[360px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800">
+                [SYSTEM READY] 준비 상태입니다. PDF 시험지를 드래그&드롭하면 동적 AI 분석 피드가 시작됩니다...
               </div>
             </div>
           </div>
 
           <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">3</span>문항)
+              </h3>
+            </div>
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
               <table class="w-full text-left text-xs">
                 <thead>
@@ -607,7 +611,6 @@
                 <tbody id="benchmarkTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
               </table>
             </div>
-            <div id="paginationBar" class="flex items-center justify-center gap-1.5 pt-3 pb-2"></div>
           </div>
         </div>
       </section>
@@ -648,10 +651,7 @@
     let queuedPdfFiles = [];
 
     let selectedDifficulty = '중';
-    let currentPage = 1;
-    let itemsPerPage = 10;
 
-    // 지원 유형 정의
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '요지', '요약'], bg: 'bg-teal-500' },
       { category: '언어 논리', types: ['빈칸', '순서', '삽입'], bg: 'bg-amber-500' },
@@ -710,30 +710,120 @@
     function removeQueuedFile(idx) { queuedPdfFiles.splice(idx, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
+    // 🚀 복원된 초고속 동시 병렬 PDF AI 분석 엔진 + 동적 커서 피드
     async function startBatchPdfClassification() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
+      if (queuedPdfFiles.length === 0) return alert('분석할 PDF 파일이 없습니다.');
 
       const logBox = document.getElementById('pdfLogTerminal');
-      logBox.innerHTML = `<div>[BATCH START] 분석 시작...</div>`;
+      const btn = document.getElementById('btnStartBatch');
 
-      for (let i = 0; i < queuedPdfFiles.length; i++) {
-        const file = queuedPdfFiles[i];
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-bolt fa-spin"></i> 분석 진행 중...';
+
+      let totalAddedCount = 0;
+      logBox.innerHTML = `<div>[BATCH START] 총 ${queuedPdfFiles.length}개 시험지 병렬 분석 가동... <span class="terminal-cursor"></span></div>`;
+
+      await Promise.all(queuedPdfFiles.map(async (file, i) => {
         const { school, exam } = cleanSchoolInfo(file.name);
-        logBox.innerHTML += `<div class="text-cyan-300">[${school}] AI 분석 중...</div>`;
-      }
+        
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          
+          let fullText = '';
+          for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+          }
+
+          logBox.innerHTML += `<div class="text-cyan-300">[${i+1}/${queuedPdfFiles.length}] [${school}] 텍스트 추출 완. AI 분석 요청 중... <span class="terminal-cursor"></span></div>`;
+          logBox.scrollTop = logBox.scrollHeight;
+
+          const parserPrompt = `
+당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
+다음 [학교 시험지 텍스트]에서 각 문항들을 식별하여 마크다운 목록으로 출력하십시오.
+
+[학교/시험]: ${school} ${exam}
+[시험지 원문]:
+${fullText.slice(0, 15000)}
+
+출력형식 예시:
+## [어법] 1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
+- 킬러패턴: what vs that 구별 함정
+`;
+
+          const rawText = await callGeminiUniversal(apiKey, parserPrompt);
+          const parsedArray = parseMarkdownBenchmarkText(rawText, school, exam);
+
+          if (Array.isArray(parsedArray) && parsedArray.length > 0) {
+            schoolBenchmarkDB.unshift(...parsedArray);
+            totalAddedCount += parsedArray.length;
+            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school}] 분석 완료! +${parsedArray.length}문항 적재 완료</div>`;
+          } else {
+            logBox.innerHTML += `<div class="text-emerald-300">✓ [${school}] 분석 완료</div>`;
+          }
+          logBox.scrollTop = logBox.scrollHeight;
+          renderBenchmarkTable();
+
+        } catch (err) {
+          logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ [${school}] 분석 에러: ${err.message}</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
+        }
+      }));
+
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모든 기출 PDF 초고속 분석 및 DB 적재 완료! (총 +${totalAddedCount}문항)</div>`;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
+      alert(`🎉 분석 완료!\n총 ${totalAddedCount}개의 기출 문항 분석이 마무리되어 기출 DB에 적재되었습니다.`);
       clearQueuedFiles();
+    }
+
+    function parseMarkdownBenchmarkText(text, school, exam) {
+      const results = [];
+      const blocks = text.split(/##\s+/);
+      blocks.forEach((block, idx) => {
+        if (!block.trim()) return;
+        const lines = block.trim().split('\n');
+        const firstLine = lines[0] || '';
+        
+        let type = '기타';
+        if (firstLine.includes('어법')) type = '어법';
+        else if (firstLine.includes('어휘')) type = '어휘';
+        else if (firstLine.includes('빈칸')) type = '빈칸';
+        else if (firstLine.includes('순서')) type = '순서';
+        else if (firstLine.includes('삽입')) type = '삽입';
+        else if (firstLine.includes('주관식') || firstLine.includes('서술형')) type = '주관식';
+
+        results.push({
+          id: 'BM-' + Date.now() + '-' + idx,
+          school: school,
+          exam: exam,
+          type: type,
+          title: firstLine.replace(/\[.*?\]/g, '').trim(),
+          trick: lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').trim() : '학교 기출 핵심 패턴'
+        });
+      });
+      return results;
     }
 
     function renderBenchmarkTable() {
       const tbody = document.getElementById('benchmarkTableBody');
+      const totalCount = document.getElementById('tableTotalCount');
+      if (totalCount) totalCount.innerText = schoolBenchmarkDB.length;
       if (!tbody) return;
+
       tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
         <tr class="hover:bg-slate-50">
           <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
-          <td class="py-2.5 px-4 font-bold">${item.school} (${item.exam})</td>
+          <td class="py-2.5 px-4 font-bold text-slate-800">${item.school} (${item.exam})</td>
           <td class="py-2.5 px-4 text-center"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">${item.type}</span></td>
-          <td class="py-2.5 px-4">${item.title}</td>
+          <td class="py-2.5 px-4">
+            <div class="font-bold text-slate-800">${item.title}</div>
+            <div class="text-[11px] text-emerald-700"><strong>함정 패턴:</strong> ${item.trick}</div>
+          </td>
         </tr>
       `).join('');
     }
@@ -907,7 +997,6 @@
       `).join('');
     }
 
-    // 🎯 두 번째 화면: 너른터 스타일 유형별/지문별 출제 문제수 표시 및 선택 UI
     function openExamTypeSelector(examId) {
       currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
       if (currentSelectedExam) {
@@ -920,19 +1009,13 @@
       switchView('typeSelect');
     }
 
-    // 유형별 수량 칩 렌더링
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
 
-      // 현재 시험지 관련 출제 문제 데이터
       const pool = generatedQuestionsPool;
-
-      // 유형별 문제 수 집계
       const typeCounts = {};
-      pool.forEach(q => {
-        typeCounts[q.type] = (typeCounts[q.type] || 0) + 1;
-      });
+      pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
 
       let html = '';
       typeCategories.forEach(cat => {
@@ -952,18 +1035,13 @@
       container.innerHTML = html;
     }
 
-    // 지문별 수량 칩 렌더링 (너른터 방식 18(11) 19(8) 표시)
     function renderPassageChips() {
       const container = document.getElementById('passageChipContainer');
       if (!container) return;
 
       const pool = generatedQuestionsPool;
-
-      // 지문별 문제 수 집계
       const passageCounts = {};
-      pool.forEach(q => {
-        passageCounts[q.passageNum] = (passageCounts[q.passageNum] || 0) + 1;
-      });
+      pool.forEach(q => { passageCounts[q.passageNum] = (passageCounts[q.passageNum] || 0) + 1; });
 
       container.innerHTML = passageNumberList.map(num => {
         const count = passageCounts[num] || 0;
@@ -989,7 +1067,6 @@
       updateSelectedCountText();
     }
 
-    // 필터링 선택된 문항수 업데이트
     function updateSelectedCountText() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
@@ -1097,7 +1174,7 @@
       const progressText = document.getElementById('genProgressText');
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [FAST BATCH] 5개 지문 동시 병렬 출제 가동 (${setKey})...</div>`;
+      logBox.innerHTML = `<div>🚀 [FAST BATCH] 5개 지문 동시 병렬 출제 가동 (${setKey})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
       let totalGeneratedCount = 0;
@@ -1139,7 +1216,7 @@ ${selectedTypes.join(', ')}
             if (parsedQuestions.length > 0) {
               generatedQuestionsPool.unshift(...parsedQuestions);
               totalGeneratedCount += parsedQuestions.length;
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공 (+${parsedQuestions.length}문항)</div>`;
+              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공 (+${parsedQuestions.length}문항) <span class="terminal-cursor"></span></div>`;
             }
             logBox.scrollTop = logBox.scrollHeight;
           } catch (err) {
