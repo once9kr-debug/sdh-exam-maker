@@ -671,7 +671,7 @@
         </div>
       </section>
 
-      <!-- VIEW 7: MY PAGE (계정 관리 & 삭제 추가) -->
+      <!-- VIEW 7: MY PAGE -->
       <section id="view-myPage" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -701,7 +701,6 @@
                 </div>
               </div>
 
-              <!-- 관리자 전용: 교사 계정 생성 & 계정 삭제 목록 -->
               <div id="adminCreateTeacherBox" class="bg-blue-50 p-5 rounded-2xl border border-blue-200 space-y-4 hidden">
                 <h3 class="font-bold text-sm text-blue-900 flex items-center gap-2">
                   <i class="fa-solid fa-user-plus text-blue-600"></i> 선생님 계정 신규 생성 (원장님 전용)
@@ -720,7 +719,6 @@
                   </button>
                 </div>
 
-                <!-- 🎯 [추가] 교사 계정 삭제 및 관리 목록 -->
                 <div class="pt-3 border-t border-blue-200">
                   <h4 class="font-bold text-xs text-blue-900 mb-2 flex items-center gap-1.5">
                     <i class="fa-solid fa-users-gear"></i> 등록된 선생님 계정 삭제 관리
@@ -794,9 +792,14 @@
     let filteredQuestions = [];
     let queuedPdfFiles = [];
 
-    // 계정 기본 세팅
     let currentUser = null;
-    let registeredTeacherList = ['saerom1', 'teacher']; // 기본 샘플 생성 교사 리스트
+    
+    // 🎯 [검증 로직] 계정 DB (비밀번호 및 권한 저장)
+    let userAccountsDB = {
+      'admin': { pw: '1234', role: 'admin', name: '원장 선생님' },
+      'saerom1': { pw: '1234', role: 'teacher', name: 'saerom1 선생님' },
+      'teacher': { pw: '1234', role: 'teacher', name: 'teacher 선생님' }
+    };
 
     let selectedDifficulty = '중';
     let selectedFilterDifficulty = '혼합';
@@ -1470,18 +1473,27 @@ ${groupTypes.join(', ')}
       } 
     }
 
-    // 🎯 [세션 보존 구현] 로그인 처리 및 브라우저 SessionStorage 저장
+    // 🎯 [정밀 수정] 정확한 비밀번호 검증 적용 로그인
     function handleLogin(e) { 
       if (e) e.preventDefault();
       const loginId = document.getElementById('loginId').value.trim();
+      const loginPw = document.getElementById('loginPw').value.trim();
       
-      if (loginId === 'admin') {
-        currentUser = { id: 'admin', role: 'admin', name: '원장 선생님' };
-      } else {
-        currentUser = { id: loginId, role: 'teacher', name: `${loginId} 선생님` };
+      const targetUser = userAccountsDB[loginId];
+
+      if (!targetUser) {
+        alert('존재하지 않는 아이디입니다.');
+        return;
       }
 
-      // 세션 저장소에 로그인 유저 정보 저장 (새로고침 유지)
+      // 비밀번호 정확히 비교
+      if (targetUser.pw !== loginPw) {
+        alert('비밀번호가 일치하지 않습니다.');
+        return;
+      }
+
+      currentUser = { id: loginId, role: targetUser.role, name: targetUser.name };
+
       sessionStorage.setItem('SDH_LOGGED_USER', JSON.stringify(currentUser));
 
       updateSidebarRoleUI();
@@ -1489,7 +1501,6 @@ ${groupTypes.join(', ')}
       switchView('examList'); 
     }
 
-    // 🎯 [세션 보존 구현] 로그아웃 시 세션 제거
     function handleLogout() { 
       sessionStorage.removeItem('SDH_LOGGED_USER');
       currentUser = null;
@@ -1498,7 +1509,6 @@ ${groupTypes.join(', ')}
       document.getElementById('loginModal').classList.remove('hidden'); 
     }
 
-    // 🎯 [세션 체크] 페이지 새로고침 시 자동 세션 복원
     function checkLoggedUserSession() {
       const savedUser = sessionStorage.getItem('SDH_LOGGED_USER');
       if (savedUser) {
@@ -1551,55 +1561,62 @@ ${groupTypes.join(', ')}
       if (activeNavEl) activeNavEl.classList.add('active-nav');
     }
 
+    // 🎯 [정밀 수정] 로그인된 본인 비밀번호 실시간 변경
     function changePassword() {
-      const pw = document.getElementById('myNewPw').value;
+      const pw = document.getElementById('myNewPw').value.trim();
       if (!pw) return alert('새 비밀번호를 입력하세요.');
-      alert('🎉 비밀번호가 변경되었습니다!');
-      document.getElementById('myNewPw').value = '';
+      
+      if (currentUser && userAccountsDB[currentUser.id]) {
+        userAccountsDB[currentUser.id].pw = pw;
+        alert('🎉 비밀번호가 변경되었습니다!');
+        document.getElementById('myNewPw').value = '';
+      }
     }
 
-    // 🎯 [교사 계정 생성]
+    // 🎯 [정밀 수정] 교사 계정 생성 시 비밀번호 동시 저장
     function createTeacherAccount() {
       const id = document.getElementById('newTeacherId').value.trim();
+      const pw = document.getElementById('newTeacherPw').value.trim();
       if (!id) return alert('선생님 ID를 입력하세요.');
-      if (registeredTeacherList.includes(id)) return alert('이미 존재하는 교사 ID입니다.');
+      if (!pw) return alert('비밀번호를 입력하세요.');
+      if (userAccountsDB[id]) return alert('이미 존재하는 교사 ID입니다.');
 
-      registeredTeacherList.push(id);
+      userAccountsDB[id] = { pw: pw, role: 'teacher', name: `${id} 선생님` };
       renderTeacherAccountList();
-      alert(`🎉 [${id}] 선생님 계정이 생성되었습니다!`);
+      alert(`🎉 [${id}] 선생님 계정이 생성되었습니다! (비밀번호: ${pw})`);
       document.getElementById('newTeacherId').value = '';
     }
 
-    // 🎯 [교사 계정 삭제 기능 추가] My Page 내 계정 목록 렌더링
     function renderTeacherAccountList() {
       const listEl = document.getElementById('teacherAccountList');
       if (!listEl) return;
 
-      if (registeredTeacherList.length === 0) {
+      const teacherKeys = Object.keys(userAccountsDB).filter(k => userAccountsDB[k].role === 'teacher');
+
+      if (teacherKeys.length === 0) {
         listEl.innerHTML = `<li class="py-2 text-slate-400 text-center">등록된 교사 계정이 없습니다.</li>`;
         return;
       }
 
-      listEl.innerHTML = registeredTeacherList.map((id, idx) => `
+      listEl.innerHTML = teacherKeys.map((id) => `
         <li class="py-2 px-2 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-user-tie text-blue-500"></i>
             <span class="font-bold text-slate-800">${id}</span>
+            <span class="text-[10px] text-slate-400">(PW: ${userAccountsDB[id].pw})</span>
           </div>
-          <button onclick="deleteTeacherAccount(${idx})" class="text-xs text-rose-600 hover:bg-rose-50 px-2 py-1 rounded font-bold">
+          <button onclick="deleteTeacherAccount('${id}')" class="text-xs text-rose-600 hover:bg-rose-50 px-2 py-1 rounded font-bold">
             삭제
           </button>
         </li>
       `).join('');
     }
 
-    // 🎯 [교사 계정 삭제 기능]
-    function deleteTeacherAccount(idx) {
-      const targetId = registeredTeacherList[idx];
-      if (confirm(`정말 [${targetId}] 선생님 계정을 삭제하시겠습니까?`)) {
-        registeredTeacherList.splice(idx, 1);
+    function deleteTeacherAccount(id) {
+      if (confirm(`정말 [${id}] 선생님 계정을 삭제하시겠습니까?`)) {
+        delete userAccountsDB[id];
         renderTeacherAccountList();
-        alert(`[${targetId}] 계정이 삭제되었습니다.`);
+        alert(`[${id}] 계정이 삭제되었습니다.`);
       }
     }
 
@@ -1634,7 +1651,7 @@ ${groupTypes.join(', ')}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      checkLoggedUserSession(); // 로그인 세션 확인 및 복원
+      checkLoggedUserSession();
       initDropdownOptions();
       loadAllSupabaseData();
       render25PassageInputForms(); 
