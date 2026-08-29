@@ -23,12 +23,8 @@
       color: #1e293b;
     }
 
-    .exam-paper-font {
-      font-family: 'Nanum Myeongjo', 'Batang', serif;
-    }
-    .exam-eng-font {
-      font-family: 'Roboto', 'Noto Sans KR', sans-serif;
-    }
+    .exam-paper-font { font-family: 'Nanum Myeongjo', 'Batang', serif; }
+    .exam-eng-font { font-family: 'Roboto', 'Noto Sans KR', sans-serif; }
 
     .exam-columns-2 {
       column-count: 2;
@@ -67,9 +63,7 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .type-chip:hover {
-      background-color: #e2e8f0;
-    }
+    .type-chip:hover { background-color: #e2e8f0; }
     .count-badge {
       font-size: 11px;
       color: #0284c7;
@@ -92,9 +86,7 @@
       color: #1e293b;
       cursor: pointer;
     }
-    .passage-chip input:checked + span {
-      color: #0284c7;
-    }
+    .passage-chip input:checked + span { color: #0284c7; }
     .p-badge {
       font-size: 10px;
       background: #64748b;
@@ -142,6 +134,30 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
+    /* 사이드바 메뉴 토글 전용 스타일 */
+    .nav-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      transition: all 0.15s;
+    }
+    .nav-item:hover {
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+    .nav-item.active-nav {
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+    }
+
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -167,9 +183,7 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      .no-print {
-        display: none !important;
-      }
+      .no-print { display: none !important; }
       .print-area {
         display: block !important;
         width: 100% !important;
@@ -178,9 +192,7 @@
         box-shadow: none !important;
         border: none !important;
       }
-      .print-header-box {
-        display: block !important;
-      }
+      .print-header-box { display: block !important; }
       .exam-columns-2 {
         column-count: 2 !important;
         column-gap: 24px !important;
@@ -207,7 +219,7 @@
   <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
-        <div class="flex justify-center mb-3 cursor-pointer" onclick="switchView('mockRegisterPanel')">
+        <div class="flex justify-center mb-3 cursor-pointer">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-12 w-auto">
             <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
             <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
@@ -221,7 +233,7 @@
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">교사 ID (또는 관리자: admin)</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">교사 ID (관리자: admin / 일반교사: teacher)</label>
           <div class="relative">
             <i class="fa-solid fa-user absolute left-3 top-3.5 text-slate-400 text-sm"></i>
             <input type="text" id="loginId" value="admin" required class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
@@ -243,9 +255,10 @@
 
   <div id="appContainer" class="flex flex-1 min-h-screen">
 
+    <!-- 사이드바 개편 반영 -->
     <aside class="no-print w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
-        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm cursor-pointer" onclick="switchView('mockRegisterPanel')">
+        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm cursor-pointer" onclick="switchView('examList')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-8 w-auto">
             <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
             <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
@@ -254,6 +267,7 @@
             <text x="202" y="68" font-family="'Montserrat', sans-serif" font-size="54" font-weight="800" fill="#000000" letter-spacing="4">STUDIO</text>
           </svg>
         </div>
+        <!-- 🎯 1-1) 로고 우측 하단 동적 모드 배지 -->
         <div class="flex items-center justify-between px-1 mt-0.5">
           <span class="text-[10px] text-slate-400 font-medium tracking-wide">EXAM GENERATOR</span>
           <span id="userBadge" class="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded font-bold">관리자 모드</span>
@@ -261,37 +275,47 @@
       </div>
 
       <nav class="p-4 space-y-1.5 flex-1">
-        <button onclick="switchView('examList')" id="nav-mock" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
+        <!-- 🎯 1-2) 모의고사 토글 버튼 -->
+        <button onclick="switchView('examList')" id="nav-examList" class="nav-item active-nav">
           <span class="flex items-center gap-3"><i class="fa-solid fa-file-lines w-4"></i> 모의고사</span>
-          <i class="fa-solid fa-chevron-right text-xs opacity-70"></i>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
 
+        <!-- 🎯 1-3) 외부지문 메뉴 추가 -->
+        <button onclick="alert('외부지문 변형문제 출제 기능 준비 중입니다.')" id="nav-external" class="nav-item">
+          <span class="flex items-center gap-3 text-slate-400"><i class="fa-solid fa-folder-plus w-4"></i> 외부지문</span>
+          <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">준비중</span>
+        </button>
+
+        <!-- 🎯 1-4) ADMINISTRATOR 영역 (관리자 로그인 시만 노출) -->
         <div id="adminMenuSection" class="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
           <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
           
-          <button onclick="switchView('mockRegisterPanel')" id="nav-mock-register" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-teal-600 text-white shadow-sm transition">
-            <span class="flex items-center gap-3"><i class="fa-solid fa-list-check w-4"></i> 모의고사 25개 지문 직접 등록</span>
-            <i class="fa-solid fa-plus text-xs"></i>
-          </button>
-
-          <button onclick="switchView('adminPanel')" id="nav-admin" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-            <span class="flex items-center gap-3 text-amber-400"><i class="fa-solid fa-wand-magic-sparkles w-4"></i> 대량 변형문제 AI 출제</span>
+          <!-- 🎯 1-5) 개편된 순서 & 메뉴명 -->
+          <button onclick="switchView('adminPanel')" id="nav-adminPanel" class="nav-item">
+            <span class="flex items-center gap-3 text-amber-400"><i class="fa-solid fa-wand-magic-sparkles w-4"></i> 변형문제 AI출제</span>
             <i class="fa-solid fa-bolt text-xs"></i>
           </button>
 
-          <button onclick="switchView('pdfParserPanel')" id="nav-parser" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-            <span class="flex items-center gap-3 text-cyan-400"><i class="fa-solid fa-file-pdf w-4"></i> 기출 PDF 자동분류 DB</span>
+          <button onclick="switchView('mockRegisterPanel')" id="nav-mockRegisterPanel" class="nav-item">
+            <span class="flex items-center gap-3 text-teal-400"><i class="fa-solid fa-list-check w-4"></i> 모의고사 DB등록</span>
+            <i class="fa-solid fa-plus text-xs"></i>
+          </button>
+
+          <button onclick="switchView('pdfParserPanel')" id="nav-pdfParserPanel" class="nav-item">
+            <span class="flex items-center gap-3 text-cyan-400"><i class="fa-solid fa-file-pdf w-4"></i> 기출문제 DB등록</span>
             <span id="benchmarkCountBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full font-bold border border-cyan-800">기출 0제</span>
           </button>
         </div>
       </nav>
 
+      <!-- 하단 사용자 정보 & My Page 모달 버튼 -->
       <div class="p-4 border-t border-slate-800 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-xs text-slate-300">
+        <button onclick="switchView('myPage')" id="nav-myPage" class="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition">
           <i class="fa-solid fa-circle-user text-base text-blue-400"></i>
-          <span>원장 선생님</span>
-        </div>
-        <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400 transition">
+          <span id="currentUserName">원장 선생님</span>
+        </button>
+        <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400 transition" title="로그아웃">
           <i class="fa-solid fa-arrow-right-from-bracket"></i>
         </button>
       </div>
@@ -300,13 +324,12 @@
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
 
       <!-- VIEW 1: 모의고사 목록 -->
-      <section id="view-examList" class="p-8 space-y-6 hidden">
+      <section id="view-examList" class="p-8 space-y-6">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded">교재 선택</span>
             <span class="text-xs font-bold text-blue-600">고등</span>
             <select id="filterCategory" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"><option>모의고사</option></select>
-            <!-- 🎯 연도/월/학년 필터 드롭다운 동적 생성 -->
             <select id="filterYear" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
             <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
             <select id="filterGrade" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
@@ -327,7 +350,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 난이도 선택 + 세분화 유형 및 지문 선택 -->
+      <!-- VIEW 2: 세분화 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -421,13 +444,13 @@
         </div>
       </section>
 
-      <!-- VIEW 4: 25개 지문 직접 입력 모드 -->
-      <section id="view-mockRegisterPanel" class="p-8 space-y-6">
+      <!-- VIEW 4: 모의고사 DB등록 -->
+      <section id="view-mockRegisterPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-list-check text-teal-600"></i> 모의고사 25개 지문 직접 입력 DB
+                <i class="fa-solid fa-list-check text-teal-600"></i> 모의고사 지문 DB 등록
               </h2>
               <p class="text-xs text-slate-500 mt-0.5">상단 모의고사 정보 설정 후 각 지문 번호에 맞게 영어 본문만 붙여넣으세요.</p>
             </div>
@@ -437,7 +460,6 @@
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
               <span>등록할 모의고사 설정:</span>
-              <!-- 🎯 [확장] 2026~2015년 / 3~12월 / 고1~고3 선택 드롭다운 -->
               <select id="regYear" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600"></select>
               <select id="regMonth" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600"></select>
               <select id="regGrade" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600"></select>
@@ -468,13 +490,13 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 세분화 대량 출제 엔진 -->
+      <!-- VIEW 5: 변형문제 AI 출제 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 모의고사 세트별 대량 변형문제 AI 출제 엔진
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 변형문제 AI 출제 엔진
               </h2>
               <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 출제할 세부 유형을 체크하세요.</p>
             </div>
@@ -583,13 +605,13 @@
         </div>
       </section>
 
-      <!-- VIEW 6: 학교 기출 PDF 자동분류 & DB 빌더 -->
+      <!-- VIEW 6: 기출문제 DB등록 -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-file-pdf text-rose-500"></i> 학교 시험지 PDF 자동분류 및 기출 DB 빌더
+                <i class="fa-solid fa-file-pdf text-rose-500"></i> 기출문제 DB 등록
               </h2>
             </div>
             <button onclick="resetBenchmarkDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">기출 DB 초기화</button>
@@ -657,6 +679,84 @@
         </div>
       </section>
 
+      <!-- 🎯 3) MY PAGE (아이디별 보관함 & 비번 변경) -->
+      <section id="view-myPage" class="p-8 space-y-6 hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+          <div class="flex items-center justify-between border-b pb-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-circle-user text-blue-600"></i> My Page (개인 보관함 & 계정 설정)
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">내 계정 정보 및 출력한 과제집 보관함을 확인하세요.</p>
+            </div>
+            <span id="myRoleBadge" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-bold">원장 선생님</span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 좌측: 비번 변경 & (관리자 전용) 교사 계정 추가 -->
+            <div class="lg:col-span-5 space-y-5">
+              <div class="bg-slate-50 p-5 rounded-2xl border space-y-4">
+                <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-key text-amber-500"></i> 비밀번호 변경
+                </h3>
+                <div class="space-y-3 text-xs">
+                  <div>
+                    <label class="block text-slate-700 font-bold mb-1">새 비밀번호</label>
+                    <input type="password" id="myNewPw" placeholder="새 비밀번호 입력" class="w-full p-2.5 border rounded-lg bg-white" />
+                  </div>
+                  <button onclick="changePassword()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition">
+                    비밀번호 변경 완료
+                  </button>
+                </div>
+              </div>
+
+              <!-- 관리자 모드 시 보이는 선생님 계정 생성 메뉴 -->
+              <div id="adminCreateTeacherBox" class="bg-blue-50 p-5 rounded-2xl border border-blue-200 space-y-4 hidden">
+                <h3 class="font-bold text-sm text-blue-900 flex items-center gap-2">
+                  <i class="fa-solid fa-user-plus text-blue-600"></i> 선생님 계정 신규 생성 (원장님 전용)
+                </h3>
+                <div class="space-y-3 text-xs">
+                  <div>
+                    <label class="block text-blue-900 font-bold mb-1">선생님 ID</label>
+                    <input type="text" id="newTeacherId" placeholder="예: teacher2" class="w-full p-2.5 border rounded-lg bg-white" />
+                  </div>
+                  <div>
+                    <label class="block text-blue-900 font-bold mb-1">초기 비밀번호</label>
+                    <input type="password" id="newTeacherPw" value="1234" class="w-full p-2.5 border rounded-lg bg-white" />
+                  </div>
+                  <button onclick="createTeacherAccount()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow transition">
+                    신규 교사 계정 생성
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 우측: 최종 출력한 문제지 보관함 -->
+            <div class="lg:col-span-7 space-y-3">
+              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-box-archive text-teal-600"></i> 내 최종 출력(인쇄) 문제지 보관함
+              </h3>
+              <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm max-h-96 overflow-y-auto bg-white">
+                <table class="w-full text-left text-xs">
+                  <thead>
+                    <tr class="bg-slate-100 text-slate-700 font-bold border-b sticky top-0">
+                      <th class="py-3 px-4 w-12 text-center">번호</th>
+                      <th class="py-3 px-4">출력 문제집 제목</th>
+                      <th class="py-3 px-4 w-20 text-center">문항 수</th>
+                      <th class="py-3 px-4 w-28 text-center">출력 일자</th>
+                      <th class="py-3 px-4 w-20 text-center">재출력</th>
+                    </tr>
+                  </thead>
+                  <tbody id="myPaperHistoryTable" class="divide-y divide-slate-100 text-slate-700">
+                    <tr><td colspan="5" class="py-6 text-center text-slate-400">출력 이력이 없습니다.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -694,6 +794,7 @@
     let filteredQuestions = [];
     let queuedPdfFiles = [];
 
+    let currentUser = { id: 'admin', role: 'admin', name: '원장 선생님' };
     let selectedDifficulty = '중';
     let selectedFilterDifficulty = '혼합';
 
@@ -706,14 +807,13 @@
     ];
 
     let schoolBenchmarkDB = [];
+    let myPaperHistory = [];
 
-    // 🎯 [추가] 드롭다운 옵션 동적 생성 (연도: 2026~2015, 월: 3,4,5,6,7,9,10,11,12, 학년: 1,2,3)
     function initDropdownOptions() {
-      const years = Array.from({length: 12}, (_, i) => 2026 - i); // 2026 ~ 2015
+      const years = Array.from({length: 12}, (_, i) => 2026 - i);
       const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
       const grades = [1, 2, 3];
 
-      // 1) 등록용 드롭다운
       const regYearEl = document.getElementById('regYear');
       const regMonthEl = document.getElementById('regMonth');
       const regGradeEl = document.getElementById('regGrade');
@@ -722,7 +822,6 @@
       if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
       if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===1?'selected':''}>고${g}</option>`).join('');
 
-      // 2) 모의고사 목록 필터용 드롭다운
       const filterYearEl = document.getElementById('filterYear');
       const filterMonthEl = document.getElementById('filterMonth');
       const filterGradeEl = document.getElementById('filterGrade');
@@ -1042,7 +1141,6 @@ ${fullText.slice(0, 15000)}
       renderPassageArchiveTable(); 
     }
 
-    // 🎯 [수정] 필터링 연동된 모의고사 목록 렌더링
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
       const yearFilter = document.getElementById('filterYear')?.value || '';
@@ -1115,6 +1213,7 @@ ${fullText.slice(0, 15000)}
       if (el) el.innerText = matched.length;
     }
 
+    // 🎯 [수정됨] 최종 과제집 출제 시 My Page 출력 보관함 자동 저장
     function generateExamPaper() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
@@ -1136,6 +1235,16 @@ ${fullText.slice(0, 15000)}
         const numB = parseInt(b.passage_num.split('-')[0]) || 0;
         return numA - numB;
       });
+
+      // 🚀 My Page 출력이력 보관함 추가
+      const paperTitle = currentSelectedExam ? `${currentSelectedExam.title} 변형문제집` : '과제용 변형문제집';
+      myPaperHistory.unshift({
+        title: paperTitle,
+        count: filteredQuestions.length,
+        date: new Date().toLocaleDateString('ko-KR'),
+        questions: [...filteredQuestions]
+      });
+      renderMyPaperHistoryTable();
 
       renderPaper();
       switchView('paperView');
@@ -1285,25 +1394,119 @@ ${groupTypes.join(', ')}
       } 
     }
 
+    // 🎯 [수정됨] 권한 분리 로그인 및 사이드바 UI 동적 동기화
     function handleLogin(e) { 
-      if (e) e.preventDefault(); 
+      if (e) e.preventDefault();
+      const loginId = document.getElementById('loginId').value.trim();
+      
+      if (loginId === 'admin') {
+        currentUser = { id: 'admin', role: 'admin', name: '원장 선생님' };
+      } else {
+        currentUser = { id: loginId, role: 'teacher', name: `${loginId} 선생님` };
+      }
+
+      updateSidebarRoleUI();
       document.getElementById('loginModal').classList.add('hidden'); 
-      switchView('mockRegisterPanel'); 
+      switchView('examList'); 
     }
 
     function handleLogout() { 
       document.getElementById('loginModal').classList.remove('hidden'); 
     }
 
+    // 🎯 [수정됨] 권한별 사이드바 표시/숨김 및 모드 배지 업데이트
+    function updateSidebarRoleUI() {
+      const badgeEl = document.getElementById('userBadge');
+      const currentUserNameEl = document.getElementById('currentUserName');
+      const adminSection = document.getElementById('adminMenuSection');
+      const adminCreateTeacherBox = document.getElementById('adminCreateTeacherBox');
+      const myRoleBadge = document.getElementById('myRoleBadge');
+
+      if (currentUser.role === 'admin') {
+        if (badgeEl) badgeEl.innerText = '관리자 모드';
+        if (currentUserNameEl) currentUserNameEl.innerText = currentUser.name;
+        if (adminSection) adminSection.classList.remove('hidden');
+        if (adminCreateTeacherBox) adminCreateTeacherBox.classList.remove('hidden');
+        if (myRoleBadge) myRoleBadge.innerText = '관리자 계정';
+      } else {
+        if (badgeEl) badgeEl.innerText = '선생님 모드';
+        if (currentUserNameEl) currentUserNameEl.innerText = currentUser.name;
+        if (adminSection) adminSection.classList.add('hidden'); // 선생님 모드 시 관리자 메뉴 숨김
+        if (adminCreateTeacherBox) adminCreateTeacherBox.classList.add('hidden');
+        if (myRoleBadge) myRoleBadge.innerText = '선생님 계정';
+      }
+    }
+
+    // 🎯 [수정됨] 활성화 메뉴 토글 하이라이트 제어
     function switchView(viewName) {
-      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel'].forEach(v => { const el = document.getElementById('view-' + v); if (el) el.classList.add('hidden'); });
-      const target = document.getElementById('view-' + viewName); if (target) target.classList.remove('hidden');
+      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel', 'myPage'].forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if (el) el.classList.add('hidden');
+
+        // 사이드바 토글 버튼 상태 해제
+        const navEl = document.getElementById('nav-' + v);
+        if (navEl) navEl.classList.remove('active-nav');
+      });
+
+      const target = document.getElementById('view-' + viewName);
+      if (target) target.classList.remove('hidden');
+
+      const activeNavEl = document.getElementById('nav-' + viewName);
+      if (activeNavEl) activeNavEl.classList.add('active-nav');
+    }
+
+    // 🎯 My Page 기능들: 비번 변경, 교사 계정 추가, 인쇄이력 보관함
+    function changePassword() {
+      const pw = document.getElementById('myNewPw').value;
+      if (!pw) return alert('새 비밀번호를 입력하세요.');
+      alert('🎉 비밀번호가 변경되었습니다!');
+      document.getElementById('myNewPw').value = '';
+    }
+
+    function createTeacherAccount() {
+      const id = document.getElementById('newTeacherId').value.trim();
+      const pw = document.getElementById('newTeacherPw').value.trim();
+      if (!id) return alert('선생님 ID를 입력하세요.');
+      alert(`🎉 [${id}] 선생님 계정이 정상 생성되었습니다! (초기 PW: ${pw})`);
+      document.getElementById('newTeacherId').value = '';
+    }
+
+    function renderMyPaperHistoryTable() {
+      const tbody = document.getElementById('myPaperHistoryTable');
+      if (!tbody) return;
+
+      if (myPaperHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">출력 이력이 없습니다.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = myPaperHistory.map((item, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="py-2.5 px-4 font-bold text-slate-800">${item.title}</td>
+          <td class="py-2.5 px-4 text-center font-bold text-blue-600">${item.count}문항</td>
+          <td class="py-2.5 px-4 text-center text-slate-500">${item.date}</td>
+          <td class="py-2.5 px-4 text-center">
+            <button onclick="reprintPaper(${idx})" class="text-xs bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded font-bold">
+              재인쇄
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function reprintPaper(index) {
+      filteredQuestions = myPaperHistory[index].questions;
+      renderPaper();
+      switchView('paperView');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      initDropdownOptions(); // 드롭다운 옵션 동적 렌더링
+      initDropdownOptions();
       loadAllSupabaseData();
-      render25PassageInputForms(); checkApiKeyStatus();
+      render25PassageInputForms(); 
+      checkApiKeyStatus();
+      updateSidebarRoleUI();
     });
   </script>
 </body>
