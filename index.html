@@ -29,25 +29,29 @@
     .exam-columns-2 {
       column-count: 2;
       column-gap: 28px;
-      column-rule: 1px solid #cbd5e1;
+      column-rule: 1px solid #e2e8f0;
     }
 
     .question-block {
       break-inside: avoid !important;
       page-break-inside: avoid !important;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       position: relative;
     }
 
+    /* 🎯 지문 양쪽 정렬(text-justify) 적용 */
     .passage-box {
       border: 1px solid #334155;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border-radius: 4px;
       line-height: 1.65;
-      font-size: 12.5px;
+      font-size: 12px;
       background: #ffffff;
-      margin-top: 6px;
+      margin-top: 5px;
       margin-bottom: 8px;
+      text-align: justify;
+      text-justify: inter-word;
+      word-break: break-word;
     }
 
     .type-chip {
@@ -62,7 +66,7 @@
       font-weight: 600;
       color: #334155;
       cursor: pointer;
-      transition: all 0.15s shadow;
+      transition: all 0.15s;
     }
     .type-chip:hover {
       background-color: #f8fafc;
@@ -184,6 +188,7 @@
       animation: blink 0.8s infinite;
     }
 
+    /* 🎯 인쇄 정밀 레이아웃 (브라우저 상하단 URL 제거) */
     @media print {
       @page {
         size: A4 portrait;
@@ -205,6 +210,10 @@
         border: none !important;
       }
       .print-header-box { display: block !important; }
+      .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
       .exam-columns-2 {
         column-count: 2 !important;
         column-gap: 24px !important;
@@ -213,7 +222,7 @@
       .question-block {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
-        margin-bottom: 20px !important;
+        margin-bottom: 18px !important;
       }
       .passage-box {
         border: 1px solid #1e293b !important;
@@ -221,6 +230,8 @@
         font-size: 11.5px !important;
         line-height: 1.55 !important;
         background: #ffffff !important;
+        text-align: justify !important;
+        text-justify: inter-word !important;
       }
     }
   </style>
@@ -452,8 +463,10 @@
             <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
               <div class="flex items-end justify-between">
                 <div>
-                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH PREMIUM DECODING EXAM</span>
-                  <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제집</h1>
+                  <!-- 🎯 1) 상단 브랜드 변경: SDH ACADEMY -->
+                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH ACADEMY</span>
+                  <!-- 🎯 1) 타이틀 변경: ~ 변형문제 -->
+                  <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제</h1>
                 </div>
                 <div class="flex items-center gap-3 text-xs">
                   <div class="border border-slate-900 px-3 py-1.5 font-bold">점수 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / 100점</div>
@@ -469,10 +482,10 @@
             <div class="border-b-2 border-slate-900 pb-3 mb-6">
               <div class="flex items-end justify-between">
                 <div>
-                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH PREMIUM DECODING - ANSWER & EXPLANATION</span>
+                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH ACADEMY - ANSWER & EXPLANATION</span>
                   <h1 id="answerHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">정답 및 상세 해설지</h1>
                 </div>
-                <div class="border border-slate-900 px-3 py-1 text-xs font-bold">SDH STUDIO</div>
+                <div class="border border-slate-900 px-3 py-1 text-xs font-bold">SDH ACADEMY</div>
               </div>
             </div>
 
@@ -1112,13 +1125,17 @@ ${fullText.slice(0, 15000)}
       throw lastError || new Error('API 통신 실패');
     }
 
+    // 🎯 마크다운 특수문자 제거 및 파서 강화
     function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey) {
       const results = [];
       rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
         if (!block.trim()) return;
         let title = '', options = [], answer = '', explanation = '', type = '주제';
         block.trim().split('\n').forEach(l => {
-          const t = l.trim();
+          let t = l.trim();
+          // 발문 마크다운 기호 `*` 제거
+          t = t.replace(/\*/g, '');
+
           if (t.startsWith('유형:')) type = extractStandardType(t.replace('유형:', ''));
           else if (t.startsWith('발문:')) title = t.replace('발문:', '');
           else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
@@ -1126,10 +1143,9 @@ ${fullText.slice(0, 15000)}
           else if (t.match(/^[①②③④⑤]/)) options.push(t);
         });
 
-        // 🎯 [유형별 보기/지문 엄격 검증 안전장치]
         const isSubjectiveType = (type === '서술형' || type === '단답형');
         if (isSubjectiveType) {
-          options = []; // 서술형/단답형은 객관식 보기를 강제 제거
+          options = [];
         }
 
         results.push({
@@ -1385,7 +1401,7 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
-    // 🎯 [완전히 새로 정비된 인쇄 및 시험지 렌더링 로직]
+    // 🎯 [정밀 교정] 발문 우측 끝 뱃지 밀착 + 특수문자 제거 + 지문 양쪽정렬 적용
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const aContainer = document.getElementById('answerDetailContent');
@@ -1397,14 +1413,16 @@ ${fullText.slice(0, 15000)}
       if (currentSelectedExam) {
         const headerTitle = document.getElementById('paperHeaderTitle');
         const ansHeaderTitle = document.getElementById('answerHeaderTitle');
-        if (headerTitle) headerTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 변형문제집`;
+        if (headerTitle) headerTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 변형문제`;
         if (ansHeaderTitle) ansHeaderTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 정답 및 상세 해설지`;
       }
 
-      // 1) 문제지 렌더링 (서술형/객관식 보기 분리 엄격 적용)
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
         const hasOptions = (!isSubjective && q.options && q.options.length > 0);
+        
+        // 발문 텍스트 내 마크다운 특수문자 `*` 제거
+        const cleanTitle = (q.title || '').replace(/\*/g, '');
 
         return `
           <div id="qBlock_${q.id}" class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] group">
@@ -1414,16 +1432,18 @@ ${fullText.slice(0, 15000)}
             </button>
 
             <div id="qDisplay_${q.id}">
-              <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
-                <div><span class="font-black text-slate-950">${idx + 1}.</span> <span>${q.title}</span></div>
-                <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passage_num}번 / ${q.type}]</span>
+              <!-- 🎯 발문 끝에 자연스럽게 붙는 [지문번호/유형] 뱃지 레이아웃 교정 -->
+              <div class="font-bold text-[13.5px] leading-snug mb-1">
+                <span class="font-black text-slate-950">${idx + 1}.</span> 
+                <span>${cleanTitle}</span>
+                <span class="text-[10px] text-slate-500 font-sans inline-block ml-1 border border-slate-300 px-1 py-0.2 rounded font-normal">[${q.passage_num}번 / ${q.type}]</span>
               </div>
+
+              <!-- 🎯 지문 박스 양쪽 정렬(text-justify) 적용 -->
               <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
               
-              <!-- 客觀式 보기: 객관식 유형일 때만 출력 -->
               ${hasOptions ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
               
-              <!-- 敍述式 답안란: 주관식/서술형일 때만 출력 -->
               ${isSubjective ? `
                 <div class="mt-3 border border-slate-400 p-3 rounded bg-slate-50 font-sans">
                   <span class="text-[11px] font-bold text-slate-700 block mb-1.5">[서술형 답안 작성란]</span>
@@ -1438,11 +1458,11 @@ ${fullText.slice(0, 15000)}
               
               <div>
                 <label class="text-[10px] font-bold text-slate-600">발문 수정</label>
-                <input type="text" id="editTitle_${q.id}" value="${q.title.replace(/"/g, '&quot;')}" class="w-full p-1.5 border rounded text-xs" />
+                <input type="text" id="editTitle_${q.id}" value="${cleanTitle.replace(/"/g, '&quot;')}" class="w-full p-1.5 border rounded text-xs" />
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정 (빈칸 문제일 경우 (A), ______ 필수 입력)</label>
+                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정 (빈칸: (A), ________ / 순서: (A),(B),(C) / 어법: ①~⑤ 밑줄)</label>
                 <textarea id="editPassage_${q.id}" rows="4" class="w-full p-1.5 border rounded text-xs font-mono">${q.passage}</textarea>
               </div>
 
@@ -1472,7 +1492,6 @@ ${fullText.slice(0, 15000)}
         `;
       }).join('');
 
-      // 2) 정답 및 해설지 영역 렌더링
       const ansSection = document.getElementById('paperAnswerSection');
       if (chkAns && !chkAns.checked) {
         if (ansSection) ansSection.classList.add('hidden');
@@ -1586,7 +1605,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
-    // 🎯 [수정된 AI 대량 출제 프롬프트 - 빈칸 및 서술형 지침 강하게 준수]
+    // 🎯 [정밀 AI 출제 프롬프트 - 지문 변형 및 서식 규칙 완전 강제화]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1632,17 +1651,21 @@ ${pObj.text}
 [요청된 세부 출제 유형]:
 ${groupTypes.join(', ')}
 
-[유형별 출제 필수 준수 규칙]:
-1. **빈칸/어휘/연결사 문제 필수 규칙:**
-   - 지문 내에서 출제할 핵심 문맥이나 단어를 반드시 **(A), (B)** 또는 **__________** 형태로 빈칸을 뚫어 수정한 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 놔두지 마십시오!
-2. **서술형/단답형 필수 규칙:**
+[유형별 출제 필수 규격 지침 (엄격 준수)]:
+1. **[빈칸/어휘/연결사] 문제:**
+   - 원문 지문에서 정답이 되는 핵심 단어나 문장을 반드시 **(A), (B)** 또는 **__________** 형태로 뚫어 변형한 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 두면 절대 안 됩니다.
+2. **[어법] 문제:**
+   - 원문 지문 내 어법 출제 요소 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 형태로 밑줄과 번호를 지문 자체에 적용하여 출력하십시오.
+3. **[순서] 문제:**
+   - 지문 첫 단락 제시문 뒤에 이어질 글을 **(A), (B), (C)** 단락 기호로 명확히 분할하여 지문을 재구성하십시오.
+4. **[서술형/단답형] 문제:**
    - 서술형 및 단답형 문제에는 객관식 보기(①~⑤)를 절대로 출력하지 마십시오.
-3. '유형:' 항목에는 요청된 세부 유형 명칭 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나를 오직 단어로만 정확히 기재하십시오.
+5. 발문에는 마크다운 기호 \`*\`를 절대 사용하지 마십시오.
 
 ## [문항 1]
 유형: ${groupTypes[0]}
 발문: 다음 글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?
-지문: (빈칸이 뚫린 변형 영어 지문)
+지문: (변형 적용된 지문)
 ① 보기1
 ② 보기2
 ③ 보기3
