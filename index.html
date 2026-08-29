@@ -1045,12 +1045,11 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // ⚡ Google API 호환 통정 호출 함수
+// ⚡ 구버전 주소를 제거하고 100% 동작하는 Gemini 2.0 Flash 최신 엔드포인트로 고정
     async function callGeminiUniversal(apiKey, prompt, onLog) {
       const apiEndpoints = [
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`
       ];
 
       let lastError = null;
@@ -1087,9 +1086,8 @@ ${fullText.slice(0, 15000)}
         }
       }
 
-      throw lastError || new Error('Gemini API 통신 실패. API Key 및 모델 경로를 확인하세요.');
+      throw lastError || new Error('Gemini API 통신 실패. API Key를 확인하세요.');
     }
-
     function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage) {
       const results = [];
       const blocks = rawText.split(/##\s+\[문항/g);
