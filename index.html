@@ -189,7 +189,7 @@
       </div>
 
       <nav class="p-4 space-y-1.5 flex-1">
-        <button onclick="switchView('examList')" id="nav-mock" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition">
+        <button onclick="switchView('examList')" id="nav-mock" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
           <span class="flex items-center gap-3">
             <i class="fa-solid fa-file-lines w-4"></i> 모의고사
           </span>
@@ -200,8 +200,8 @@
         <div id="adminMenuSection" class="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
           <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
           
-          <button onclick="switchView('mockRegisterPanel')" id="nav-mock-register" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-            <span class="flex items-center gap-3 text-teal-400">
+          <button onclick="switchView('mockRegisterPanel')" id="nav-mock-register" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-teal-600 text-white shadow-sm transition">
+            <span class="flex items-center gap-3">
               <i class="fa-solid fa-list-check w-4"></i> 모의고사 25개 지문 직접 등록
             </span>
             <i class="fa-solid fa-plus text-xs"></i>
@@ -212,13 +212,6 @@
               <i class="fa-solid fa-wand-magic-sparkles w-4"></i> 대량 변형문제 AI 출제
             </span>
             <i class="fa-solid fa-bolt text-xs"></i>
-          </button>
-
-          <button onclick="switchView('pdfParserPanel')" id="nav-parser" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-            <span class="flex items-center gap-3 text-cyan-400">
-              <i class="fa-solid fa-file-pdf w-4"></i> 기출 PDF 자동분류 DB
-            </span>
-            <span id="benchmarkCountBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full font-bold border border-cyan-800">기출 3제</span>
           </button>
         </div>
       </nav>
@@ -238,7 +231,7 @@
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
 
       <!-- ==================== VIEW 1: 모의고사 목록 ==================== -->
-      <section id="view-examList" class="p-8 space-y-6">
+      <section id="view-examList" class="p-8 space-y-6 hidden">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded">교재 선택</span>
@@ -297,7 +290,7 @@
       </section>
 
       <!-- ==================== VIEW 2: 25개 지문 직접 입력 모드 ==================== -->
-      <section id="view-mockRegisterPanel" class="p-8 space-y-6 hidden">
+      <section id="view-mockRegisterPanel" class="p-8 space-y-6">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
             <div>
@@ -506,7 +499,87 @@
     ];
 
     let passageArchiveDB = [];
-    let mockExams = [];
+    let generatedQuestionsPool = [];
+
+    // 1. 범용 Gemini API 통신 지원 함수 (모든 모델 유연 지원)
+    async function callGeminiUniversal(apiKey, prompt, onLog) {
+      const candidateModels = [
+        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro'
+      ];
+
+      let lastError = null;
+
+      for (let i = 0; i < candidateModels.length; i++) {
+        const m = candidateModels[i];
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+
+        try {
+          if (onLog) onLog(`[AI 통신 시도 ${i+1}/${candidateModels.length}] 모델: ${m}...`);
+          
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                maxOutputTokens: 8192
+              }
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '';
+            if (text) return text;
+          } else {
+            const errJson = await res.json().catch(() => ({}));
+            lastError = new Error(errJson.error && errJson.error.message ? errJson.error.message : `HTTP ${res.status}`);
+            if (res.status === 404 || res.status === 400) continue;
+            else throw lastError;
+          }
+        } catch (e) {
+          lastError = e;
+        }
+      }
+
+      throw lastError || new Error('Gemini API 호출에 실패했습니다. API Key를 확인하세요.');
+    }
+
+    // 2. 안전한 JSON 추출기
+    function extractJsonFromText(rawText) {
+      let clean = rawText.trim();
+      clean = clean.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+      const firstBracket = clean.indexOf('[');
+      if (firstBracket !== -1) {
+        clean = clean.substring(firstBracket);
+      }
+
+      let lastBracket = clean.lastIndexOf(']');
+      if (lastBracket === -1) {
+        const lastCurly = clean.lastIndexOf('}');
+        if (lastCurly !== -1) {
+          clean = clean.substring(0, lastCurly + 1) + ']';
+        } else {
+          clean = clean + '}]';
+        }
+      } else {
+        clean = clean.substring(0, lastBracket + 1);
+      }
+
+      try {
+        return JSON.parse(clean);
+      } catch (err) {
+        clean = clean
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+          .replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+        return JSON.parse(clean);
+      }
+    }
 
     function render25PassageInputForms() {
       const container = document.getElementById('passageInputsContainer');
@@ -523,7 +596,6 @@
       `).join('');
     }
 
-    // 💡 중복 시 덮어쓰기 안내 팝업 포함 DB 저장
     function saveAll25Passages() {
       const year = document.getElementById('regYear').value;
       const month = document.getElementById('regMonth').value;
@@ -537,7 +609,6 @@
         let text = inputEl ? inputEl.value.trim() : '';
 
         if (text) {
-          // 과도한 엔터 줄바꿈 정제 (줄간격 벌어짐 방지)
           text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
 
           const key = `${year}-${month}-${grade}-${num}`;
@@ -554,7 +625,6 @@
           };
 
           if (existingIdx !== -1) {
-            // 중복 지문 확인 팝업
             const confirmOverwrite = confirm(`[${year}년 ${month}월 고${grade}] ${num}번 지문이 이미 DB에 존재합니다.\n새로운 내용으로 덮어쓰시겠습니까?`);
             if (confirmOverwrite) {
               passageArchiveDB[existingIdx] = pObj;
@@ -646,8 +716,6 @@
         document.getElementById('adminMonth').value = target.month;
         document.getElementById('adminGrade').value = target.grade;
         document.getElementById('adminPassageNum').value = target.passageNum;
-        
-        // 지문 불러올 때 공백 정제 적용
         document.getElementById('adminPassageText').value = target.text.replace(/\n\s*\n\s*\n+/g, '\n\n');
       }
     }
@@ -689,7 +757,7 @@
       alert('Gemini API Key가 성공적으로 저장되었습니다!');
     }
 
-// ⚡ 변형문제 대량 AI 생성 (HTTP 404 에러 방지 및 모델 자동 폴백 로직 적용)
+    // ⚡ 변형문제 대량 AI 생성 (에러 방지 및 로딩 스피너)
     async function executeGeminiBatchGenerate() {
       const apiKey = getStoredApiKey();
       
@@ -745,7 +813,6 @@ ${selectedTypes.join(', ')}
 `;
 
       try {
-        // 범용 모델 지원 함수 호출로 HTTP 404 에러 예방
         const rawText = await callGeminiUniversal(apiKey, systemPrompt, (msg) => {
           logBox.innerHTML += `<div>${msg}</div>`;
         });
