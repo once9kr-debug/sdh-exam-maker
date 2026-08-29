@@ -39,7 +39,6 @@
       position: relative;
     }
 
-    /* 🎯 지문 양쪽 정렬(text-justify) 적용 */
     .passage-box {
       border: 1px solid #334155;
       padding: 9px 12px;
@@ -188,7 +187,6 @@
       animation: blink 0.8s infinite;
     }
 
-    /* 🎯 인쇄 정밀 레이아웃 (브라우저 상하단 URL 제거) */
     @media print {
       @page {
         size: A4 portrait;
@@ -463,9 +461,7 @@
             <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
               <div class="flex items-end justify-between">
                 <div>
-                  <!-- 🎯 1) 상단 브랜드 변경: SDH ACADEMY -->
                   <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH ACADEMY</span>
-                  <!-- 🎯 1) 타이틀 변경: ~ 변형문제 -->
                   <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제</h1>
                 </div>
                 <div class="flex items-center gap-3 text-xs">
@@ -1125,24 +1121,33 @@ ${fullText.slice(0, 15000)}
       throw lastError || new Error('API 통신 실패');
     }
 
-    // 🎯 마크다운 특수문자 제거 및 파서 강화
+    // 🎯 [완전 강화 파서] 오답 해설 및 보기 분리, 지문 서식 강제 교정
     function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey) {
       const results = [];
       rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
         if (!block.trim()) return;
-        let title = '', options = [], answer = '', explanation = '', type = '주제';
+        let title = '', options = [], answer = '', explanation = '', type = '주제', passage = defaultPassage;
+        
         block.trim().split('\n').forEach(l => {
           let t = l.trim();
-          // 발문 마크다운 기호 `*` 제거
           t = t.replace(/\*/g, '');
 
           if (t.startsWith('유형:')) type = extractStandardType(t.replace('유형:', ''));
           else if (t.startsWith('발문:')) title = t.replace('발문:', '');
+          else if (t.startsWith('지문:')) passage = t.replace('지문:', '');
           else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
           else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
-          else if (t.match(/^[①②③④⑤]/)) options.push(t);
+          else if (t.match(/^[①②③④⑤]/)) {
+            // 오답 해설이 보기에 섞인 경우 분리 로직
+            if (t.includes('는 ') || t.includes('은 ') || t.includes('해설')) {
+              explanation += ' ' + t;
+            } else {
+              options.push(t);
+            }
+          }
         });
 
+        // 서술형/단답형 보기는 강제 제거
         const isSubjectiveType = (type === '서술형' || type === '단답형');
         if (isSubjectiveType) {
           options = [];
@@ -1151,7 +1156,7 @@ ${fullText.slice(0, 15000)}
         results.push({
           id: 'Q-' + setKey + '-' + defaultPassageNum + '-' + type + '-' + Date.now() + '-' + idx,
           passage_num: defaultPassageNum, type, difficulty: difficulty || '중',
-          title: title || `[${defaultPassageNum}번 변형문항]`, passage: defaultPassage, options, answer: answer || '①', explanation
+          title: title || `[${defaultPassageNum}번 변형문항]`, passage, options, answer: answer || '①', explanation
         });
       });
       return results;
@@ -1401,7 +1406,7 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
-    // 🎯 [정밀 교정] 발문 우측 끝 뱃지 밀착 + 특수문자 제거 + 지문 양쪽정렬 적용
+    // 🎯 [완전 정밀 교정] 오답 해설 분리 + 보기 오차 수정 + 발문 끝 출처 밀착
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const aContainer = document.getElementById('answerDetailContent');
@@ -1419,9 +1424,14 @@ ${fullText.slice(0, 15000)}
 
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
-        const hasOptions = (!isSubjective && q.options && q.options.length > 0);
-        
-        // 발문 텍스트 내 마크다운 특수문자 `*` 제거
+
+        // 보기 항목 중 오답 해설 제거 필터링
+        let cleanOptions = (q.options || []).filter(opt => {
+          const t = opt.trim();
+          return !t.includes('는 ') && !t.includes('은 ') && !t.includes('해설');
+        });
+
+        const hasOptions = (!isSubjective && cleanOptions.length > 0);
         const cleanTitle = (q.title || '').replace(/\*/g, '');
 
         return `
@@ -1432,17 +1442,15 @@ ${fullText.slice(0, 15000)}
             </button>
 
             <div id="qDisplay_${q.id}">
-              <!-- 🎯 발문 끝에 자연스럽게 붙는 [지문번호/유형] 뱃지 레이아웃 교정 -->
               <div class="font-bold text-[13.5px] leading-snug mb-1">
                 <span class="font-black text-slate-950">${idx + 1}.</span> 
                 <span>${cleanTitle}</span>
                 <span class="text-[10px] text-slate-500 font-sans inline-block ml-1 border border-slate-300 px-1 py-0.2 rounded font-normal">[${q.passage_num}번 / ${q.type}]</span>
               </div>
 
-              <!-- 🎯 지문 박스 양쪽 정렬(text-justify) 적용 -->
               <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
               
-              ${hasOptions ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
+              ${hasOptions ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${cleanOptions.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
               
               ${isSubjective ? `
                 <div class="mt-3 border border-slate-400 p-3 rounded bg-slate-50 font-sans">
@@ -1462,13 +1470,13 @@ ${fullText.slice(0, 15000)}
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정 (빈칸: (A), ________ / 순서: (A),(B),(C) / 어법: ①~⑤ 밑줄)</label>
+                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정</label>
                 <textarea id="editPassage_${q.id}" rows="4" class="w-full p-1.5 border rounded text-xs font-mono">${q.passage}</textarea>
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-600">보기 수정 (줄바꿈 구분 / 서술형은 비워둠)</label>
-                <textarea id="editOptions_${q.id}" rows="3" class="w-full p-1.5 border rounded text-xs">${q.options ? q.options.join('\n') : ''}</textarea>
+                <label class="text-[10px] font-bold text-slate-600">보기 수정 (줄바꿈 구분)</label>
+                <textarea id="editOptions_${q.id}" rows="3" class="w-full p-1.5 border rounded text-xs">${cleanOptions.join('\n')}</textarea>
               </div>
 
               <div class="grid grid-cols-2 gap-2">
@@ -1605,7 +1613,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
-    // 🎯 [정밀 AI 출제 프롬프트 - 지문 변형 및 서식 규칙 완전 강제화]
+    // 🎯 [초강력 AI 프롬프트 적용 - 지문 변형 지침 강화]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1651,16 +1659,16 @@ ${pObj.text}
 [요청된 세부 출제 유형]:
 ${groupTypes.join(', ')}
 
-[유형별 출제 필수 규격 지침 (엄격 준수)]:
-1. **[빈칸/어휘/연결사] 문제:**
-   - 원문 지문에서 정답이 되는 핵심 단어나 문장을 반드시 **(A), (B)** 또는 **__________** 형태로 뚫어 변형한 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 두면 절대 안 됩니다.
-2. **[어법] 문제:**
-   - 원문 지문 내 어법 출제 요소 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 형태로 밑줄과 번호를 지문 자체에 적용하여 출력하십시오.
-3. **[순서] 문제:**
-   - 지문 첫 단락 제시문 뒤에 이어질 글을 **(A), (B), (C)** 단락 기호로 명확히 분할하여 지문을 재구성하십시오.
-4. **[서술형/단답형] 문제:**
-   - 서술형 및 단답형 문제에는 객관식 보기(①~⑤)를 절대로 출력하지 마십시오.
-5. 발문에는 마크다운 기호 \`*\`를 절대 사용하지 마십시오.
+[유형별 지문 변형 엄격 준수 규칙 (필수)]:
+1. **[빈칸/어휘/연결사] 문제 규칙:**
+   - 정답이 되는 핵심 단어나 구문을 지문에서 뚫어서 반드시 **(A), (B)** 또는 **__________** 형태로 빈칸을 만든 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 놔두지 마십시오!
+2. **[어법] 문제 규칙:**
+   - 지문 내 어법 출제 요소 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 형태로 밑줄과 번호를 적용한 지문을 출력하십시오.
+3. **[순서] 문제 규칙:**
+   - 지문을 제시문과 **(A), (B), (C)** 3개 단락으로 나누어 구성하십시오.
+4. **[서술형/단답형] 문제 규칙:**
+   - 서술형에는 객관식 보기(①~⑤)를 절대로 생성하지 마십시오.
+5. 보기에 해설 텍스트나 오답 설명을 절대로 포함시키지 마십시오. 오답 설명은 오직 '해설:' 칸에만 기재하십시오.
 
 ## [문항 1]
 유형: ${groupTypes[0]}
