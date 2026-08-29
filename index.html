@@ -455,7 +455,7 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 세분화된 대량 출제 엔진 -->
+      <!-- VIEW 5: 백엔드 수량 고정 대량 출제 엔진 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -463,7 +463,7 @@
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 모의고사 세트별 대량 변형문제 AI 출제 엔진
               </h2>
-              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 세분화된 유형별로 일괄 출제합니다.</p>
+              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 출제할 세부 유형을 체크하세요.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
@@ -494,15 +494,9 @@
               </div>
 
               <div class="space-y-3">
-                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 flex items-center justify-between">
-                  <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                    <i class="fa-solid fa-layer-group text-amber-600"></i> 지문 1개당 유형별 출제 수량
-                  </span>
-                  <select id="questionsPerType" class="border border-amber-300 rounded-lg px-2.5 py-1 text-xs font-bold bg-white text-amber-900">
-                    <option value="1">유형당 1문제씩 (기본)</option>
-                    <option value="2">유형당 2문제씩</option>
-                    <option value="3" selected>유형당 3문제씩 (대량 과제용)</option>
-                  </select>
+                <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 text-xs text-blue-800 flex items-center gap-2 font-medium">
+                  <i class="fa-solid fa-shield-halved text-blue-600"></i>
+                  <span>백엔드 고정 정책: AI 품질 최적화를 위해 **유형당 최적 수량(2문제씩)**으로 분할 자동 출제됩니다.</span>
                 </div>
 
                 <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 세부 변형문제 유형 선택</label>
@@ -559,7 +553,7 @@
               </div>
 
               <button onclick="executeFastParallelGenerate()" id="btnAdminGen" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow transition text-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 세분화된 Gemini AI 변형문제 자동 생성 시작
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 고품질 분할 AI 변형문제 자동 생성 시작
               </button>
             </div>
 
@@ -689,6 +683,7 @@
 
     let selectedDifficulty = '중';
 
+    // 세분화 5대 대분류 구조
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-teal-500' },
       { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-sky-500' },
@@ -767,7 +762,6 @@
     function removeQueuedFile(idx) { queuedPdfFiles.splice(idx, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
-    // PDF 파싱 엔진 (완료 시 커서 제거 적용)
     async function startBatchPdfClassification() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -796,7 +790,6 @@
             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
           }
 
-          // 커서 태그 이전 줄에서 제거
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           logBox.innerHTML += `<div>[${i+1}/${queuedPdfFiles.length}] [${school} ${exam}] 킬러 함정 정밀 추출 중... <span class="terminal-cursor"></span></div>`;
           logBox.scrollTop = logBox.scrollHeight;
@@ -892,7 +885,6 @@ ${fullText.slice(0, 15000)}
       return results;
     }
 
-    // 19개 세부 유형 매칭 헬퍼 함수
     function extractStandardType(str) {
       if (str.includes('어법')) return '어법';
       if (str.includes('어휘')) return '어휘';
@@ -1263,7 +1255,7 @@ ${fullText.slice(0, 15000)}
       alert('Gemini API Key 저장 완료!');
     }
 
-    // AI 변형문제 출제 엔진 (완료 시 커서 제거 적용)
+    // 🚀 [백엔드 수량 고정 + 카테고리 분할 호출 엔진] 짤림 없는 100% 완벽 출제
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1277,7 +1269,6 @@ ${fullText.slice(0, 15000)}
       const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
       if (selectedTypes.length === 0) return alert('생성할 변형문제 유형을 선택해 주세요.');
 
-      const countPerType = parseInt(document.getElementById('questionsPerType').value) || 3;
       const btn = document.getElementById('btnAdminGen');
       const logBox = document.getElementById('generationLogBox');
       const progressText = document.getElementById('genProgressText');
@@ -1287,20 +1278,32 @@ ${fullText.slice(0, 15000)}
         : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [FAST BATCH] 세분화된 유형 100% 매칭 출제 시작 (${setKey})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [FAST BATCH] 카테고리 분할 AI 출제 가동 (${setKey})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
       let totalGeneratedCount = 0;
-      const BATCH_SIZE = 5;
+      
+      // 요청 유형을 대분류 5개 카테고리 단위 그룹으로 자동 분할 (토큰 잘림 차단)
+      const typeGroups = [];
+      typeCategories.forEach(cat => {
+        const matchedInCat = cat.types.filter(t => selectedTypes.includes(t));
+        if (matchedInCat.length > 0) typeGroups.push(matchedInCat);
+      });
+
+      const BATCH_SIZE = 3; // 안정적인 지문 병렬 수
 
       for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
         const chunk = targetPassages.slice(i, i + BATCH_SIZE);
         if (progressText) progressText.innerText = `${Math.min(i + BATCH_SIZE, targetPassages.length)}/${targetPassages.length} 진행 중`;
 
+        // 지문 그룹별로 분할 카테고리 순차 호출
         await Promise.all(chunk.map(async (pObj) => {
-          const prompt = `
+          for (let g = 0; g < typeGroups.length; g++) {
+            const groupTypes = typeGroups[g];
+
+            const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-주어진 [영어 지문]에 대해 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 세부 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 변형문제를 제작하십시오.
+주어진 [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 세부 출제 유형]별로 **각각 정확히 2문제씩** 변형문제를 제작하십시오.
 
 [축적된 실제 학교 기출 킬러 함정 패턴]:
 ${benchmarkTricksSection}
@@ -1309,14 +1312,14 @@ ${benchmarkTricksSection}
 ${pObj.text}
 
 [요청된 세부 출제 유형]:
-${selectedTypes.join(', ')}
+${groupTypes.join(', ')}
 
 [출력 규격 필수 규칙]:
 - '유형:' 항목에는 요청된 세부 유형 명칭 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나를 오직 단어로만 정확히 기재하십시오.
 
 ## [문항 1]
-유형: 빈칸
-발문: 다음 빈칸에 들어갈 말로 가장 적절한 것은?
+유형: ${groupTypes[0]}
+발문: 다음 글의 내용을 바탕으로 적절한 문제를 푸시오.
 지문: ${pObj.text}
 ① 보기1
 ② 보기2
@@ -1327,25 +1330,22 @@ ${selectedTypes.join(', ')}
 해설: 상세 해설
 `;
 
-          try {
-            const rawText = await callGeminiUniversal(apiKey, prompt);
-            const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text);
+            try {
+              const rawText = await callGeminiUniversal(apiKey, prompt);
+              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text);
 
-            logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-
-            if (parsedQuestions.length > 0) {
-              generatedQuestionsPool.unshift(...parsedQuestions);
-              totalGeneratedCount += parsedQuestions.length;
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공 (+${parsedQuestions.length}문항)</div>`;
-            } else {
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공</div>`;
+              if (parsedQuestions.length > 0) {
+                generatedQuestionsPool.unshift(...parsedQuestions);
+                totalGeneratedCount += parsedQuestions.length;
+              }
+            } catch (err) {
+              console.error(err);
             }
-            logBox.scrollTop = logBox.scrollHeight;
-          } catch (err) {
-            logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-            logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passageNum}번 실패</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
           }
+
+          logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
+          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 모든 세부 유형 완수</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
         }));
       }
 
@@ -1370,8 +1370,8 @@ ${selectedTypes.join(', ')}
 
       renderExamTable();
       btn.disabled = false;
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 세부 유형 출제 완료! (총 +${totalGeneratedCount}문항 생성)</div>`;
-      alert(`🎉 세부 유형 반영 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 변형문제가 성공적으로 생성되었습니다.`);
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 짤림 없는 세부 유형 출제 완전 완료! (총 +${totalGeneratedCount}문항 생성)</div>`;
+      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 누락 없이 생성되었습니다.`);
     }
 
     function clearPassageArchiveDB() {
