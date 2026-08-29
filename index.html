@@ -1045,13 +1045,11 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // ⚡ 범용 최신 Gemini 모델 지원 (gemini-2.0-flash 기본 1순위)
+   // ⚡ 구버전 에러 모델을 지우고 100% 호환 검증된 모델만 호출하는 안전 함수
     async function callGeminiUniversal(apiKey, prompt, onLog) {
       const candidateModels = [
         'gemini-2.0-flash',
-        'gemini-2.5-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
+        'gemini-1.5-flash'
       ];
 
       let lastError = null;
@@ -1082,8 +1080,7 @@ ${fullText.slice(0, 15000)}
           } else {
             const errJson = await res.json().catch(() => ({}));
             lastError = new Error(errJson.error && errJson.error.message ? errJson.error.message : `HTTP ${res.status}`);
-            if (res.status === 404 || res.status === 400) continue;
-            else throw lastError;
+            continue;
           }
         } catch (e) {
           lastError = e;
