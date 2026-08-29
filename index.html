@@ -30,7 +30,6 @@
       font-family: 'Roboto', 'Noto Sans KR', sans-serif;
     }
 
-    /* 화면용 2단 레이아웃 */
     .exam-columns-2 {
       column-count: 2;
       column-gap: 28px;
@@ -125,7 +124,24 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
-    /* 터미널 커서 스타일 */
+    .filter-diff-btn {
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-diff-btn.active-filter-diff {
+      background-color: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+    }
+
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -140,24 +156,20 @@
       animation: blink 0.8s infinite;
     }
 
-    /* 🖨️ 인쇄 및 PDF 출력 전용 정밀 미디어 쿼리 (웹주소/날짜 삭제, 2단 고급 정렬) */
     @media print {
       @page {
         size: A4 portrait;
         margin: 10mm 12mm 10mm 12mm !important;
       }
-
       body {
         background: white !important;
         color: black !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-
       .no-print {
         display: none !important;
       }
-
       .print-area {
         display: block !important;
         width: 100% !important;
@@ -166,23 +178,19 @@
         box-shadow: none !important;
         border: none !important;
       }
-
       .print-header-box {
         display: block !important;
       }
-
       .exam-columns-2 {
         column-count: 2 !important;
         column-gap: 24px !important;
         column-rule: 0.8px solid #94a3b8 !important;
       }
-
       .question-block {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
         margin-bottom: 20px !important;
       }
-
       .passage-box {
         border: 1px solid #1e293b !important;
         padding: 6px 10px !important;
@@ -226,12 +234,6 @@
             <input type="password" id="loginPw" value="1234" required class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
         </div>
-
-        <div class="bg-blue-50 p-3 rounded-lg text-xs text-blue-700 flex items-center gap-2">
-          <i class="fa-solid fa-circle-info"></i>
-          <span>선생님 계정: <strong>teacher</strong> / 관리자 계정: <strong>admin</strong> (PW: 1234)</span>
-        </div>
-
         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg shadow-md transition text-sm">
           SDH STUDIO 로그인
         </button>
@@ -260,9 +262,7 @@
 
       <nav class="p-4 space-y-1.5 flex-1">
         <button onclick="switchView('examList')" id="nav-mock" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-          <span class="flex items-center gap-3">
-            <i class="fa-solid fa-file-lines w-4"></i> 모의고사
-          </span>
+          <span class="flex items-center gap-3"><i class="fa-solid fa-file-lines w-4"></i> 모의고사</span>
           <i class="fa-solid fa-chevron-right text-xs opacity-70"></i>
         </button>
 
@@ -270,23 +270,17 @@
           <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
           
           <button onclick="switchView('mockRegisterPanel')" id="nav-mock-register" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-teal-600 text-white shadow-sm transition">
-            <span class="flex items-center gap-3">
-              <i class="fa-solid fa-list-check w-4"></i> 모의고사 25개 지문 직접 등록
-            </span>
+            <span class="flex items-center gap-3"><i class="fa-solid fa-list-check w-4"></i> 모의고사 25개 지문 직접 등록</span>
             <i class="fa-solid fa-plus text-xs"></i>
           </button>
 
           <button onclick="switchView('adminPanel')" id="nav-admin" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-            <span class="flex items-center gap-3 text-amber-400">
-              <i class="fa-solid fa-wand-magic-sparkles w-4"></i> 대량 변형문제 AI 출제
-            </span>
+            <span class="flex items-center gap-3 text-amber-400"><i class="fa-solid fa-wand-magic-sparkles w-4"></i> 대량 변형문제 AI 출제</span>
             <i class="fa-solid fa-bolt text-xs"></i>
           </button>
 
           <button onclick="switchView('pdfParserPanel')" id="nav-parser" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
-            <span class="flex items-center gap-3 text-cyan-400">
-              <i class="fa-solid fa-file-pdf w-4"></i> 기출 PDF 자동분류 DB
-            </span>
+            <span class="flex items-center gap-3 text-cyan-400"><i class="fa-solid fa-file-pdf w-4"></i> 기출 PDF 자동분류 DB</span>
             <span id="benchmarkCountBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full font-bold border border-cyan-800">기출 3제</span>
           </button>
         </div>
@@ -311,27 +305,17 @@
           <div class="flex items-center gap-3">
             <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded">교재 선택</span>
             <span class="text-xs font-bold text-blue-600">고등</span>
-            <select id="filterCategory" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option>모의고사</option>
-            </select>
+            <select id="filterCategory" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"><option>모의고사</option></select>
             <select id="filterYear" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option value="">년도 전체</option>
-              <option value="2026">2026년</option>
-              <option value="2025">2025년</option>
+              <option value="">년도 전체</option><option value="2026">2026년</option><option value="2025">2025년</option>
             </select>
             <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option value="">월 전체</option>
-              <option value="3">3월</option>
-              <option value="6">6월</option>
+              <option value="">월 전체</option><option value="3">3월</option><option value="6">6월</option>
             </select>
             <select id="filterGrade" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
-              <option value="">학년 전체</option>
-              <option value="1">고1</option>
-              <option value="2">고2</option>
+              <option value="">학년 전체</option><option value="1">고1</option><option value="2">고2</option>
             </select>
-            <button onclick="renderExamTable()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-lg font-bold">
-              <i class="fa-solid fa-arrows-rotate"></i>
-            </button>
+            <button onclick="renderExamTable()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-lg font-bold"><i class="fa-solid fa-arrows-rotate"></i></button>
           </div>
         </div>
 
@@ -339,12 +323,8 @@
           <table class="w-full text-left border-collapse text-sm">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-200 text-blue-600 font-bold text-xs">
-                <th class="py-3.5 px-6">년도</th>
-                <th class="py-3.5 px-6">월</th>
-                <th class="py-3.5 px-6">주관 / 모의고사명</th>
-                <th class="py-3.5 px-6">학년</th>
-                <th class="py-3.5 px-6 text-center">변형 문제수</th>
-                <th class="py-3.5 px-6 text-center">출제 및 보기</th>
+                <th class="py-3.5 px-6">년도</th><th class="py-3.5 px-6">월</th><th class="py-3.5 px-6">주관 / 모의고사명</th>
+                <th class="py-3.5 px-6">학년</th><th class="py-3.5 px-6 text-center">변형 문제수</th><th class="py-3.5 px-6 text-center">출제 및 보기</th>
               </tr>
             </thead>
             <tbody id="examTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
@@ -352,7 +332,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 세분화된 유형 및 지문 선택 -->
+      <!-- VIEW 2: 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -361,8 +341,20 @@
             </button>
             <div>
               <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">2026년 3월 학력평가 (고1)</h2>
-              <p class="text-xs text-slate-500">원하시는 세부 출제 유형과 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
+              <p class="text-xs text-slate-500">원하시는 난이도, 출제 유형, 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
             </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-amber-500"></i> 출제 난이도 필터 선택
+          </span>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="setSelectDifficulty('상')" id="filterDiff_상" class="filter-diff-btn">상 (고난도)</button>
+            <button type="button" onclick="setSelectDifficulty('중')" id="filterDiff_중" class="filter-diff-btn">중 (표준)</button>
+            <button type="button" onclick="setSelectDifficulty('하')" id="filterDiff_하" class="filter-diff-btn">하 (기본)</button>
+            <button type="button" onclick="setSelectDifficulty('혼합')" id="filterDiff_혼합" class="filter-diff-btn active-filter-diff">혼합 (상/중/하 전체)</button>
           </div>
         </div>
 
@@ -392,20 +384,22 @@
           <div id="passageChipContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1"></div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-4 text-xs font-bold text-slate-700">
-            <span>선택된 문항 제한:</span>
-            <input type="number" id="limitCount" value="50" class="w-24 p-2 border rounded-lg text-center font-bold text-blue-600" />
-            <span class="text-slate-400">(현재 필터 선택 문항: <strong id="selectedTotalCount" class="text-blue-600">0</strong>개)</span>
+        <!-- 🎯 [수정] 명확해진 출력 문항수 선택 영역 -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-300 flex items-center justify-between">
+          <div class="flex items-center gap-4 text-sm font-black text-slate-800">
+            <span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded text-xs font-bold"><i class="fa-solid fa-print"></i> 최종 인쇄 설정</span>
+            <span>출력할 문항 갯수 :</span>
+            <input type="number" id="limitCount" value="50" class="w-24 p-2 border-2 border-blue-400 rounded-lg text-center font-bold text-blue-700 text-base shadow-inner focus:outline-none" />
+            <span class="text-xs text-slate-500 font-medium">(현재 위 필터로 매칭된 풀: <strong id="selectedTotalCount" class="text-blue-600 text-sm">0</strong>개)</span>
           </div>
 
-          <button onclick="generateExamPaper()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
-            <i class="fa-solid fa-book-bookmark"></i> 선택된 문제 과제집 출제
+          <button onclick="generateExamPaper()" class="bg-blue-600 hover:bg-blue-700 text-white font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
+            <i class="fa-solid fa-book-bookmark"></i> 선택된 문제 과제집 출력
           </button>
         </div>
       </section>
 
-      <!-- VIEW 3: 2단 인쇄용 정밀 시험지 (개편완료) -->
+      <!-- VIEW 3: 2단 인쇄용 정밀 시험지 -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
         <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
@@ -417,7 +411,6 @@
         </div>
 
         <div class="print-area bg-white p-8 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
-          <!-- 🖨️ 인쇄 전용 내신 시험지 스타일 깔끔 상단 헤더 -->
           <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
             <div class="flex items-end justify-between">
               <div>
@@ -430,7 +423,6 @@
               </div>
             </div>
           </div>
-
           <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
         </div>
       </section>
@@ -443,35 +435,28 @@
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-list-check text-teal-600"></i> 모의고사 25개 지문 직접 입력 DB
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">상단 모의고사 정보 설정 후 각 지문 번호(18번~43-45번)에 맞게 영어 본문만 붙여넣으세요.</p>
+              <p class="text-xs text-slate-500 mt-0.5">상단 모의고사 정보 설정 후 각 지문 번호에 맞게 영어 본문만 붙여넣으세요.</p>
             </div>
-            <button onclick="clearPassageArchiveDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">
-              지문 DB 전체 초기화
-            </button>
+            <button onclick="clearPassageArchiveDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">지문 DB 전체 초기화</button>
           </div>
 
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
               <span>등록할 모의고사 설정:</span>
               <select id="regYear" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="2026" selected>2026년</option>
-                <option value="2025">2025년</option>
+                <option value="2026" selected>2026년</option><option value="2025">2025년</option>
               </select>
               <select id="regMonth" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="3" selected>3월</option>
-                <option value="6">6월</option>
+                <option value="3" selected>3월</option><option value="6">6월</option>
               </select>
               <select id="regGrade" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="1" selected>고1</option>
-                <option value="2">고2</option>
+                <option value="1" selected>고1</option><option value="2">고2</option>
               </select>
             </div>
-
             <button onclick="saveAll25Passages()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-floppy-disk"></i> 입력된 25개 지문 일괄 DB 저장
+              <i class="fa-solid fa-floppy-disk"></i> 입력된 지문 일괄 DB 저장
             </button>
           </div>
-
           <div id="passageInputsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-2"></div>
         </div>
 
@@ -483,13 +468,9 @@
             <table class="w-full text-left text-xs">
               <thead>
                 <tr class="bg-slate-100 text-slate-700 font-bold border-b sticky top-0">
-                  <th class="py-2.5 px-4 w-16 text-center">연도</th>
-                  <th class="py-2.5 px-4 w-16 text-center">시행월</th>
-                  <th class="py-2.5 px-4 w-20 text-center">학년</th>
-                  <th class="py-2.5 px-4 w-24 text-center">지문 번호</th>
-                  <th class="py-2.5 px-4">지문 첫 문장 / 미리보기</th>
-                  <th class="py-2.5 px-4 w-24 text-center">상태</th>
-                  <th class="py-2.5 px-4 w-28 text-center">관리</th>
+                  <th class="py-2.5 px-4 w-16 text-center">연도</th><th class="py-2.5 px-4 w-16 text-center">시행월</th>
+                  <th class="py-2.5 px-4 w-20 text-center">학년</th><th class="py-2.5 px-4 w-24 text-center">지문 번호</th>
+                  <th class="py-2.5 px-4">지문 첫 문장 / 미리보기</th><th class="py-2.5 px-4 w-24 text-center">상태</th><th class="py-2.5 px-4 w-28 text-center">관리</th>
                 </tr>
               </thead>
               <tbody id="passageArchiveTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
@@ -498,7 +479,7 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 세분화된 대량 출제 엔진 -->
+      <!-- VIEW 5: 세분화 대량 출제 엔진 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -699,9 +680,7 @@
         <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
           <i class="fa-solid fa-key text-amber-500"></i> Google Gemini API Key 설정
         </h3>
-        <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-slate-600">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <input type="password" id="inputApiKey" placeholder="AIzaSy..." class="w-full p-2.5 border rounded-lg text-sm mb-4 font-mono" />
       <div class="flex justify-end gap-2">
@@ -725,6 +704,7 @@
     let queuedPdfFiles = [];
 
     let selectedDifficulty = '중';
+    let selectedFilterDifficulty = '혼합'; // 🎯 선택 화면 난이도 필터
 
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-teal-500' },
@@ -747,20 +727,27 @@
       });
     }
 
+    // 🎯 선택 화면용 난이도 필터 기능
+    function setSelectDifficulty(diff) {
+      selectedFilterDifficulty = diff;
+      ['상', '중', '하', '혼합'].forEach(d => {
+        const btn = document.getElementById(`filterDiff_${d}`);
+        if (btn) {
+          btn.className = (d === diff) ? 'filter-diff-btn active-filter-diff' : 'filter-diff-btn';
+        }
+      });
+      renderTypeChips();
+      renderPassageChips();
+      updateSelectedCountText();
+    }
+
     function cleanSchoolInfo(filename) {
       let name = filename.replace(/\.pdf$/i, '').trim();
       name = name.replace(/\(개정\)/g, '').replace(/\(기출\)/g, '').replace(/20\d\d년?/g, '').trim();
-
-      let schoolStr = '학교 미상';
-      let examStr = '기출';
-
+      let schoolStr = '학교 미상', examStr = '기출';
       let schoolMatch = name.match(/([가-힣a-zA-Z0-9]+(고등학교|여고|외고|과고|고|여중|중학교|중))/);
-      if (schoolMatch) {
-        schoolStr = schoolMatch[0].replace('고등학교', '고').replace('중학교', '중');
-      } else {
-        const parts = name.split(/[_\-\s]+/);
-        schoolStr = parts[0] || '학교 기출';
-      }
+      if (schoolMatch) schoolStr = schoolMatch[0].replace('고등학교', '고').replace('중학교', '중');
+      else schoolStr = name.split(/[_\-\s]+/)[0] || '학교 기출';
 
       if (name.includes('1-1') || name.includes('1학기 중간')) examStr = '1-1 중간';
       else if (name.includes('1-2') || name.includes('1학기 기말')) examStr = '1-1 기말';
@@ -768,7 +755,6 @@
       else if (name.includes('2-2') || name.includes('2학기 기말')) examStr = '2-1 기말';
       else if (name.includes('중간')) examStr = '중간고사';
       else if (name.includes('기말')) examStr = '기말고사';
-
       return { school: schoolStr, exam: examStr };
     }
 
@@ -778,8 +764,7 @@
     function handleFileInputChange(e) { addFilesToQueue(Array.from(e.target.files)); }
 
     function addFilesToQueue(files) {
-      const pdfFiles = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
-      queuedPdfFiles.push(...pdfFiles);
+      queuedPdfFiles.push(...files.filter(f => f.name.toLowerCase().endsWith('.pdf')));
       renderQueuedFiles();
     }
 
@@ -787,11 +772,7 @@
       const container = document.getElementById('queuedFilesContainer');
       const list = document.getElementById('queuedFileList');
       if (!container || !list) return;
-
-      if (queuedPdfFiles.length === 0) {
-        container.classList.add('hidden');
-        return;
-      }
+      if (queuedPdfFiles.length === 0) return container.classList.add('hidden');
       container.classList.remove('hidden');
       list.innerHTML = queuedPdfFiles.map((file, idx) => `
         <div class="flex items-center justify-between p-2 bg-white rounded border text-xs">
@@ -809,28 +790,19 @@
       if (!apiKey) return toggleApiKeyModal();
       if (queuedPdfFiles.length === 0) return alert('분석할 PDF 파일이 없습니다.');
 
-      const logBox = document.getElementById('pdfLogTerminal');
-      const btn = document.getElementById('btnStartBatch');
-
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-bolt fa-spin"></i> 정밀 기출 분석 진행 중...';
+      const logBox = document.getElementById('pdfLogTerminal'), btn = document.getElementById('btnStartBatch');
+      btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-bolt fa-spin"></i> 정밀 기출 분석 진행 중...';
 
       let totalAddedCount = 0;
-      logBox.innerHTML = `<div>[BATCH START] 총 ${queuedPdfFiles.length}개 시험지 정밀 함정 분석 가동... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>[BATCH START] 총 ${queuedPdfFiles.length}개 시험지 정밀 분석 가동... <span class="terminal-cursor"></span></div>`;
 
       await Promise.all(queuedPdfFiles.map(async (file, i) => {
         const { school, exam } = cleanSchoolInfo(file.name);
-        
         try {
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          
           let fullText = '';
-          for (let p = 1; p <= pdf.numPages; p++) {
-            const page = await pdf.getPage(p);
-            const textContent = await page.getTextContent();
-            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
-          }
+          for (let p = 1; p <= pdf.numPages; p++) fullText += (await (await pdf.getPage(p)).getTextContent()).items.map(item => item.str).join(' ') + '\n';
 
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           logBox.innerHTML += `<div>[${i+1}/${queuedPdfFiles.length}] [${school} ${exam}] 킬러 함정 정밀 추출 중... <span class="terminal-cursor"></span></div>`;
@@ -838,13 +810,6 @@
 
           const parserPrompt = `
 당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
-주어진 [영어 시험지 텍스트]를 분석하여 개별 기출 문항들을 추출하고, 각 문항의 **구체적인 내신 오답 함정 메커니즘(킬러 포인트)**을 명확히 명시하십시오.
-
-[출력 규격 지침]:
-1. 오직 기출 문제 발문만 추출하십시오. 안내 문구나 설명은 절대로 포함하지 마십시오.
-2. 유형은 반드시 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나로 정밀 매칭하십시오.
-3. 킬러패턴 지침: 반드시 실제 시험지 문항을 보고 "원문 유의어 패러프레이징", "관계대명사 vs 접속사 착시", "반의어 어휘 교체 함정" 등 실제 오답 유도 매커니즘을 작성하십시오.
-
 [학교/시험]: ${school} ${exam}
 [시험지 원문]:
 ${fullText.slice(0, 15000)}
@@ -853,193 +818,116 @@ ${fullText.slice(0, 15000)}
 ## [어법] 1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
 - 킬러패턴: 준동사(v-ing) vs 본동사 위치 착시 및 수일치 복합 함정
 `;
-
           const rawText = await callGeminiUniversal(apiKey, parserPrompt);
           const parsedArray = parseMarkdownBenchmarkText(rawText, school, exam);
 
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
             schoolBenchmarkDB.unshift(...parsedArray);
             totalAddedCount += parsedArray.length;
-            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school} ${exam}] 함정 분석 완료! +${parsedArray.length}문항 적재 완료</div>`;
+            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school} ${exam}] 분석 완료! +${parsedArray.length}문항 적재</div>`;
           } else {
             logBox.innerHTML += `<div class="text-emerald-300">✓ [${school} ${exam}] 분석 완료</div>`;
           }
           logBox.scrollTop = logBox.scrollHeight;
           renderBenchmarkTable();
-
         } catch (err) {
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ [${school}] 분석 에러: ${err.message}</div>`;
-          logBox.scrollTop = logBox.scrollHeight;
         }
       }));
-
       logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모든 기출 PDF 킬러 패턴 학습 완료! (총 +${totalAddedCount}문항 적재)</div>`;
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
-      alert(`🎉 킬러 함정 패턴 학습 완료!\n[${queuedPdfFiles.length}개 시험지] 총 ${totalAddedCount}개 문항의 정밀 함정 정보가 DB에 연동되었습니다.`);
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 기출 패턴 학습 완료! (총 +${totalAddedCount}문항)</div>`;
+      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
       clearQueuedFiles();
     }
 
     function parseMarkdownBenchmarkText(text, school, exam) {
       const results = [];
-      const blocks = text.split(/##\s+/);
-
-      blocks.forEach((block, idx) => {
-        if (!block.trim()) return;
-
-        if (block.includes('대한민국 고등학교 영어 시험지 분석 전문가') || block.includes('출력형식 예시')) {
-          return;
-        }
-
+      text.split(/##\s+/).forEach((block, idx) => {
+        if (!block.trim() || block.includes('전문가') || block.includes('출력형식')) return;
         const lines = block.trim().split('\n');
-        const firstLine = lines[0] || '';
+        let type = extractStandardType(lines[0] || '');
+        const cleanedTitle = (lines[0] || '').replace(/\[.*?\]/g, '').trim();
+        let trickText = lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').replace(/킬러패턴:\s*/, '').trim() : '원문 핵심 어구의 패러프레이징 오답 유도';
         
-        let type = extractStandardType(firstLine);
-        const cleanedTitle = firstLine.replace(/\[.*?\]/g, '').trim();
-
-        let trickText = lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').replace(/킬러패턴:\s*/, '').trim() : '';
-        
-        if (!trickText || trickText.includes('학교 기출 핵심 패턴')) {
-          if (type === '어법') trickText = '수일치, 관계사/접속사 착시 및 준동사 변형 함정';
-          else if (type === '어휘') trickText = '원문 핵심 어휘의 유의어/반의어 교체 출제';
-          else if (type === '빈칸') trickText = '핵심 구문의 고급 패러프레이징 및 어휘 변형';
-          else if (type === '순서' || type === '삽입') trickText = '지시대명사 및 논리적 연결사 단서 변형';
-          else if (type === '서술형') trickText = '조건부 영작 어순배열 및 어휘 형태 변형 요구';
-          else trickText = '원문 주제문의 패러프레이징 오답 유도';
-        }
-
-        if (cleanedTitle && cleanedTitle.length > 5) {
-          results.push({
-            id: 'BM-' + Date.now() + '-' + idx,
-            school: school,
-            exam: exam,
-            type: type,
-            title: cleanedTitle,
-            trick: trickText
-          });
+        if (cleanedTitle.length > 5) {
+          results.push({ id: 'BM-' + Date.now() + '-' + idx, school, exam, type, title: cleanedTitle, trick: trickText });
         }
       });
-
       return results;
     }
 
     function extractStandardType(str) {
-      if (str.includes('어법')) return '어법';
-      if (str.includes('어휘')) return '어휘';
-      if (str.includes('함축')) return '함축의미';
-      if (str.includes('빈칸')) return '빈칸';
-      if (str.includes('연결사')) return '연결사';
-      if (str.includes('순서')) return '순서';
-      if (str.includes('삽입')) return '삽입';
-      if (str.includes('흐름')) return '흐름';
-      if (str.includes('불일치')) return '불일치';
-      if (str.includes('일치')) return '일치';
-      if (str.includes('요약')) return '요약';
-      if (str.includes('목적')) return '목적';
-      if (str.includes('주장')) return '주장';
-      if (str.includes('제목')) return '제목';
-      if (str.includes('요지')) return '요지';
-      if (str.includes('단답형')) return '단답형';
-      if (str.includes('서술형') || str.includes('주관식')) return '서술형';
-      return '주제';
+      if (str.includes('어법')) return '어법'; if (str.includes('어휘')) return '어휘';
+      if (str.includes('함축')) return '함축의미'; if (str.includes('빈칸')) return '빈칸';
+      if (str.includes('연결사')) return '연결사'; if (str.includes('순서')) return '순서';
+      if (str.includes('삽입')) return '삽입'; if (str.includes('흐름')) return '흐름';
+      if (str.includes('불일치')) return '불일치'; if (str.includes('일치')) return '일치';
+      if (str.includes('요약')) return '요약'; if (str.includes('목적')) return '목적';
+      if (str.includes('주장')) return '주장'; if (str.includes('제목')) return '제목';
+      if (str.includes('요지')) return '요지'; if (str.includes('단답형')) return '단답형';
+      if (str.includes('서술형') || str.includes('주관식')) return '서술형'; return '주제';
     }
 
     function renderBenchmarkTable() {
-      const tbody = document.getElementById('benchmarkTableBody');
-      const totalCount = document.getElementById('tableTotalCount');
+      const tbody = document.getElementById('benchmarkTableBody'), totalCount = document.getElementById('tableTotalCount');
       if (totalCount) totalCount.innerText = schoolBenchmarkDB.length;
-      if (!tbody) return;
-
-      tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
+      if (tbody) tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
         <tr class="hover:bg-slate-50">
           <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
           <td class="py-2.5 px-4 font-bold text-slate-800">${item.school} (${item.exam})</td>
           <td class="py-2.5 px-4 text-center"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">${item.type}</span></td>
-          <td class="py-2.5 px-4">
-            <div class="font-bold text-slate-800">${item.title}</div>
-            <div class="text-[11px] text-emerald-700"><strong>함정 패턴:</strong> ${item.trick}</div>
-          </td>
+          <td class="py-2.5 px-4"><div class="font-bold text-slate-800">${item.title}</div><div class="text-[11px] text-emerald-700"><strong>함정 패턴:</strong> ${item.trick}</div></td>
         </tr>
       `).join('');
     }
 
-    function resetBenchmarkDB() {
-      schoolBenchmarkDB = [];
-      renderBenchmarkTable();
-    }
+    function resetBenchmarkDB() { schoolBenchmarkDB = []; renderBenchmarkTable(); }
 
     async function callGeminiUniversal(apiKey, prompt) {
       const apiEndpoints = [
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`
       ];
-
       let lastError = null;
       for (let url of apiEndpoints) {
         try {
           const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.2, maxOutputTokens: 8192 }
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 8192 } })
           });
-
-          if (res.ok) {
-            const data = await res.json();
-            return data.candidates[0].content.parts[0].text;
-          }
+          if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
         } catch (e) { lastError = e; }
       }
       throw lastError || new Error('API 통신 실패');
     }
 
-    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage) {
+    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty) {
       const results = [];
-      const blocks = rawText.split(/##\s+\[문항/g);
-
-      blocks.forEach((block, idx) => {
+      rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
         if (!block.trim()) return;
-        const lines = block.trim().split('\n');
         let title = '', options = [], answer = '', explanation = '', type = '주제';
-
-        lines.forEach(line => {
-          const l = line.trim();
-          if (l.startsWith('유형:')) {
-            const typeStr = l.replace('유형:', '').trim();
-            type = extractStandardType(typeStr);
-          }
-          else if (l.startsWith('발문:')) title = l.replace('발문:', '').trim();
-          else if (l.startsWith('정답:')) answer = l.replace('정답:', '').trim();
-          else if (l.startsWith('해설:')) explanation = l.replace('해설:', '').trim();
-          else if (l.match(/^[①②③④⑤]/)) options.push(l);
+        block.trim().split('\n').forEach(l => {
+          const t = l.trim();
+          if (t.startsWith('유형:')) type = extractStandardType(t.replace('유형:', ''));
+          else if (t.startsWith('발문:')) title = t.replace('발문:', '');
+          else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
+          else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
+          else if (t.match(/^[①②③④⑤]/)) options.push(t);
         });
-
         results.push({
           id: 'Q-' + defaultPassageNum + '-' + type + '-' + Date.now() + '-' + idx,
-          passageNum: defaultPassageNum,
-          type: type,
-          title: title || `[${defaultPassageNum}번 변형문항]`,
-          passage: defaultPassage,
-          options: options,
-          answer: answer || '①',
-          explanation: explanation
+          passageNum: defaultPassageNum, type, difficulty: difficulty || '중',
+          title: title || `[${defaultPassageNum}번 변형문항]`, passage: defaultPassage, options, answer: answer || '①', explanation
         });
       });
-
       return results;
     }
 
     function render25PassageInputForms() {
       const container = document.getElementById('passageInputsContainer');
-      if (!container) return;
-
-      container.innerHTML = passageNumberList.map(num => `
+      if (container) container.innerHTML = passageNumberList.map(num => `
         <div class="p-3 bg-slate-50 border rounded-xl space-y-1.5 shadow-sm">
           <div class="flex items-center justify-between text-xs font-bold text-slate-800">
             <span class="text-teal-700 font-black">[${num}번 지문]</span>
@@ -1051,236 +939,152 @@ ${fullText.slice(0, 15000)}
     }
 
     function saveAll25Passages() {
-      const year = document.getElementById('regYear').value;
-      const month = document.getElementById('regMonth').value;
-      const grade = document.getElementById('regGrade').value;
-
+      const year = document.getElementById('regYear').value, month = document.getElementById('regMonth').value, grade = document.getElementById('regGrade').value;
       passageNumberList.forEach(num => {
-        const inputEl = document.getElementById(`inputP_${num}`);
-        let text = inputEl ? inputEl.value.trim() : '';
+        const text = (document.getElementById(`inputP_${num}`)?.value || '').trim();
         if (text) {
           const key = `${year}-${month}-${grade}-${num}`;
           passageArchiveDB = passageArchiveDB.filter(p => p.key !== key);
-          passageArchiveDB.unshift({
-            key, year, month, grade, passageNum: num, sample: text.substring(0, 50) + '...', text
-          });
+          passageArchiveDB.unshift({ key, year, month, grade, passageNum: num, sample: text.substring(0, 50) + '...', text });
         }
       });
-
-      renderPassageArchiveTable();
-      alert('🎉 DB 저장 완료!');
+      renderPassageArchiveTable(); alert('🎉 DB 저장 완료!');
     }
 
     function renderPassageArchiveTable() {
-      const tbody = document.getElementById('passageArchiveTableBody');
-      const totalArchived = document.getElementById('totalArchivedCount');
+      const tbody = document.getElementById('passageArchiveTableBody'), totalArchived = document.getElementById('totalArchivedCount');
       if (totalArchived) totalArchived.innerText = passageArchiveDB.length;
-      if (!tbody) return;
-
-      tbody.innerHTML = passageArchiveDB.map(p => `
+      if (tbody) tbody.innerHTML = passageArchiveDB.map(p => `
         <tr class="hover:bg-slate-50">
-          <td class="py-2 px-4 text-center font-bold">${p.year}년</td>
-          <td class="py-2 px-4 text-center">${p.month}월</td>
-          <td class="py-2 px-4 text-center font-bold text-blue-600">고${p.grade}</td>
-          <td class="py-2 px-4 text-center font-black text-amber-600">${p.passageNum}번</td>
-          <td class="py-2 px-4 font-mono text-slate-600 truncate max-w-xs">${p.sample}</td>
-          <td class="py-2 px-4 text-center text-emerald-600 font-bold">등록완료</td>
-          <td class="py-2 px-4 text-center">
-            <button onclick="deleteSinglePassage('${p.key}')" class="text-rose-600 hover:underline">삭제</button>
-          </td>
+          <td class="py-2 px-4 text-center font-bold">${p.year}년</td><td class="py-2 px-4 text-center">${p.month}월</td>
+          <td class="py-2 px-4 text-center font-bold text-blue-600">고${p.grade}</td><td class="py-2 px-4 text-center font-black text-amber-600">${p.passageNum}번</td>
+          <td class="py-2 px-4 font-mono text-slate-600 truncate max-w-xs">${p.sample}</td><td class="py-2 px-4 text-center text-emerald-600 font-bold">등록완료</td>
+          <td class="py-2 px-4 text-center"><button onclick="deleteSinglePassage('${p.key}')" class="text-rose-600 hover:underline">삭제</button></td>
         </tr>
       `).join('');
-
       updateMockSetDropdown();
     }
 
     function updateMockSetDropdown() {
-      const selectEl = document.getElementById('selectMockSet');
-      if (!selectEl) return;
-
-      const setMap = {};
-      passageArchiveDB.forEach(p => {
-        const setKey = `${p.year}-${p.month}-${p.grade}`;
-        setMap[setKey] = (setMap[setKey] || 0) + 1;
-      });
-
+      const selectEl = document.getElementById('selectMockSet'), setMap = {};
+      passageArchiveDB.forEach(p => { const k = `${p.year}-${p.month}-${p.grade}`; setMap[k] = (setMap[k] || 0) + 1; });
       const keys = Object.keys(setMap);
-      if (keys.length === 0) {
-        selectEl.innerHTML = '<option value="">-- DB에 저장된 세트 없음 --</option>';
-        return;
-      }
-
-      selectEl.innerHTML = '<option value="">-- DB에 저장된 모의고사 세트 선택 --</option>' +
-        keys.map(k => `<option value="${k}">[${k}] 모의고사 세트 (${setMap[k]}개 지문)</option>`).join('');
+      if (selectEl) selectEl.innerHTML = keys.length === 0 ? '<option value="">-- DB에 저장된 세트 없음 --</option>' : '<option value="">-- 모의고사 세트 선택 --</option>' + keys.map(k => `<option value="${k}">[${k}] 모의고사 세트 (${setMap[k]}개 지문)</option>`).join('');
     }
 
-    function deleteSinglePassage(key) {
-      passageArchiveDB = passageArchiveDB.filter(p => p.key !== key);
-      renderPassageArchiveTable();
-    }
+    function deleteSinglePassage(key) { passageArchiveDB = passageArchiveDB.filter(p => p.key !== key); renderPassageArchiveTable(); }
 
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
-      if (!tbody) return;
-
-      tbody.innerHTML = mockExams.map(exam => `
+      if (tbody) tbody.innerHTML = mockExams.map(exam => `
         <tr class="hover:bg-slate-50">
-          <td class="py-4 px-6 font-semibold">${exam.year}년</td>
-          <td class="py-4 px-6 font-semibold">${exam.month}월</td>
-          <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td>
-          <td class="py-4 px-6">${exam.grade}</td>
+          <td class="py-4 px-6 font-semibold">${exam.year}년</td><td class="py-4 px-6 font-semibold">${exam.month}월</td>
+          <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td><td class="py-4 px-6">${exam.grade}</td>
           <td class="py-4 px-6 text-center font-bold text-blue-600">${exam.questionCount}문항</td>
-          <td class="py-4 px-6 text-center">
-            <button onclick="openExamTypeSelector('${exam.id}')" class="text-amber-500 hover:bg-amber-50 p-2 rounded-lg" title="과제 보기 및 필터링">
-              <i class="fa-solid fa-folder-open text-xl"></i>
-            </button>
-          </td>
+          <td class="py-4 px-6 text-center"><button onclick="openExamTypeSelector('${exam.id}')" class="text-amber-500 hover:bg-amber-50 p-2 rounded-lg" title="과제 보기 및 필터링"><i class="fa-solid fa-folder-open text-xl"></i></button></td>
         </tr>
       `).join('');
     }
 
     function openExamTypeSelector(examId) {
       currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
-      if (currentSelectedExam) {
-        document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade})`;
-      }
-
-      renderTypeChips();
-      renderPassageChips();
-      updateSelectedCountText();
-      switchView('typeSelect');
+      if (currentSelectedExam) document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade})`;
+      renderTypeChips(); renderPassageChips(); updateSelectedCountText(); switchView('typeSelect');
     }
 
+    // 🎯 [실시간 카운트 갱신 연동]
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
-
-      const pool = generatedQuestionsPool;
-      const typeCounts = {};
-      pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
-
+      const pool = generatedQuestionsPool.filter(q => selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+      const typeCounts = {}; pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
       let html = '';
       typeCategories.forEach(cat => {
         html += `<span class="text-xs font-bold ${cat.bg} text-white px-3 py-1.5 rounded-full shadow-sm">${cat.category}</span>`;
         cat.types.forEach(t => {
-          const count = typeCounts[t] || 0;
-          html += `
-            <label class="type-chip">
-              <input type="checkbox" name="qTypeFilter" value="${t}" checked onchange="updateSelectedCountText()" />
-              <span>${t}</span>
-              <span class="count-badge">${count}</span>
-            </label>
-          `;
+          html += `<label class="type-chip"><input type="checkbox" name="qTypeFilter" value="${t}" checked onchange="updateSelectedCountText()" /><span>${t}</span><span class="count-badge">${typeCounts[t] || 0}</span></label>`;
         });
       });
-
       container.innerHTML = html;
     }
 
+    // 🎯 [실시간 카운트 갱신 연동]
     function renderPassageChips() {
       const container = document.getElementById('passageChipContainer');
       if (!container) return;
-
-      const pool = generatedQuestionsPool;
-      const passageCounts = {};
-      pool.forEach(q => { passageCounts[q.passageNum] = (passageCounts[q.passageNum] || 0) + 1; });
-
-      container.innerHTML = passageNumberList.map(num => {
-        const count = passageCounts[num] || 0;
-        return `
-          <label class="passage-chip flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              <input type="checkbox" name="passageFilter" value="${num}" checked onchange="updateSelectedCountText()" />
-              <span>${num}번</span>
-            </div>
-            <span class="p-badge">${count}</span>
-          </label>
-        `;
-      }).join('');
+      const pool = generatedQuestionsPool.filter(q => selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+      const passageCounts = {}; pool.forEach(q => { passageCounts[q.passageNum] = (passageCounts[q.passageNum] || 0) + 1; });
+      container.innerHTML = passageNumberList.map(num => `
+        <label class="passage-chip flex items-center justify-between">
+          <div class="flex items-center gap-1.5"><input type="checkbox" name="passageFilter" value="${num}" checked onchange="updateSelectedCountText()" /><span>${num}번</span></div>
+          <span class="p-badge">${passageCounts[num] || 0}</span>
+        </label>
+      `).join('');
     }
 
-    function toggleAllTypes(checked) {
-      document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => cb.checked = checked);
-      updateSelectedCountText();
-    }
+    function toggleAllTypes(checked) { document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => cb.checked = checked); updateSelectedCountText(); }
+    function toggleAllPassages(checked) { document.querySelectorAll('input[name="passageFilter"]').forEach(cb => cb.checked = checked); updateSelectedCountText(); }
 
-    function toggleAllPassages(checked) {
-      document.querySelectorAll('input[name="passageFilter"]').forEach(cb => cb.checked = checked);
-      updateSelectedCountText();
-    }
-
+    // 🎯 [핵심] 실시간 매칭 카운트 동적 업데이트
     function updateSelectedCountText() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
-
-      const matched = generatedQuestionsPool.filter(q => 
-        selectedTypes.includes(q.type) && selectedPassages.includes(q.passageNum)
-      );
-
+      const matched = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        return diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passageNum);
+      });
       const el = document.getElementById('selectedTotalCount');
       if (el) el.innerText = matched.length;
     }
 
+    // 🎯 [랜덤 추출 및 재정렬] 지정된 '출력할 문항 갯수' 만큼 스마트 추출
     function generateExamPaper() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const limit = parseInt(document.getElementById('limitCount').value) || 50;
 
-      const matched = generatedQuestionsPool.filter(q => 
-        selectedTypes.includes(q.type) && selectedPassages.includes(q.passageNum)
-      );
+      let matched = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        return diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passageNum);
+      });
 
+      if (matched.length === 0) return alert('선택하신 난이도/유형/지문 필터 조건에 해당하는 문제가 없습니다.');
+
+      // 1) 혼합 출제 시 한쪽으로 쏠리지 않도록 전체 풀 셔플(무작위 섞기)
+      matched = matched.sort(() => Math.random() - 0.5);
+      
+      // 2) 원하는 문항 수(limit) 만큼만 자르기
       filteredQuestions = matched.slice(0, limit);
 
-      if (filteredQuestions.length === 0) {
-        alert('선택하신 필터 조건에 해당하는 문제가 없습니다.');
-        return;
-      }
+      // 3) 실제 모의고사처럼 다시 '지문 번호순'으로 깔끔하게 재정렬
+      filteredQuestions.sort((a, b) => {
+        const numA = parseInt(a.passageNum.split('-')[0]) || 0;
+        const numB = parseInt(b.passageNum.split('-')[0]) || 0;
+        return numA - numB;
+      });
 
       renderPaper();
       switchView('paperView');
     }
 
-    // 🖨️ [개편완료] 실제 내신 기출 시험지 스타일 렌더러 (서술형 답안 박스 및 정밀 2단 배치)
     function renderPaper() {
       const container = document.getElementById('paperContent');
       if (!container) return;
-
       if (currentSelectedExam) {
         const headerTitle = document.getElementById('paperHeaderTitle');
         if (headerTitle) headerTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 변형문제집`;
       }
-
       container.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
-
         return `
           <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
             <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
-              <div>
-                <span class="font-black text-slate-950">${idx + 1}.</span>
-                <span>${q.title}</span>
-              </div>
+              <div><span class="font-black text-slate-950">${idx + 1}.</span> <span>${q.title}</span></div>
               <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passageNum}번 / ${q.type}]</span>
             </div>
-
-            <div class="passage-box exam-eng-font text-slate-800">
-              ${q.passage.replace(/\n/g, '<br/>')}
-            </div>
-
-            ${q.options && q.options.length > 0 ? `
-              <div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">
-                ${q.options.map(opt => `<div>${opt}</div>`).join('')}
-              </div>
-            ` : ''}
-
-            ${isSubjective ? `
-              <div class="mt-3 border border-slate-400 p-2.5 rounded bg-slate-50">
-                <span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span>
-                <div class="border-b border-dashed border-slate-300 h-6"></div>
-                <div class="border-b border-dashed border-slate-300 h-6"></div>
-              </div>
-            ` : ''}
+            <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
+            ${q.options && q.options.length > 0 ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
+            ${isSubjective ? `<div class="mt-3 border border-slate-400 p-2.5 rounded bg-slate-50"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed border-slate-300 h-6"></div><div class="border-b border-dashed border-slate-300 h-6"></div></div>` : ''}
           </div>
         `;
       }).join('');
@@ -1289,61 +1093,42 @@ ${fullText.slice(0, 15000)}
     function getStoredApiKey() { return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim(); }
 
     function checkApiKeyStatus() {
-      const key = getStoredApiKey();
-      const badge = document.getElementById('apiKeyStatusBadge');
+      const key = getStoredApiKey(), badge = document.getElementById('apiKeyStatusBadge');
       if (badge) {
-        if (key && key.length > 20) {
-          badge.className = 'text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold';
-          badge.innerText = 'Gemini API Key 연결됨';
-        } else {
-          badge.className = 'text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-bold cursor-pointer';
-          badge.innerText = 'API Key 미설정 (클릭)';
-        }
+        if (key && key.length > 20) { badge.className = 'text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold'; badge.innerText = 'Gemini API Key 연결됨'; }
+        else { badge.className = 'text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-bold cursor-pointer'; badge.innerText = 'API Key 미설정 (클릭)'; }
       }
     }
 
     function toggleApiKeyModal() {
-      const modal = document.getElementById('apiKeyModal');
       document.getElementById('inputApiKey').value = getStoredApiKey();
-      modal.classList.toggle('hidden');
+      document.getElementById('apiKeyModal').classList.toggle('hidden');
     }
 
     function saveApiKey() {
       const input = document.getElementById('inputApiKey').value.trim();
       if (!input) return alert('API Key를 입력해 주세요.');
-      localStorage.setItem('SDH_GEMINI_API_KEY', input);
-      toggleApiKeyModal();
-      checkApiKeyStatus();
-      alert('Gemini API Key 저장 완료!');
+      localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
-
       const setKey = document.getElementById('selectMockSet').value;
       if (!setKey) return alert('출제할 모의고사 세트를 선택해 주세요.');
-
       const targetPassages = passageArchiveDB.filter(p => `${p.year}-${p.month}-${p.grade}` === setKey);
       if (targetPassages.length === 0) return alert('선택하신 세트에 지문이 없습니다.');
-
       const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
       if (selectedTypes.length === 0) return alert('생성할 변형문제 유형을 선택해 주세요.');
 
-      const btn = document.getElementById('btnAdminGen');
-      const logBox = document.getElementById('generationLogBox');
-      const progressText = document.getElementById('genProgressText');
-
-      const benchmarkTricksSection = schoolBenchmarkDB.length > 0
-        ? schoolBenchmarkDB.slice(0, 6).map(bm => `- [${bm.school} ${bm.type} 기출]: ${bm.trick}`).join('\n')
-        : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
+      const btn = document.getElementById('btnAdminGen'), logBox = document.getElementById('generationLogBox'), progressText = document.getElementById('genProgressText');
+      const benchmarkTricksSection = schoolBenchmarkDB.length > 0 ? schoolBenchmarkDB.slice(0, 6).map(bm => `- [${bm.school} ${bm.type} 기출]: ${bm.trick}`).join('\n') : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [FAST BATCH] 카테고리 분할 AI 출제 가동 (${setKey})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [FAST BATCH] 카테고리 분할 AI 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
       let totalGeneratedCount = 0;
-      
       const typeGroups = [];
       typeCategories.forEach(cat => {
         const matchedInCat = cat.types.filter(t => selectedTypes.includes(t));
@@ -1351,7 +1136,6 @@ ${fullText.slice(0, 15000)}
       });
 
       const BATCH_SIZE = 3;
-
       for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
         const chunk = targetPassages.slice(i, i + BATCH_SIZE);
         if (progressText) progressText.innerText = `${Math.min(i + BATCH_SIZE, targetPassages.length)}/${targetPassages.length} 진행 중`;
@@ -1359,7 +1143,6 @@ ${fullText.slice(0, 15000)}
         await Promise.all(chunk.map(async (pObj) => {
           for (let g = 0; g < typeGroups.length; g++) {
             const groupTypes = typeGroups[g];
-
             const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
 주어진 [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 세부 출제 유형]별로 **각각 정확히 2문제씩** 변형문제를 제작하십시오.
@@ -1388,20 +1171,15 @@ ${groupTypes.join(', ')}
 정답: ①
 해설: 상세 해설
 `;
-
             try {
               const rawText = await callGeminiUniversal(apiKey, prompt);
-              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text);
-
+              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text, selectedDifficulty);
               if (parsedQuestions.length > 0) {
                 generatedQuestionsPool.unshift(...parsedQuestions);
                 totalGeneratedCount += parsedQuestions.length;
               }
-            } catch (err) {
-              console.error(err);
-            }
+            } catch (err) { console.error(err); }
           }
-
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 모든 세부 유형 완수</div>`;
           logBox.scrollTop = logBox.scrollHeight;
@@ -1409,61 +1187,28 @@ ${groupTypes.join(', ')}
       }
 
       logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-
       const parts = setKey.split('-');
       const examId = `${parts[0]}-${parts[1]}-${parts[2]}`;
       let existingExam = mockExams.find(e => e.id === examId);
 
-      if (existingExam) {
-        existingExam.questionCount = (existingExam.questionCount || 0) + totalGeneratedCount;
-      } else {
-        mockExams.unshift({
-          id: examId,
-          year: parts[0],
-          month: parts[1],
-          title: `${parts[0]}년 ${parts[1]}월 학력평가`,
-          grade: `고${parts[2]}`,
-          questionCount: totalGeneratedCount
-        });
-      }
+      if (existingExam) existingExam.questionCount = (existingExam.questionCount || 0) + totalGeneratedCount;
+      else mockExams.unshift({ id: examId, year: parts[0], month: parts[1], title: `${parts[0]}년 ${parts[1]}월 학력평가`, grade: `고${parts[2]}`, questionCount: totalGeneratedCount });
 
-      renderExamTable();
-      btn.disabled = false;
+      renderExamTable(); btn.disabled = false;
       logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 짤림 없는 세부 유형 출제 완전 완료! (총 +${totalGeneratedCount}문항 생성)</div>`;
       alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 누락 없이 생성되었습니다.`);
     }
 
-    function clearPassageArchiveDB() {
-      if (confirm('지문 DB를 전체 초기화하시겠습니까?')) {
-        passageArchiveDB = [];
-        renderPassageArchiveTable();
-      }
-    }
-
-    function handleLogin(e) {
-      if (e) e.preventDefault();
-      document.getElementById('loginModal').classList.add('hidden');
-      switchView('mockRegisterPanel');
-    }
-
+    function clearPassageArchiveDB() { if (confirm('지문 DB를 전체 초기화하시겠습니까?')) { passageArchiveDB = []; renderPassageArchiveTable(); } }
+    function handleLogin(e) { if (e) e.preventDefault(); document.getElementById('loginModal').classList.add('hidden'); switchView('mockRegisterPanel'); }
     function handleLogout() { document.getElementById('loginModal').classList.remove('hidden'); }
-
     function switchView(viewName) {
-      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel'].forEach(v => {
-        const el = document.getElementById('view-' + v);
-        if (el) el.classList.add('hidden');
-      });
-
-      const target = document.getElementById('view-' + viewName);
-      if (target) target.classList.remove('hidden');
+      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel'].forEach(v => { const el = document.getElementById('view-' + v); if (el) el.classList.add('hidden'); });
+      const target = document.getElementById('view-' + viewName); if (target) target.classList.remove('hidden');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      render25PassageInputForms();
-      renderPassageArchiveTable();
-      renderBenchmarkTable();
-      renderExamTable();
-      checkApiKeyStatus();
+      render25PassageInputForms(); renderPassageArchiveTable(); renderBenchmarkTable(); renderExamTable(); checkApiKeyStatus();
     });
   </script>
 </body>
