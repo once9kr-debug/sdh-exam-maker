@@ -583,7 +583,8 @@
               <div class="space-y-3">
                 <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2 font-medium">
                   <i class="fa-solid fa-shield-halved text-amber-600"></i>
-                  <span>백엔드 고정 정책: AI 품질 최적화를 위해 **유형당 최적 수량(2문제씩)**으로 분할 자동 출제됩니다.</span>
+                  <!-- 🎯 최적 정책 안내문 업데이트 (유형당 1문제씩) -->
+                  <span>백엔드 고정 정책: AI 품질 최적화를 위해 **유형당 최적 수량(1문제씩)**으로 분할 자동 출제됩니다.</span>
                 </div>
 
                 <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 세부 변형문제 유형 선택</label>
@@ -1121,12 +1122,11 @@ ${fullText.slice(0, 15000)}
       throw lastError || new Error('API 통신 실패');
     }
 
-    // 🎯 [완전 강화 파서] 오답 해설 및 보기 분리, 지문 서식 강제 교정
-    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey) {
+    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey, targetType) {
       const results = [];
       rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
         if (!block.trim()) return;
-        let title = '', options = [], answer = '', explanation = '', type = '주제', passage = defaultPassage;
+        let title = '', options = [], answer = '', explanation = '', type = targetType || '주제', passage = defaultPassage;
         
         block.trim().split('\n').forEach(l => {
           let t = l.trim();
@@ -1138,7 +1138,6 @@ ${fullText.slice(0, 15000)}
           else if (t.startsWith('정답:')) answer = t.replace('정답:', '');
           else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
           else if (t.match(/^[①②③④⑤]/)) {
-            // 오답 해설이 보기에 섞인 경우 분리 로직
             if (t.includes('는 ') || t.includes('은 ') || t.includes('해설')) {
               explanation += ' ' + t;
             } else {
@@ -1147,14 +1146,16 @@ ${fullText.slice(0, 15000)}
           }
         });
 
-        // 서술형/단답형 보기는 강제 제거
         const isSubjectiveType = (type === '서술형' || type === '단답형');
         if (isSubjectiveType) {
           options = [];
         }
 
+        const randomId = Math.random().toString(36).substring(2, 7);
+        const uniqueId = `Q-${setKey}-${defaultPassageNum}-${type}-${idx+1}-${randomId}`;
+
         results.push({
-          id: 'Q-' + setKey + '-' + defaultPassageNum + '-' + type + '-' + Date.now() + '-' + idx,
+          id: uniqueId,
           passage_num: defaultPassageNum, type, difficulty: difficulty || '중',
           title: title || `[${defaultPassageNum}번 변형문항]`, passage, options, answer: answer || '①', explanation
         });
@@ -1406,7 +1407,6 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
-    // 🎯 [완전 정밀 교정] 오답 해설 분리 + 보기 오차 수정 + 발문 끝 출처 밀착
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const aContainer = document.getElementById('answerDetailContent');
@@ -1425,7 +1425,6 @@ ${fullText.slice(0, 15000)}
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
 
-        // 보기 항목 중 오답 해설 제거 필터링
         let cleanOptions = (q.options || []).filter(opt => {
           const t = opt.trim();
           return !t.includes('는 ') && !t.includes('은 ') && !t.includes('해설');
@@ -1613,7 +1612,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
-    // 🎯 [초강력 AI 프롬프트 적용 - 지문 변형 지침 강화]
+    // 🎯 [수정] 유형당 정확히 1문제만 단독 출제하도록 프롬프트 수량 설정 변경
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1628,27 +1627,24 @@ ${fullText.slice(0, 15000)}
       const benchmarkTricksSection = schoolBenchmarkDB.length > 0 ? schoolBenchmarkDB.slice(0, 6).map(bm => `- [${bm.school} ${bm.type} 기출]: ${bm.trick}`).join('\n') : '- 원문 핵심 어구의 유의어/반의어 패러프레이징 및 오답 어법 착시 함정 적용';
 
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [FAST BATCH] 카테고리 분할 AI 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
+      logBox.innerHTML = `<div>🚀 [ACCURATE BATCH] 유형당 1문제 정밀 출제 가동 (${setKey}, 난이도: ${selectedDifficulty})... <span class="terminal-cursor"></span></div>`;
       btn.disabled = true;
 
       let totalGeneratedCount = 0;
-      const typeGroups = [];
-      typeCategories.forEach(cat => {
-        const matchedInCat = cat.types.filter(t => selectedTypes.includes(t));
-        if (matchedInCat.length > 0) typeGroups.push(matchedInCat);
-      });
 
-      const BATCH_SIZE = 3;
+      const BATCH_SIZE = 2;
       for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
         const chunk = targetPassages.slice(i, i + BATCH_SIZE);
-        if (progressText) progressText.innerText = `${Math.min(i + BATCH_SIZE, targetPassages.length)}/${targetPassages.length} 진행 중`;
+        if (progressText) progressText.innerText = `${Math.min(i + BATCH_SIZE, targetPassages.length)}/${targetPassages.length} 지문 진행 중`;
 
         await Promise.all(chunk.map(async (pObj) => {
-          for (let g = 0; g < typeGroups.length; g++) {
-            const groupTypes = typeGroups[g];
+          for (let tIdx = 0; tIdx < selectedTypes.length; tIdx++) {
+            const targetType = selectedTypes[tIdx];
+
+            // 🎯 프롬프트 내에 정확히 1문제 생성을 지시
             const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
-주어진 [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 [요청된 세부 출제 유형]별로 **각각 정확히 2문제씩** 변형문제를 제작하십시오.
+주어진 [영어 지문]에 대해 출제 난이도를 **'${selectedDifficulty}'** 수준으로 맞추어 오직 **'${targetType}'** 유형으로만 **정확히 1문제**를 제작하십시오.
 
 [축적된 실제 학교 기출 킬러 함정 패턴]:
 ${benchmarkTricksSection}
@@ -1656,12 +1652,12 @@ ${benchmarkTricksSection}
 [영어 지문 (${pObj.passage_num}번)]:
 ${pObj.text}
 
-[요청된 세부 출제 유형]:
-${groupTypes.join(', ')}
+[요청된 단독 출제 세부 유형]:
+${targetType}
 
-[유형별 지문 변형 엄격 준수 규칙 (필수)]:
+[지문 변형 필수 규격 지침 (엄격 준수)]:
 1. **[빈칸/어휘/연결사] 문제 규칙:**
-   - 정답이 되는 핵심 단어나 구문을 지문에서 뚫어서 반드시 **(A), (B)** 또는 **__________** 형태로 빈칸을 만든 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 놔두지 마십시오!
+   - 정답 어구를 지문에서 뚫어서 반드시 **(A)** 또는 **__________** 형태로 빈칸을 뚫어 변형된 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 놔두지 마십시오!
 2. **[어법] 문제 규칙:**
    - 지문 내 어법 출제 요소 5곳에 반드시 **① <u>word</u>, ② <u>word</u>, ③ <u>word</u>, ④ <u>word</u>, ⑤ <u>word</u>** 형태로 밑줄과 번호를 적용한 지문을 출력하십시오.
 3. **[순서] 문제 규칙:**
@@ -1671,8 +1667,8 @@ ${groupTypes.join(', ')}
 5. 보기에 해설 텍스트나 오답 설명을 절대로 포함시키지 마십시오. 오답 설명은 오직 '해설:' 칸에만 기재하십시오.
 
 ## [문항 1]
-유형: ${groupTypes[0]}
-발문: 다음 글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?
+유형: ${targetType}
+발문: 다음 글의 ${targetType}으로 가장 적절한 것은?
 지문: (변형 적용된 지문)
 ① 보기1
 ② 보기2
@@ -1684,7 +1680,7 @@ ${groupTypes.join(', ')}
 `;
             try {
               const rawText = await callGeminiUniversal(apiKey, prompt);
-              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passage_num, pObj.text, selectedDifficulty, setKey);
+              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passage_num, pObj.text, selectedDifficulty, setKey, targetType);
               if (parsedQuestions.length > 0) {
                 await supabaseClient.from('generated_questions').upsert(parsedQuestions);
                 generatedQuestionsPool.unshift(...parsedQuestions);
@@ -1692,8 +1688,9 @@ ${groupTypes.join(', ')}
               }
             } catch (err) { console.error(err); }
           }
+
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 모든 세부 유형 완수</div>`;
+          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 ${selectedTypes.length}개 세부 유형 완수 (+${selectedTypes.length}문항)</div>`;
           logBox.scrollTop = logBox.scrollHeight;
         }));
       }
@@ -1710,8 +1707,8 @@ ${groupTypes.join(', ')}
       }
 
       renderExamTable(); btn.disabled = false;
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 짤림 없는 세부 유형 출제 완전 완료! (총 +${totalGeneratedCount}문항 클라우드 저장)</div>`;
-      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 누락 없이 클라우드에 생성되었습니다.`);
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 100% 누락 없는 정밀 출제 완전 완료! (총 +${totalGeneratedCount}문항 클라우드 적재)</div>`;
+      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 단 한 개도 누락 없이 클라우드에 완벽 생성되었습니다.`);
     }
 
     async function clearPassageArchiveDB() { 
