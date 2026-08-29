@@ -29,25 +29,25 @@
     .exam-columns-2 {
       column-count: 2;
       column-gap: 28px;
-      column-rule: 1px solid #e2e8f0;
+      column-rule: 1px solid #cbd5e1;
     }
 
     .question-block {
       break-inside: avoid !important;
       page-break-inside: avoid !important;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
       position: relative;
     }
 
     .passage-box {
       border: 1px solid #334155;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 4px;
-      line-height: 1.6;
+      line-height: 1.65;
       font-size: 12.5px;
       background: #ffffff;
-      margin-top: 4px;
-      margin-bottom: 6px;
+      margin-top: 6px;
+      margin-bottom: 8px;
     }
 
     .type-chip {
@@ -96,9 +96,7 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .passage-chip:hover {
-      background-color: #f8fafc;
-    }
+    .passage-chip:hover { background-color: #f8fafc; }
     .passage-chip input:checked + span { color: #0f172a; }
     
     .p-badge {
@@ -207,10 +205,6 @@
         border: none !important;
       }
       .print-header-box { display: block !important; }
-      .page-break-before {
-        page-break-before: always !important;
-        break-before: page !important;
-      }
       .exam-columns-2 {
         column-count: 2 !important;
         column-gap: 24px !important;
@@ -429,7 +423,6 @@
 
       <!-- VIEW 3: 2단 인쇄용 정밀 시험지 및 정답/해설지 -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
-        <!-- 인쇄 상단 제어 바 -->
         <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
@@ -452,7 +445,6 @@
           </div>
         </div>
 
-        <!-- 실제 출력이 이루어지는 영역 -->
         <div class="print-area bg-white p-8 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto space-y-12">
           
           <!-- [PART 1] 문제지 영역 -->
@@ -472,7 +464,7 @@
             <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
           </div>
 
-          <!-- [PART 2] 🎯 정답 및 상세 해설지 세트 영역 (페이지 분리) -->
+          <!-- [PART 2] 정답 및 상세 해설지 세트 영역 -->
           <div id="paperAnswerSection" class="page-break-before pt-6 border-t-2 border-dashed border-slate-300">
             <div class="border-b-2 border-slate-900 pb-3 mb-6">
               <div class="flex items-end justify-between">
@@ -484,13 +476,11 @@
               </div>
             </div>
 
-            <!-- 빠른 정답표 모음 -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-300 mb-6 text-xs">
               <h3 class="font-black text-slate-900 mb-2">[빠른 정답표]</h3>
               <div id="quickAnswerGrid" class="grid grid-cols-5 md:grid-cols-10 gap-2 font-mono text-center"></div>
             </div>
 
-            <!-- 문항별 상세 해설 세트 -->
             <div id="answerDetailContent" class="exam-columns-2 text-slate-900 text-xs"></div>
           </div>
 
@@ -503,7 +493,7 @@
           <div class="flex items-center justify-between border-b pb-4">
             <div>
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-list-check text-teal-500"></i> 모의고사 지문 DB 등록
+                <i class="fa-solid fa-list-check text-teal-600"></i> 모의고사 지문 DB 등록
               </h2>
               <p class="text-xs text-slate-500 mt-0.5">상단 모의고사 정보 설정 후 각 지문 번호에 맞게 영어 본문만 붙여넣으세요.</p>
             </div>
@@ -648,7 +638,7 @@
             <div class="lg:col-span-6 flex flex-col space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                 <span>AI 변형문제 생성 진행 상황 (터미널)</span>
-                <span id="genProgressText" class="text-blue-600 font-bold">대기 중</span>
+                <span id="genProgressText" class="text-amber-600 font-bold">대기 중</span>
               </div>
               <div id="generationLogBox" class="h-[430px] max-h-[430px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800">
                 [SYSTEM READY] 모의고사 세트를 선택하고 생성 시작 버튼을 누르세요...
@@ -1135,6 +1125,13 @@ ${fullText.slice(0, 15000)}
           else if (t.startsWith('해설:')) explanation = t.replace('해설:', '');
           else if (t.match(/^[①②③④⑤]/)) options.push(t);
         });
+
+        // 🎯 [유형별 보기/지문 엄격 검증 안전장치]
+        const isSubjectiveType = (type === '서술형' || type === '단답형');
+        if (isSubjectiveType) {
+          options = []; // 서술형/단답형은 객관식 보기를 강제 제거
+        }
+
         results.push({
           id: 'Q-' + setKey + '-' + defaultPassageNum + '-' + type + '-' + Date.now() + '-' + idx,
           passage_num: defaultPassageNum, type, difficulty: difficulty || '중',
@@ -1388,7 +1385,7 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
-    // 🎯 [2단계 기능] 문제지 및 정답/해설지 2단 출력 렌더링
+    // 🎯 [완전히 새로 정비된 인쇄 및 시험지 렌더링 로직]
     function renderPaper() {
       const qContainer = document.getElementById('paperContent');
       const aContainer = document.getElementById('answerDetailContent');
@@ -1404,30 +1401,38 @@ ${fullText.slice(0, 15000)}
         if (ansHeaderTitle) ansHeaderTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 정답 및 상세 해설지`;
       }
 
-      // 1) 문제지 렌더링 (에디터 [수정/저장] 연동)
+      // 1) 문제지 렌더링 (서술형/객관식 보기 분리 엄격 적용)
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
+        const hasOptions = (!isSubjective && q.options && q.options.length > 0);
 
         return `
           <div id="qBlock_${q.id}" class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] group">
             
-            <!-- 인쇄 미포함: 검수/수정(Edit) 버튼 -->
             <button onclick="toggleQuestionEdit('${q.id}')" class="no-print opacity-0 group-hover:opacity-100 transition absolute -top-2 -right-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow font-sans">
               <i class="fa-solid fa-pen-to-square"></i> 수정
             </button>
 
-            <!-- 일반 표시 모드 -->
             <div id="qDisplay_${q.id}">
               <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
                 <div><span class="font-black text-slate-950">${idx + 1}.</span> <span>${q.title}</span></div>
                 <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passage_num}번 / ${q.type}]</span>
               </div>
               <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
-              ${q.options && q.options.length > 0 ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
-              ${isSubjective ? `<div class="mt-3 border border-slate-400 p-2.5 rounded bg-slate-50"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed border-slate-300 h-6"></div><div class="border-b border-dashed border-slate-300 h-6"></div></div>` : ''}
+              
+              <!-- 客觀式 보기: 객관식 유형일 때만 출력 -->
+              ${hasOptions ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
+              
+              <!-- 敍述式 답안란: 주관식/서술형일 때만 출력 -->
+              ${isSubjective ? `
+                <div class="mt-3 border border-slate-400 p-3 rounded bg-slate-50 font-sans">
+                  <span class="text-[11px] font-bold text-slate-700 block mb-1.5">[서술형 답안 작성란]</span>
+                  <div class="border-b border-dashed border-slate-300 h-6"></div>
+                  <div class="border-b border-dashed border-slate-300 h-6"></div>
+                </div>
+              ` : ''}
             </div>
 
-            <!-- 🎯 실시간 검수 에디터 폼 (기본 숨김) -->
             <div id="qEditForm_${q.id}" class="hidden no-print bg-slate-50 p-3 rounded-xl border border-slate-300 font-sans space-y-2 mt-2">
               <span class="text-[11px] font-bold text-blue-700 flex items-center gap-1"><i class="fa-solid fa-pen"></i> [문항 실시간 검수 에디터]</span>
               
@@ -1437,12 +1442,12 @@ ${fullText.slice(0, 15000)}
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정</label>
+                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정 (빈칸 문제일 경우 (A), ______ 필수 입력)</label>
                 <textarea id="editPassage_${q.id}" rows="4" class="w-full p-1.5 border rounded text-xs font-mono">${q.passage}</textarea>
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-600">보기 수정 (줄바꿈 구분)</label>
+                <label class="text-[10px] font-bold text-slate-600">보기 수정 (줄바꿈 구분 / 서술형은 비워둠)</label>
                 <textarea id="editOptions_${q.id}" rows="3" class="w-full p-1.5 border rounded text-xs">${q.options ? q.options.join('\n') : ''}</textarea>
               </div>
 
@@ -1475,17 +1480,15 @@ ${fullText.slice(0, 15000)}
       }
       if (ansSection) ansSection.classList.remove('hidden');
 
-      // 빠른 정답표 Grid
       if (quickAnswerGrid) {
         quickAnswerGrid.innerHTML = filteredQuestions.map((q, idx) => `
-          <div class="border border-slate-300 p-1 rounded bg-white">
+          <div class="border border-slate-300 p-1.5 rounded bg-white">
             <span class="font-bold text-slate-500 text-[10px] block">${idx + 1}번</span>
             <span class="font-black text-slate-900">${q.answer || '①'}</span>
           </div>
         `).join('');
       }
 
-      // 상세 해설 세트
       if (aContainer) {
         aContainer.innerHTML = filteredQuestions.map((q, idx) => `
           <div class="question-block exam-paper-font border-b border-slate-200 pb-3 mb-3">
@@ -1501,7 +1504,6 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // 🎯 [2단계 기능] 문항 에디터 토글 및 DB 수정 저장
     function toggleQuestionEdit(qId) {
       const displayEl = document.getElementById(`qDisplay_${qId}`);
       const formEl = document.getElementById(`qEditForm_${qId}`);
@@ -1529,14 +1531,12 @@ ${fullText.slice(0, 15000)}
       qObj.answer = newAnswer;
       qObj.explanation = newExplanation;
 
-      // Supabase DB 실시간 저장
       await supabaseClient.from('generated_questions').upsert([qObj]);
 
       renderPaper();
       alert('🎉 문항 수정이 완료되었으며 Supabase DB에 실시간 저장되었습니다!');
     }
 
-    // 🎯 [2단계 기능] 인쇄 보기 모드 토글 (전체/문제만/해설만)
     function togglePaperMode(mode) {
       const qSec = document.getElementById('paperQuestionSection');
       const aSec = document.getElementById('paperAnswerSection');
@@ -1586,6 +1586,7 @@ ${fullText.slice(0, 15000)}
       localStorage.setItem('SDH_GEMINI_API_KEY', input); toggleApiKeyModal(); checkApiKeyStatus(); alert('Gemini API Key 저장 완료!');
     }
 
+    // 🎯 [수정된 AI 대량 출제 프롬프트 - 빈칸 및 서술형 지침 강하게 준수]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -1631,13 +1632,17 @@ ${pObj.text}
 [요청된 세부 출제 유형]:
 ${groupTypes.join(', ')}
 
-[출력 규격 필수 규칙]:
-- '유형:' 항목에는 요청된 세부 유형 명칭 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나를 오직 단어로만 정확히 기재하십시오.
+[유형별 출제 필수 준수 규칙]:
+1. **빈칸/어휘/연결사 문제 필수 규칙:**
+   - 지문 내에서 출제할 핵심 문맥이나 단어를 반드시 **(A), (B)** 또는 **__________** 형태로 빈칸을 뚫어 수정한 지문을 '지문:' 항목에 출력하십시오. 원문 지문 그대로 놔두지 마십시오!
+2. **서술형/단답형 필수 규칙:**
+   - 서술형 및 단답형 문제에는 객관식 보기(①~⑤)를 절대로 출력하지 마십시오.
+3. '유형:' 항목에는 요청된 세부 유형 명칭 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나를 오직 단어로만 정확히 기재하십시오.
 
 ## [문항 1]
 유형: ${groupTypes[0]}
-발문: 다음 글의 내용을 바탕으로 적절한 문제를 푸시오.
-지문: ${pObj.text}
+발문: 다음 글의 빈칸 (A)에 들어갈 말로 가장 적절한 것은?
+지문: (빈칸이 뚫린 변형 영어 지문)
 ① 보기1
 ② 보기2
 ③ 보기3
