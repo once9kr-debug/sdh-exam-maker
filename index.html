@@ -124,6 +124,7 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
+    /* 선택 화면용 난이도 버튼 전용 디자인 */
     .filter-diff-btn {
       padding: 6px 16px;
       font-size: 12px;
@@ -332,7 +333,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 유형 및 지문 선택 -->
+      <!-- VIEW 2: 난이도 선택 + 세분화 유형 및 지문 선택 (복원완료) -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -346,6 +347,7 @@
           </div>
         </div>
 
+        <!-- 🎯 [복원] 출제 난이도 필터 선택 상자 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-layer-group text-amber-500"></i> 출제 난이도 필터 선택
@@ -358,6 +360,7 @@
           </div>
         </div>
 
+        <!-- 출제 유형별 문항수 선택 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -371,6 +374,7 @@
           <div id="typeChipContainer" class="flex flex-wrap items-center gap-2 pt-1"></div>
         </div>
 
+        <!-- 지문별 선택 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -384,7 +388,7 @@
           <div id="passageChipContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1"></div>
         </div>
 
-        <!-- 🎯 [수정] 명확해진 출력 문항수 선택 영역 -->
+        <!-- 출력 문항 갯수 설정 상자 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-300 flex items-center justify-between">
           <div class="flex items-center gap-4 text-sm font-black text-slate-800">
             <span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded text-xs font-bold"><i class="fa-solid fa-print"></i> 최종 인쇄 설정</span>
@@ -603,9 +607,7 @@
                 <i class="fa-solid fa-file-pdf text-rose-500"></i> 학교 시험지 PDF 자동분류 및 기출 DB 빌더
               </h2>
             </div>
-            <button onclick="resetBenchmarkDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">
-              기출 DB 초기화
-            </button>
+            <button onclick="resetBenchmarkDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">기출 DB 초기화</button>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -704,7 +706,7 @@
     let queuedPdfFiles = [];
 
     let selectedDifficulty = '중';
-    let selectedFilterDifficulty = '혼합'; // 🎯 선택 화면 난이도 필터
+    let selectedFilterDifficulty = '혼합';
 
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-teal-500' },
@@ -727,18 +729,13 @@
       });
     }
 
-    // 🎯 선택 화면용 난이도 필터 기능
     function setSelectDifficulty(diff) {
       selectedFilterDifficulty = diff;
       ['상', '중', '하', '혼합'].forEach(d => {
         const btn = document.getElementById(`filterDiff_${d}`);
-        if (btn) {
-          btn.className = (d === diff) ? 'filter-diff-btn active-filter-diff' : 'filter-diff-btn';
-        }
+        if (btn) btn.className = (d === diff) ? 'filter-diff-btn active-filter-diff' : 'filter-diff-btn';
       });
-      renderTypeChips();
-      renderPassageChips();
-      updateSelectedCountText();
+      renderTypeChips(); renderPassageChips(); updateSelectedCountText();
     }
 
     function cleanSchoolInfo(filename) {
@@ -769,8 +766,7 @@
     }
 
     function renderQueuedFiles() {
-      const container = document.getElementById('queuedFilesContainer');
-      const list = document.getElementById('queuedFileList');
+      const container = document.getElementById('queuedFilesContainer'), list = document.getElementById('queuedFileList');
       if (!container || !list) return;
       if (queuedPdfFiles.length === 0) return container.classList.add('hidden');
       container.classList.remove('hidden');
@@ -992,7 +988,6 @@ ${fullText.slice(0, 15000)}
       renderTypeChips(); renderPassageChips(); updateSelectedCountText(); switchView('typeSelect');
     }
 
-    // 🎯 [실시간 카운트 갱신 연동]
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
@@ -1008,7 +1003,6 @@ ${fullText.slice(0, 15000)}
       container.innerHTML = html;
     }
 
-    // 🎯 [실시간 카운트 갱신 연동]
     function renderPassageChips() {
       const container = document.getElementById('passageChipContainer');
       if (!container) return;
@@ -1025,7 +1019,6 @@ ${fullText.slice(0, 15000)}
     function toggleAllTypes(checked) { document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => cb.checked = checked); updateSelectedCountText(); }
     function toggleAllPassages(checked) { document.querySelectorAll('input[name="passageFilter"]').forEach(cb => cb.checked = checked); updateSelectedCountText(); }
 
-    // 🎯 [핵심] 실시간 매칭 카운트 동적 업데이트
     function updateSelectedCountText() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
@@ -1037,7 +1030,6 @@ ${fullText.slice(0, 15000)}
       if (el) el.innerText = matched.length;
     }
 
-    // 🎯 [랜덤 추출 및 재정렬] 지정된 '출력할 문항 갯수' 만큼 스마트 추출
     function generateExamPaper() {
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
@@ -1050,13 +1042,9 @@ ${fullText.slice(0, 15000)}
 
       if (matched.length === 0) return alert('선택하신 난이도/유형/지문 필터 조건에 해당하는 문제가 없습니다.');
 
-      // 1) 혼합 출제 시 한쪽으로 쏠리지 않도록 전체 풀 셔플(무작위 섞기)
       matched = matched.sort(() => Math.random() - 0.5);
-      
-      // 2) 원하는 문항 수(limit) 만큼만 자르기
       filteredQuestions = matched.slice(0, limit);
 
-      // 3) 실제 모의고사처럼 다시 '지문 번호순'으로 깔끔하게 재정렬
       filteredQuestions.sort((a, b) => {
         const numA = parseInt(a.passageNum.split('-')[0]) || 0;
         const numB = parseInt(b.passageNum.split('-')[0]) || 0;
