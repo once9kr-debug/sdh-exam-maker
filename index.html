@@ -36,6 +36,7 @@
       break-inside: avoid !important;
       page-break-inside: avoid !important;
       margin-bottom: 22px;
+      position: relative;
     }
 
     .passage-box {
@@ -49,7 +50,6 @@
       margin-bottom: 6px;
     }
 
-    /* 사이드바 액센트 컬러 이식 칩 스타일 */
     .type-chip {
       display: inline-flex;
       align-items: center;
@@ -101,7 +101,6 @@
     }
     .passage-chip input:checked + span { color: #0f172a; }
     
-    /* 사이드바 기출 뱃지 스타일 이식 */
     .p-badge {
       font-size: 11px;
       background: #0f172a;
@@ -112,7 +111,6 @@
       font-weight: 800;
     }
 
-    /* 난이도 버튼 사이드바 모드 스타일 */
     .diff-btn {
       flex: 1;
       padding: 10px 0;
@@ -209,6 +207,10 @@
         border: none !important;
       }
       .print-header-box { display: block !important; }
+      .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
       .exam-columns-2 {
         column-count: 2 !important;
         column-gap: 24px !important;
@@ -419,38 +421,79 @@
             <span class="text-xs text-slate-500 font-medium">(현재 위 필터로 매칭된 풀: <strong id="selectedTotalCount" class="text-cyan-600 font-bold text-sm">0</strong>개)</span>
           </div>
 
-          <!-- 사이드바 스포티 컬러 적용 -->
           <button onclick="generateExamPaper()" class="bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500 font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
             <i class="fa-solid fa-print"></i> 선택된 문제 출력
           </button>
         </div>
       </section>
 
-      <!-- VIEW 3: 2단 인쇄용 정밀 시험지 -->
+      <!-- VIEW 3: 2단 인쇄용 정밀 시험지 및 정답/해설지 -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
-        <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
-          <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
-            <i class="fa-solid fa-arrow-left"></i>
-          </button>
-          <button onclick="window.print()" class="bg-slate-900 text-cyan-400 border border-cyan-500 hover:bg-slate-800 text-xs px-5 py-3 rounded-xl font-bold flex items-center gap-2 shadow-md">
-            <i class="fa-solid fa-print"></i> 인쇄 및 PDF 저장
-          </button>
+        <!-- 인쇄 상단 제어 바 -->
+        <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+              <input type="checkbox" id="chkIncludeAns" checked onchange="renderPaper()" class="w-4 h-4 text-slate-900 rounded focus:ring-slate-800" />
+              <span>정답 및 해설지 포함 인쇄</span>
+            </label>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button onclick="togglePaperMode('all')" id="btnShowAllPaper" class="px-3.5 py-2 text-xs font-bold bg-slate-900 text-white rounded-xl shadow-sm">전체 (문제+해설)</button>
+            <button onclick="togglePaperMode('questions')" id="btnShowQOnly" class="px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl">문제지만 보기</button>
+            <button onclick="togglePaperMode('answers')" id="btnShowAOnly" class="px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl">정답/해설지만 보기</button>
+            
+            <button onclick="window.print()" class="bg-slate-900 text-cyan-400 border border-cyan-500 hover:bg-slate-800 text-xs px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-md">
+              <i class="fa-solid fa-print"></i> 인쇄 및 PDF 저장
+            </button>
+          </div>
         </div>
 
-        <div class="print-area bg-white p-8 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
-          <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
-            <div class="flex items-end justify-between">
-              <div>
-                <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH PREMIUM DECODING EXAM</span>
-                <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제집</h1>
-              </div>
-              <div class="flex items-center gap-3 text-xs">
-                <div class="border border-slate-900 px-3 py-1.5 font-bold">점수 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / 100점</div>
-                <div class="border border-slate-900 px-4 py-1.5 font-bold">이름 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+        <!-- 실제 출력이 이루어지는 영역 -->
+        <div class="print-area bg-white p-8 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto space-y-12">
+          
+          <!-- [PART 1] 문제지 영역 -->
+          <div id="paperQuestionSection">
+            <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
+              <div class="flex items-end justify-between">
+                <div>
+                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH PREMIUM DECODING EXAM</span>
+                  <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제집</h1>
+                </div>
+                <div class="flex items-center gap-3 text-xs">
+                  <div class="border border-slate-900 px-3 py-1.5 font-bold">점수 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / 100점</div>
+                  <div class="border border-slate-900 px-4 py-1.5 font-bold">이름 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                </div>
               </div>
             </div>
+            <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
           </div>
-          <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
+
+          <!-- [PART 2] 🎯 정답 및 상세 해설지 세트 영역 (페이지 분리) -->
+          <div id="paperAnswerSection" class="page-break-before pt-6 border-t-2 border-dashed border-slate-300">
+            <div class="border-b-2 border-slate-900 pb-3 mb-6">
+              <div class="flex items-end justify-between">
+                <div>
+                  <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH PREMIUM DECODING - ANSWER & EXPLANATION</span>
+                  <h1 id="answerHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">정답 및 상세 해설지</h1>
+                </div>
+                <div class="border border-slate-900 px-3 py-1 text-xs font-bold">SDH STUDIO</div>
+              </div>
+            </div>
+
+            <!-- 빠른 정답표 모음 -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-300 mb-6 text-xs">
+              <h3 class="font-black text-slate-900 mb-2">[빠른 정답표]</h3>
+              <div id="quickAnswerGrid" class="grid grid-cols-5 md:grid-cols-10 gap-2 font-mono text-center"></div>
+            </div>
+
+            <!-- 문항별 상세 해설 세트 -->
+            <div id="answerDetailContent" class="exam-columns-2 text-slate-900 text-xs"></div>
+          </div>
+
         </div>
       </section>
 
@@ -524,7 +567,7 @@
                 <label class="block text-xs font-bold text-slate-700 mb-1.5">
                   <i class="fa-solid fa-database text-teal-600"></i> 출제할 모의고사 세트 선택
                 </label>
-                <select id="selectMockSet" class="w-full p-3 border rounded-xl text-xs font-bold bg-white focus:outline-slate-800 shadow-sm">
+                <select id="selectMockSet" class="w-full p-3 border rounded-xl text-xs font-bold bg-white focus:outline-blue-600 shadow-sm">
                   <option value="">-- DB에 저장된 모의고사 세트 목록 (선택) --</option>
                 </select>
               </div>
@@ -605,7 +648,7 @@
             <div class="lg:col-span-6 flex flex-col space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                 <span>AI 변형문제 생성 진행 상황 (터미널)</span>
-                <span id="genProgressText" class="text-amber-600 font-bold">대기 중</span>
+                <span id="genProgressText" class="text-blue-600 font-bold">대기 중</span>
               </div>
               <div id="generationLogBox" class="h-[430px] max-h-[430px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800">
                 [SYSTEM READY] 모의고사 세트를 선택하고 생성 시작 버튼을 누르세요...
@@ -820,7 +863,6 @@
     let selectedDifficulty = '중';
     let selectedFilterDifficulty = '혼합';
 
-    // 🎯 사이드바 스포티 컬러 이식 칩 카테고리
     const typeCategories = [
       { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-amber-500' },
       { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-teal-600' },
@@ -1181,8 +1223,8 @@ ${fullText.slice(0, 15000)}
         <tr class="hover:bg-slate-50">
           <td class="py-4 px-6 font-semibold">${exam.year}년</td><td class="py-4 px-6 font-semibold">${exam.month}월</td>
           <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td><td class="py-4 px-6">${exam.grade}</td>
-          <td class="py-4 px-6 text-center font-bold text-cyan-700">${exam.questionCount}문항</td>
-          <td class="py-4 px-6 text-center"><button onclick="openExamTypeSelector('${exam.id}')" class="text-cyan-700 hover:bg-cyan-50 p-2 rounded-lg" title="과제 보기 및 필터링"><i class="fa-solid fa-folder-open text-xl"></i></button></td>
+          <td class="py-4 px-6 text-center font-bold text-cyan-600">${exam.questionCount}문항</td>
+          <td class="py-4 px-6 text-center"><button onclick="openExamTypeSelector('${exam.id}')" class="text-cyan-600 hover:bg-cyan-50 p-2 rounded-lg" title="과제 보기 및 필터링"><i class="fa-solid fa-folder-open text-xl"></i></button></td>
         </tr>
       `).join('');
     }
@@ -1346,27 +1388,181 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
+    // 🎯 [2단계 기능] 문제지 및 정답/해설지 2단 출력 렌더링
     function renderPaper() {
-      const container = document.getElementById('paperContent');
-      if (!container) return;
+      const qContainer = document.getElementById('paperContent');
+      const aContainer = document.getElementById('answerDetailContent');
+      const quickAnswerGrid = document.getElementById('quickAnswerGrid');
+      const chkAns = document.getElementById('chkIncludeAns');
+
+      if (!qContainer) return;
+
       if (currentSelectedExam) {
         const headerTitle = document.getElementById('paperHeaderTitle');
+        const ansHeaderTitle = document.getElementById('answerHeaderTitle');
         if (headerTitle) headerTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 변형문제집`;
+        if (ansHeaderTitle) ansHeaderTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 정답 및 상세 해설지`;
       }
-      container.innerHTML = filteredQuestions.map((q, idx) => {
+
+      // 1) 문제지 렌더링 (에디터 [수정/저장] 연동)
+      qContainer.innerHTML = filteredQuestions.map((q, idx) => {
         const isSubjective = (q.type === '서술형' || q.type === '단답형');
+
         return `
-          <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
-            <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
-              <div><span class="font-black text-slate-950">${idx + 1}.</span> <span>${q.title}</span></div>
-              <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passage_num}번 / ${q.type}]</span>
+          <div id="qBlock_${q.id}" class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] group">
+            
+            <!-- 인쇄 미포함: 검수/수정(Edit) 버튼 -->
+            <button onclick="toggleQuestionEdit('${q.id}')" class="no-print opacity-0 group-hover:opacity-100 transition absolute -top-2 -right-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow font-sans">
+              <i class="fa-solid fa-pen-to-square"></i> 수정
+            </button>
+
+            <!-- 일반 표시 모드 -->
+            <div id="qDisplay_${q.id}">
+              <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
+                <div><span class="font-black text-slate-950">${idx + 1}.</span> <span>${q.title}</span></div>
+                <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passage_num}번 / ${q.type}]</span>
+              </div>
+              <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
+              ${q.options && q.options.length > 0 ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
+              ${isSubjective ? `<div class="mt-3 border border-slate-400 p-2.5 rounded bg-slate-50"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed border-slate-300 h-6"></div><div class="border-b border-dashed border-slate-300 h-6"></div></div>` : ''}
             </div>
-            <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
-            ${q.options && q.options.length > 0 ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
-            ${isSubjective ? `<div class="mt-3 border border-slate-400 p-2.5 rounded bg-slate-50"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed border-slate-300 h-6"></div><div class="border-b border-dashed border-slate-300 h-6"></div></div>` : ''}
+
+            <!-- 🎯 실시간 검수 에디터 폼 (기본 숨김) -->
+            <div id="qEditForm_${q.id}" class="hidden no-print bg-slate-50 p-3 rounded-xl border border-slate-300 font-sans space-y-2 mt-2">
+              <span class="text-[11px] font-bold text-blue-700 flex items-center gap-1"><i class="fa-solid fa-pen"></i> [문항 실시간 검수 에디터]</span>
+              
+              <div>
+                <label class="text-[10px] font-bold text-slate-600">발문 수정</label>
+                <input type="text" id="editTitle_${q.id}" value="${q.title.replace(/"/g, '&quot;')}" class="w-full p-1.5 border rounded text-xs" />
+              </div>
+
+              <div>
+                <label class="text-[10px] font-bold text-slate-600">영어 지문 수정</label>
+                <textarea id="editPassage_${q.id}" rows="4" class="w-full p-1.5 border rounded text-xs font-mono">${q.passage}</textarea>
+              </div>
+
+              <div>
+                <label class="text-[10px] font-bold text-slate-600">보기 수정 (줄바꿈 구분)</label>
+                <textarea id="editOptions_${q.id}" rows="3" class="w-full p-1.5 border rounded text-xs">${q.options ? q.options.join('\n') : ''}</textarea>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] font-bold text-slate-600">정답</label>
+                  <input type="text" id="editAnswer_${q.id}" value="${q.answer.replace(/"/g, '&quot;')}" class="w-full p-1.5 border rounded text-xs" />
+                </div>
+                <div>
+                  <label class="text-[10px] font-bold text-slate-600">해설</label>
+                  <input type="text" id="editExplanation_${q.id}" value="${(q.explanation||'').replace(/"/g, '&quot;')}" class="w-full p-1.5 border rounded text-xs" />
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-1">
+                <button onclick="toggleQuestionEdit('${q.id}')" class="px-2.5 py-1 bg-slate-200 text-slate-700 text-xs font-bold rounded">취소</button>
+                <button onclick="saveQuestionEdit('${q.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded shadow">저장 및 DB 적재</button>
+              </div>
+            </div>
+
           </div>
         `;
       }).join('');
+
+      // 2) 정답 및 해설지 영역 렌더링
+      const ansSection = document.getElementById('paperAnswerSection');
+      if (chkAns && !chkAns.checked) {
+        if (ansSection) ansSection.classList.add('hidden');
+        return;
+      }
+      if (ansSection) ansSection.classList.remove('hidden');
+
+      // 빠른 정답표 Grid
+      if (quickAnswerGrid) {
+        quickAnswerGrid.innerHTML = filteredQuestions.map((q, idx) => `
+          <div class="border border-slate-300 p-1 rounded bg-white">
+            <span class="font-bold text-slate-500 text-[10px] block">${idx + 1}번</span>
+            <span class="font-black text-slate-900">${q.answer || '①'}</span>
+          </div>
+        `).join('');
+      }
+
+      // 상세 해설 세트
+      if (aContainer) {
+        aContainer.innerHTML = filteredQuestions.map((q, idx) => `
+          <div class="question-block exam-paper-font border-b border-slate-200 pb-3 mb-3">
+            <div class="font-bold text-slate-950 mb-1 flex items-center justify-between">
+              <span>[${idx + 1}번 정답 : <strong class="text-blue-700">${q.answer || '①'}</strong>]</span>
+              <span class="text-[10px] text-slate-500 font-sans">[${q.passage_num}번 / ${q.type}]</span>
+            </div>
+            <div class="text-[11.5px] text-slate-700 leading-relaxed font-sans bg-slate-50 p-2 rounded border border-slate-200">
+              <strong>해설:</strong> ${q.explanation || '원문의 핵심 문맥 및 논리적 흐름에 근거하여 출제된 변형 문항입니다.'}
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 🎯 [2단계 기능] 문항 에디터 토글 및 DB 수정 저장
+    function toggleQuestionEdit(qId) {
+      const displayEl = document.getElementById(`qDisplay_${qId}`);
+      const formEl = document.getElementById(`qEditForm_${qId}`);
+      if (displayEl && formEl) {
+        displayEl.classList.toggle('hidden');
+        formEl.classList.toggle('hidden');
+      }
+    }
+
+    async function saveQuestionEdit(qId) {
+      const qObj = filteredQuestions.find(q => q.id === qId);
+      if (!qObj) return;
+
+      const newTitle = document.getElementById(`editTitle_${qId}`).value.trim();
+      const newPassage = document.getElementById(`editPassage_${qId}`).value.trim();
+      const newOptionsText = document.getElementById(`editOptions_${qId}`).value.trim();
+      const newAnswer = document.getElementById(`editAnswer_${qId}`).value.trim();
+      const newExplanation = document.getElementById(`editExplanation_${qId}`).value.trim();
+
+      const newOptions = newOptionsText ? newOptionsText.split('\n').filter(o => o.trim()) : [];
+
+      qObj.title = newTitle;
+      qObj.passage = newPassage;
+      qObj.options = newOptions;
+      qObj.answer = newAnswer;
+      qObj.explanation = newExplanation;
+
+      // Supabase DB 실시간 저장
+      await supabaseClient.from('generated_questions').upsert([qObj]);
+
+      renderPaper();
+      alert('🎉 문항 수정이 완료되었으며 Supabase DB에 실시간 저장되었습니다!');
+    }
+
+    // 🎯 [2단계 기능] 인쇄 보기 모드 토글 (전체/문제만/해설만)
+    function togglePaperMode(mode) {
+      const qSec = document.getElementById('paperQuestionSection');
+      const aSec = document.getElementById('paperAnswerSection');
+      const btnAll = document.getElementById('btnShowAllPaper');
+      const btnQ = document.getElementById('btnShowQOnly');
+      const btnA = document.getElementById('btnShowAOnly');
+
+      if (mode === 'all') {
+        if(qSec) qSec.classList.remove('hidden');
+        if(aSec) aSec.classList.remove('hidden');
+        btnAll.className = "px-3.5 py-2 text-xs font-bold bg-slate-900 text-white rounded-xl shadow-sm";
+        btnQ.className = "px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl";
+        btnA.className = "px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl";
+      } else if (mode === 'questions') {
+        if(qSec) qSec.classList.remove('hidden');
+        if(aSec) aSec.classList.add('hidden');
+        btnAll.className = "px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl";
+        btnQ.className = "px-3.5 py-2 text-xs font-bold bg-slate-900 text-white rounded-xl shadow-sm";
+        btnA.className = "px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl";
+      } else if (mode === 'answers') {
+        if(qSec) qSec.classList.add('hidden');
+        if(aSec) aSec.classList.remove('hidden');
+        btnAll.className = "px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl";
+        btnQ.className = "px-3.5 py-2 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl";
+        btnA.className = "px-3.5 py-2 text-xs font-bold bg-slate-900 text-white rounded-xl shadow-sm";
+      }
     }
 
     function getStoredApiKey() { return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim(); }
