@@ -23,11 +23,17 @@
     .question-block { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 22px; position: relative; }
     .passage-box { border: 1px solid #334155; padding: 9px 12px; border-radius: 4px; line-height: 1.65; font-size: 12px; background: #ffffff; margin-top: 5px; margin-bottom: 8px; text-align: justify; word-break: break-word; }
     .given-box { border: 1.5px solid #0f172a; padding: 8px 12px; background: #f8fafc; font-size: 12px; line-height: 1.6; margin-bottom: 8px; border-radius: 4px; }
-    .type-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer; }
+    
+    .type-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer; transition: all 0.15s; }
+    .type-chip:hover { background-color: #f8fafc; border-color: #64748b; }
     .type-chip input:checked + span { color: #0f172a; font-weight: 800; }
     .count-badge { font-size: 11px; color: #0e7490; background: #ecfeff; border: 1px solid #a5f3fc; padding: 1px 7px; border-radius: 9999px; font-weight: 800; }
-    .passage-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; }
+
+    .passage-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; transition: all 0.15s; }
+    .passage-chip:hover { background-color: #f8fafc; }
+    .passage-chip input:checked + span { color: #0f172a; }
     .p-badge { font-size: 11px; background: #0f172a; color: #38bdf8; border: 1px solid #0284c7; padding: 1px 8px; border-radius: 9999px; font-weight: 800; }
+
     .diff-btn { flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 700; border-radius: 10px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
     .diff-btn.active-diff { background-color: #0f172a; color: #f59e0b; border-color: #0f172a; }
     .filter-diff-btn { padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
@@ -172,18 +178,70 @@
         </div>
       </section>
 
+      <!-- VIEW 2: 모의고사 세트 선택 (칩 복원 적용) -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <button onclick="switchView('examList')" class="w-9 h-9 bg-white border border-slate-200 rounded-xl text-slate-600 flex items-center justify-center">
+            <button onclick="switchView('examList')" class="w-9 h-9 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 flex items-center justify-center shadow-sm">
               <i class="fa-solid fa-arrow-left"></i>
             </button>
-            <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">모의고사 세트</h2>
+            <div>
+              <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">모의고사 세트</h2>
+              <p class="text-xs text-slate-500">원하시는 난이도, 출제 유형, 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
+            </div>
           </div>
         </div>
-        <div id="typeChipContainer" class="bg-white p-6 rounded-2xl border flex flex-wrap gap-2"></div>
-        <div id="passageChipContainer" class="bg-white p-6 rounded-2xl border grid grid-cols-6 gap-2"></div>
-        <button onclick="generateExamPaper()" class="bg-slate-900 text-cyan-400 font-black px-8 py-3.5 rounded-xl shadow-lg"><i class="fa-solid fa-print mr-2"></i>선택된 문제 출력</button>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+          <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-cyan-600"></i> 출제 난이도 필터 선택
+          </span>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="setSelectDifficulty('상')" id="filterDiff_상" class="filter-diff-btn">상 (고난도)</button>
+            <button type="button" onclick="setSelectDifficulty('중')" id="filterDiff_중" class="filter-diff-btn">중 (표준)</button>
+            <button type="button" onclick="setSelectDifficulty('하')" id="filterDiff_하" class="filter-diff-btn">하 (기본)</button>
+            <button type="button" onclick="setSelectDifficulty('혼합')" id="filterDiff_혼합" class="filter-diff-btn active-filter-diff">혼합 (상/중/하 전체)</button>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <div class="flex items-center justify-between border-b pb-3">
+            <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-tags text-amber-500"></i> 출제 유형별 문항수 선택
+            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="toggleAllTypes(true)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 선택</button>
+              <button onclick="toggleAllTypes(false)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 해제</button>
+            </div>
+          </div>
+          <div id="typeChipContainer" class="flex flex-wrap items-center gap-2 pt-1"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <div class="flex items-center justify-between border-b pb-3">
+            <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-teal-600"></i> 지문별 선택 (지문 번호 옆 숫자는 생성된 문제수)
+            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="toggleAllPassages(true)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 선택</button>
+              <button onclick="toggleAllPassages(false)" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded font-bold text-slate-700">전체 해제</button>
+            </div>
+          </div>
+          <div id="passageChipContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1"></div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-300 flex items-center justify-between">
+          <div class="flex items-center gap-4 text-sm font-black text-slate-800">
+            <span class="bg-slate-900 text-slate-100 px-2.5 py-1 rounded text-xs font-bold"><i class="fa-solid fa-print"></i> 최종 인쇄 설정</span>
+            <span>출력할 문항 갯수 :</span>
+            <input type="number" id="limitCount" value="50" class="w-24 p-2 border-2 border-slate-800 rounded-lg text-center font-bold text-slate-900 text-base shadow-inner focus:outline-none" />
+            <span class="text-xs text-slate-500 font-medium">(현재 위 필터로 매칭된 풀: <strong id="selectedTotalCount" class="text-cyan-600 font-bold text-sm">0</strong>개)</span>
+          </div>
+
+          <button onclick="generateExamPaper()" class="bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500 font-black text-sm px-8 py-3.5 rounded-xl shadow-lg flex items-center gap-2 transition">
+            <i class="fa-solid fa-print"></i> 선택된 문제 출력
+          </button>
+        </div>
       </section>
 
       <section id="view-paperView" class="p-8 space-y-6 hidden">
@@ -201,7 +259,6 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 변형문제 AI 출제 복원 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex items-center justify-between border-b pb-4">
@@ -277,7 +334,6 @@
         </div>
       </section>
 
-      <!-- VIEW 4: 모의고사 DB 등록 복원 -->
       <section id="view-mockRegisterPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -323,7 +379,6 @@
         </div>
       </section>
 
-      <!-- VIEW 6: 기출문제 DB 등록 (드래그앤드롭 + 테이블 복원) -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -398,7 +453,6 @@
         </div>
       </section>
 
-      <!-- VIEW 7: MY PAGE 복원 -->
       <section id="view-myPage" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -476,6 +530,7 @@
     let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], filteredQuestions = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
     let currentUser = null, userAccountsDB = { 'admin': { pw: '1234', role: 'admin', name: '원장 선생님' } };
     let selectedDifficulty = '중';
+    let selectedFilterDifficulty = '혼합';
 
     const standardTitleMap = {
       '주제': '다음 글의 주제로 가장 적절한 것은?',
@@ -492,6 +547,14 @@
       '서술형': '[주관식 서술형] 다음 글을 읽고 [조건]에 맞추어 알맞은 답안을 작성하시오.',
       '단답형': '[주관식 단답형] 다음 글의 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 쓰시오.'
     };
+
+    const typeCategories = [
+      { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-amber-500' },
+      { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-teal-600' },
+      { category: '언어 논리', types: ['함축의미', '빈칸', '연결사', '순서', '삽입', '흐름'], bg: 'bg-cyan-600' },
+      { category: '어법/어휘', types: ['어법', '어휘'], bg: 'bg-sky-600' },
+      { category: '주관식', types: ['서술형', '단답형'], bg: 'bg-slate-800' }
+    ];
 
     function getStoredApiKey() { return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim(); }
     function checkApiKeyStatus() {
@@ -515,6 +578,15 @@
         const btn = document.getElementById(`diffBtn_${d}`);
         if (btn) btn.className = (d === diff) ? 'diff-btn active-diff' : 'diff-btn';
       });
+    }
+
+    function setSelectDifficulty(diff) {
+      selectedFilterDifficulty = diff;
+      ['상', '중', '하', '혼합'].forEach(d => {
+        const btn = document.getElementById(`filterDiff_${d}`);
+        if (btn) btn.className = (d === diff) ? 'filter-diff-btn active-filter-diff' : 'filter-diff-btn';
+      });
+      renderTypeChips(); renderPassageChips(); updateSelectedCountText();
     }
 
     async function callGeminiUniversal(apiKey, prompt) {
@@ -567,6 +639,82 @@
     function updateSidebarRoleUI() {
       if (!currentUser) return;
       document.getElementById('currentUserName').innerText = currentUser.name;
+    }
+
+    // 🎯 칩 복원 렌더링 로직
+    function renderTypeChips() {
+      const container = document.getElementById('typeChipContainer');
+      if (!container) return;
+
+      const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
+      const pool = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
+        return isCurrentExam && diffMatch && passageMatch;
+      });
+
+      const typeCounts = {}; pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
+      let html = '';
+      typeCategories.forEach(cat => {
+        html += `<span class="text-xs font-bold ${cat.bg} text-white px-3 py-1.5 rounded-full shadow-sm">${cat.category}</span>`;
+        cat.types.forEach(t => {
+          html += `<label class="type-chip"><input type="checkbox" name="qTypeFilter" value="${t}" checked onchange="updateSelectedCountText()" /><span>${t}</span><span class="count-badge">${typeCounts[t] || 0}</span></label>`;
+        });
+      });
+      container.innerHTML = html;
+    }
+
+    function renderPassageChips() {
+      const container = document.getElementById('passageChipContainer');
+      if (!container) return;
+
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
+      const pool = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
+        return isCurrentExam && diffMatch && typeMatch;
+      });
+
+      const passageCounts = {}; pool.forEach(q => { passageCounts[q.passage_num] = (passageCounts[q.passage_num] || 0) + 1; });
+      container.innerHTML = passageNumberList.map(num => `
+        <label class="passage-chip flex items-center justify-between">
+          <div class="flex items-center gap-1.5"><input type="checkbox" name="passageFilter" value="${num}" checked onchange="updateSelectedCountText()" /><span>${num}번</span></div>
+          <span class="p-badge">${passageCounts[num] || 0}</span>
+        </label>
+      `).join('');
+    }
+
+    function toggleAllTypes(checked) {
+      document.querySelectorAll('input[name="qTypeFilter"]').forEach(cb => cb.checked = checked);
+      updateSelectedCountText();
+    }
+
+    function toggleAllPassages(checked) {
+      document.querySelectorAll('input[name="passageFilter"]').forEach(cb => cb.checked = checked);
+      updateSelectedCountText();
+    }
+
+    function updateSelectedCountText() {
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
+      const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
+      const matched = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
+      });
+      const el = document.getElementById('selectedTotalCount');
+      if (el) el.innerText = matched.length;
+    }
+
+    function openExamTypeSelector(examId) {
+      currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
+      if (currentSelectedExam) document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade})`;
+      renderTypeChips();
+      renderPassageChips();
+      updateSelectedCountText();
+      switchView('typeSelect');
     }
 
     function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
@@ -636,8 +784,12 @@
       generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
 
       let totalCount = 0;
-      for (let pObj of targetPassages) {
-        const prompt = `
+      const BATCH_SIZE = 3;
+      for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
+        const chunk = targetPassages.slice(i, i + BATCH_SIZE);
+
+        await Promise.all(chunk.map(async (pObj) => {
+          const prompt = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 아래 [영어 지문]에 대해 [요청 유형들]의 정밀 변형 데이터를 JSON 배열로 출제하십시오.
 
@@ -658,19 +810,21 @@ JSON 출력 예시:
   }
 ]
 `;
-        try {
-          const rawJson = await callGeminiUniversal(apiKey, prompt);
-          let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-          const parsed = JSON.parse(cleanedJson);
-          if (Array.isArray(parsed)) {
-            const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
-            await supabaseClient.from('generated_questions').upsert(verifiedItems);
-            generatedQuestionsPool.unshift(...verifiedItems);
-            totalCount += verifiedItems.length;
-            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 적재 완료 (+${verifiedItems.length}문항)</div>`;
-          }
-        } catch (e) { console.error(e); }
+          try {
+            const rawJson = await callGeminiUniversal(apiKey, prompt);
+            let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanedJson);
+            if (Array.isArray(parsed)) {
+              const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
+              await supabaseClient.from('generated_questions').upsert(verifiedItems);
+              generatedQuestionsPool.unshift(...verifiedItems);
+              totalCount += verifiedItems.length;
+              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 적재 완료 (+${verifiedItems.length}문항)</div>`;
+            }
+          } catch (e) { console.error(e); }
+        }));
       }
+
       logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재</div>`;
       alert('🎉 출제 완료!');
       loadAllSupabaseData();
@@ -733,13 +887,20 @@ JSON 출력 예시:
       `).join('');
     }
 
-    function openExamTypeSelector(examId) {
-      currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
-      switchView('typeSelect');
-    }
-
     function generateExamPaper() {
-      filteredQuestions = generatedQuestionsPool.filter(q => currentSelectedExam && q.id.includes(currentSelectedExam.id)).slice(0, 50);
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
+      const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
+      const limit = parseInt(document.getElementById('limitCount')?.value) || 50;
+
+      let matched = generatedQuestionsPool.filter(q => {
+        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
+      });
+
+      if (matched.length === 0) return alert('선택하신 조건에 매칭되는 문제가 없습니다.');
+
+      filteredQuestions = matched.slice(0, limit);
       renderPaper();
       switchView('paperView');
     }
