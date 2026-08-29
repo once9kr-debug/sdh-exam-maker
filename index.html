@@ -251,27 +251,13 @@
               <option value="2026">2026년</option>
               <option value="2025">2025년</option>
               <option value="2024">2024년</option>
-              <option value="2023">2023년</option>
-              <option value="2022">2022년</option>
-              <option value="2021">2021년</option>
-              <option value="2020">2020년</option>
-              <option value="2019">2019년</option>
-              <option value="2018">2018년</option>
-              <option value="2017">2017년</option>
-              <option value="2016">2016년</option>
               <option value="2015">2015년</option>
             </select>
             <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
               <option value="">월 전체</option>
               <option value="3">3월</option>
-              <option value="4">4월</option>
-              <option value="5">5월</option>
               <option value="6">6월</option>
-              <option value="7">7월</option>
-              <option value="9">9월</option>
-              <option value="10">10월</option>
               <option value="11">11월</option>
-              <option value="12">12월</option>
             </select>
             <select id="filterGrade" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium">
               <option value="">학년 전체</option>
@@ -325,12 +311,12 @@
             </button>
           </div>
 
-          <!-- 공통 설정 바 (연도 2026~2015 / 월 3~12월 / 학년 고1~고3) -->
+          <!-- 공통 설정 바 -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
               <span>등록할 모의고사 설정:</span>
               <select id="regYear" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
-                <option value="2026">2026년</option>
+                <option value="2026" selected>2026년</option>
                 <option value="2025">2025년</option>
                 <option value="2024">2024년</option>
                 <option value="2023">2023년</option>
@@ -341,7 +327,7 @@
                 <option value="2018">2018년</option>
                 <option value="2017">2017년</option>
                 <option value="2016">2016년</option>
-                <option value="2015" selected>2015년</option>
+                <option value="2015">2015년</option>
               </select>
               <select id="regMonth" class="border rounded-lg px-3 py-2 bg-white font-bold text-blue-600">
                 <option value="3" selected>3월</option>
@@ -370,7 +356,7 @@
           <div id="passageInputsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-2"></div>
         </div>
 
-        <!-- DB에 적재된 지문 목록 (수정 / 삭제 기능 탑재) -->
+        <!-- DB에 적재된 지문 목록 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-3">
           <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-database text-teal-600"></i> 현재 학원 지문 ARCHIVE DB 목록 (<span id="totalArchivedCount">0</span>개 적재됨)
@@ -424,14 +410,14 @@
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">모의고사 / 시험 분류</label>
                 <div class="grid grid-cols-3 gap-2">
-                  <input type="text" id="adminYear" value="2015" class="p-2 border rounded-lg text-xs" placeholder="년도" />
+                  <input type="text" id="adminYear" value="2026" class="p-2 border rounded-lg text-xs" placeholder="년도" />
                   <input type="text" id="adminMonth" value="3" class="p-2 border rounded-lg text-xs" placeholder="월" />
                   <input type="text" id="adminGrade" value="1" class="p-2 border rounded-lg text-xs" placeholder="학년" />
                 </div>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">지문 번호 (예: 23)</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">지문 번호 (예: 18)</label>
                 <input type="text" id="adminPassageNum" value="18" class="w-full p-2 border rounded-lg text-xs" placeholder="지문 번호" />
               </div>
 
@@ -537,21 +523,26 @@
       `).join('');
     }
 
+    // 💡 중복 시 덮어쓰기 안내 팝업 포함 DB 저장
     function saveAll25Passages() {
       const year = document.getElementById('regYear').value;
       const month = document.getElementById('regMonth').value;
       const grade = document.getElementById('regGrade').value;
 
       let addedCount = 0;
+      let overwrittenCount = 0;
 
       passageNumberList.forEach(num => {
         const inputEl = document.getElementById(`inputP_${num}`);
-        const text = inputEl ? inputEl.value.trim() : '';
+        let text = inputEl ? inputEl.value.trim() : '';
 
         if (text) {
+          // 과도한 엔터 줄바꿈 정제 (줄간격 벌어짐 방지)
+          text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
+
           const key = `${year}-${month}-${grade}-${num}`;
-          
           const existingIdx = passageArchiveDB.findIndex(p => p.key === key);
+
           const pObj = {
             key: key,
             year: year,
@@ -563,21 +554,26 @@
           };
 
           if (existingIdx !== -1) {
-            passageArchiveDB[existingIdx] = pObj;
+            // 중복 지문 확인 팝업
+            const confirmOverwrite = confirm(`[${year}년 ${month}월 고${grade}] ${num}번 지문이 이미 DB에 존재합니다.\n새로운 내용으로 덮어쓰시겠습니까?`);
+            if (confirmOverwrite) {
+              passageArchiveDB[existingIdx] = pObj;
+              overwrittenCount++;
+            }
           } else {
             passageArchiveDB.unshift(pObj);
+            addedCount++;
           }
-          addedCount++;
         }
       });
 
-      if (addedCount === 0) {
-        alert('입력된 지문이 없습니다. 지문 박스에 원문을 채워 넣어주세요.');
+      if (addedCount === 0 && overwrittenCount === 0) {
+        alert('입력된 지문이 없거나 저장이 취소되었습니다.');
         return;
       }
 
       renderPassageArchiveTable();
-      alert(`🎉 성공! [${year}년 ${month}월 고${grade}] 모의고사 지문 ${addedCount}개가 DB에 적재되었습니다.`);
+      alert(`🎉 DB 저장 완료!\n신규 등록: ${addedCount}개 / 덮어쓰기 수정: ${overwrittenCount}개`);
     }
 
     function renderPassageArchiveTable() {
@@ -614,7 +610,6 @@
       }
     }
 
-    // ✏️ 단일 지문 수정 (입력창으로 불러오기)
     function editSinglePassage(key) {
       const target = passageArchiveDB.find(p => p.key === key);
       if (!target) return;
@@ -630,10 +625,9 @@
         inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      alert(`[${target.year}년 ${target.month}월 고${target.grade}] ${target.passageNum}번 지문을 수정 폼으로 불러왔습니다. 수정 후 상단 [DB 저장] 버튼을 누르세요.`);
+      alert(`[${target.year}년 ${target.month}월 고${target.grade}] ${target.passageNum}번 지문을 수정 폼으로 불러왔습니다.`);
     }
 
-    // 🗑️ 단일 지문 삭제
     function deleteSinglePassage(key) {
       const target = passageArchiveDB.find(p => p.key === key);
       if (!target) return;
@@ -652,7 +646,144 @@
         document.getElementById('adminMonth').value = target.month;
         document.getElementById('adminGrade').value = target.grade;
         document.getElementById('adminPassageNum').value = target.passageNum;
-        document.getElementById('adminPassageText').value = target.text;
+        
+        // 지문 불러올 때 공백 정제 적용
+        document.getElementById('adminPassageText').value = target.text.replace(/\n\s*\n\s*\n+/g, '\n\n');
+      }
+    }
+
+    function getStoredApiKey() {
+      return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim();
+    }
+
+    function checkApiKeyStatus() {
+      const key = getStoredApiKey();
+      const badge = document.getElementById('apiKeyStatusBadge');
+      if (badge) {
+        if (key && (key.startsWith('AIzaSy') || key.length > 20)) {
+          badge.className = 'text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold';
+          badge.innerText = 'Gemini API Key 연결됨';
+        } else {
+          badge.className = 'text-xs bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-bold cursor-pointer';
+          badge.innerText = 'API Key 미설정 (클릭)';
+        }
+      }
+    }
+
+    function toggleApiKeyModal() {
+      const modal = document.getElementById('apiKeyModal');
+      const input = document.getElementById('inputApiKey');
+      input.value = getStoredApiKey();
+      modal.classList.toggle('hidden');
+    }
+
+    function saveApiKey() {
+      const input = document.getElementById('inputApiKey').value.trim();
+      if (!input) {
+        alert('API Key를 입력해 주세요.');
+        return;
+      }
+      localStorage.setItem('SDH_GEMINI_API_KEY', input);
+      toggleApiKeyModal();
+      checkApiKeyStatus();
+      alert('Gemini API Key가 성공적으로 저장되었습니다!');
+    }
+
+    // ⚡ 변형문제 대량 AI 생성 (로딩 스피너 및 에러 처리 강화)
+    async function executeGeminiBatchGenerate() {
+      const apiKey = getStoredApiKey();
+      
+      // 1. API 키 미설정 시 즉시 모달 출력
+      if (!apiKey) {
+        alert('Gemini API Key가 설정되지 않았습니다. API Key 입력 창을 엽니다.');
+        toggleApiKeyModal();
+        return;
+      }
+
+      const passage = document.getElementById('adminPassageText').value.trim();
+      const passageNum = document.getElementById('adminPassageNum').value.trim() || '18';
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
+      const countPerType = parseInt(document.getElementById('questionsPerType').value) || 3;
+
+      if (!passage) return alert('영어 지문을 선택하거나 입력해 주세요.');
+      if (selectedTypes.length === 0) return alert('생성할 변형문제 유형을 선택해 주세요.');
+
+      const btn = document.getElementById('btnAdminGen');
+      const logBox = document.getElementById('generationLogBox');
+      
+      logBox.classList.remove('hidden');
+      logBox.innerHTML = `<div>⚡ Gemini AI 대량 출제 가동 (유형당 ${countPerType}개씩 총 ${selectedTypes.length * countPerType}문항 생성 지시)...</div>`;
+      
+      // 2. 버튼 상태 변경 (움직이는 스피너 아이콘 추가)
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Gemini AI 변형문제 생성 중... (약 10~15초 소요)';
+      btn.disabled = true;
+
+      const systemPrompt = `
+당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
+주어진 [영어 지문]에 대해 [요청된 출제 유형]별로 **각각 정확히 ${countPerType}개씩** 변형문제를 제작하십시오.
+
+[영어 지문]:
+${passage}
+
+[요청된 출제 유형]:
+${selectedTypes.join(', ')}
+
+[대량 출제 지침]:
+1. 각 유형별로 **${countPerType}개씩** 문제를 만드십시오.
+2. 각 문제의 지문에서 불필요하게 넓은 줄간격을 자동으로 다듬어 단락 형태로 구성하십시오.
+3. 선택지(①~⑤) 오답과 정답을 고품질 패러프레이징으로 다변화하십시오.
+
+반드시 마크다운 없이 순수 JSON Array 형태로만 출력하십시오.
+[
+  {
+    "type": "유형명",
+    "title": "발문",
+    "passage": "변형된 지문 텍스트",
+    "options": ["① 보기1", "② 보기2", "③ 보기3", "④ 보기4", "⑤ 보기5"],
+    "answer": "정답 번호 및 정답 어구",
+    "explanation": "상세 해설"
+  }
+]
+`;
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 8192 }
+          })
+        });
+
+        if (!res.ok) throw new Error(`API 통신 에러 (HTTP ${res.status})`);
+
+        const data = await res.json();
+        const rawText = data.candidates[0].content.parts[0].text;
+        
+        // JSON 파싱 정제
+        let clean = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const firstBracket = clean.indexOf('[');
+        const lastBracket = clean.lastIndexOf(']');
+        clean = clean.substring(firstBracket, lastBracket + 1);
+
+        const parsedQuestions = JSON.parse(clean);
+
+        logBox.innerHTML += `<div class="text-emerald-300 font-bold">🎉 성공! 대량 출제된 ${parsedQuestions.length}개 변형문제가 완벽 생성되었습니다.</div>`;
+
+        setTimeout(() => {
+          alert(`축하합니다! 총 ${parsedQuestions.length}문항의 대량 변형문제가 완벽하게 생성되었습니다.`);
+          btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
+          btn.disabled = false;
+        }, 500);
+
+      } catch (err) {
+        console.error('Gemini API Error:', err);
+        logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ 오류 발생: ${err.message}</div>`;
+        alert(`출제 실패: ${err.message}\nAPI Key가 정확한지 다시 확인해 주세요.`);
+        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
+        btn.disabled = false;
       }
     }
 
@@ -681,6 +812,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       render25PassageInputForms();
       renderPassageArchiveTable();
+      checkApiKeyStatus();
     });
   </script>
 </body>
