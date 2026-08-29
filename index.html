@@ -1045,7 +1045,7 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-// ⚡ 최신 규격 gemini-2.5-flash 지원 호출 함수
+    // ⚡ 구글 API 호환성 완전 고정 (gemini-2.5-flash 표준 최신 모델 적용)
     async function callGeminiUniversal(apiKey, prompt, onLog) {
       const apiEndpoints = [
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -1088,6 +1088,7 @@ ${fullText.slice(0, 15000)}
 
       throw lastError || new Error('Gemini API 통신 실패. API Key를 확인하세요.');
     }
+
     function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage) {
       const results = [];
       const blocks = rawText.split(/##\s+\[문항/g);
@@ -1409,7 +1410,7 @@ ${fullText.slice(0, 15000)}
       alert('Gemini API Key가 성공적으로 저장되었습니다!');
     }
 
-    // 🚀 통합 호환 callGeminiUniversal 방식으로 완전 통일 (직통 호출 제거 완료)
+    // 🚀 초고속 병렬 생성 및 1회 자동 재시도(Retry) 포함 출제 함수
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) {
@@ -1449,7 +1450,6 @@ ${fullText.slice(0, 15000)}
         logBox.innerHTML += `<div class="text-cyan-300 mt-2">⚡ [병렬 그룹 ${Math.floor(i/BATCH_SIZE)+1}] ${chunkNumText} 동시 출제 중...</div>`;
         logBox.scrollTop = logBox.scrollHeight;
 
-        // 5개 지문 동시 병렬 안전 통합 호출
         await Promise.all(chunk.map(async (pObj) => {
           const prompt = `
 당신은 대한민국 고등학교 영어 내신 시험 출제 전문가입니다.
@@ -1477,23 +1477,36 @@ ${selectedTypes.join(', ')}
 해설: 상세 해설 작성
 `;
 
-          try {
-            // 💡 고정 직통 URL 대신 callGeminiUniversal을 사용하여 모델 호환성 100% 보장
-            const rawText = await callGeminiUniversal(apiKey, prompt);
-            const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text);
+          let success = false;
+          let retryCount = 0;
 
-            if (parsedQuestions.length > 0) {
-              generatedQuestionsPool.unshift(...parsedQuestions);
-              totalGeneratedCount += parsedQuestions.length;
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 완료 (+${parsedQuestions.length}문항)</div>`;
-            } else {
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 완료</div>`;
+          // 💡 실패 시 1회 자동 재시도 로직
+          while (!success && retryCount < 2) {
+            try {
+              if (retryCount > 0) {
+                logBox.innerHTML += `<div class="text-amber-400">🔄 ${pObj.passageNum}번 재시도 중... (${retryCount}/1)</div>`;
+              }
+
+              const rawText = await callGeminiUniversal(apiKey, prompt);
+              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text);
+
+              if (parsedQuestions.length > 0) {
+                generatedQuestionsPool.unshift(...parsedQuestions);
+                totalGeneratedCount += parsedQuestions.length;
+                logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공 (+${parsedQuestions.length}문항)</div>`;
+              } else {
+                logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 성공</div>`;
+              }
+              logBox.scrollTop = logBox.scrollHeight;
+              success = true;
+
+            } catch (err) {
+              retryCount++;
+              if (retryCount >= 2) {
+                logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passageNum}번 실패: ${err.message}</div>`;
+                logBox.scrollTop = logBox.scrollHeight;
+              }
             }
-            logBox.scrollTop = logBox.scrollHeight;
-
-          } catch (err) {
-            logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passageNum}번 에러: ${err.message}</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
           }
         }));
       }
@@ -1517,13 +1530,13 @@ ${selectedTypes.join(', ')}
 
       renderExamTable();
 
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 초고속 모의고사 1세트 일괄 출제 완수! 총 ${totalGeneratedCount}문항 생성됨.</div>`;
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모의고사 1세트 완벽 출제 완료! 총 ${totalGeneratedCount}문항 생성됨.</div>`;
       if (progressText) progressText.innerText = '출제 완료';
 
       btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> 초고속 Gemini AI 변형문제 자동 생성 시작';
       btn.disabled = false;
 
-      alert(`🎉 초고속 출제 완료!\n[${setKey}] 모의고사 세트에서 총 ${totalGeneratedCount}개의 변형문제가 에러 없이 완벽하게 생성되어 등록되었습니다.`);
+      alert(`🎉 출제 완수!\n[${setKey}] 모의고사 세트에서 총 ${totalGeneratedCount}개의 변형문제가 완벽하게 생성되어 등록되었습니다.`);
     }
 
     function clearPassageArchiveDB() {
