@@ -500,8 +500,11 @@
 
     let passageArchiveDB = [];
     let generatedQuestionsPool = [];
+    let mockExams = [
+      { id: '2026-3-1', year: '2026', month: '3', title: '2026년 3월 학력평가', grade: '고1', questionCount: 0 }
+    ];
 
-    // 1. 범용 Gemini API 통신 지원 함수 (모든 모델 유연 지원)
+    // 1. 범용 Gemini API 통신 지원 함수
     async function callGeminiUniversal(apiKey, prompt, onLog) {
       const candidateModels = [
         'gemini-1.5-flash',
@@ -720,6 +723,43 @@
       }
     }
 
+    function renderExamTable() {
+      const tbody = document.getElementById('examTableBody');
+      const year = document.getElementById('filterYear').value;
+      const month = document.getElementById('filterMonth').value;
+      const grade = document.getElementById('filterGrade').value;
+      const keyword = document.getElementById('searchKeyword').value.trim();
+
+      if (!tbody) return;
+
+      const filtered = mockExams.filter(item => {
+        if (year && item.year !== year) return false;
+        if (month && item.month !== month) return false;
+        if (grade && !item.grade.includes(grade)) return false;
+        if (keyword && !item.title.includes(keyword)) return false;
+        return true;
+      });
+
+      tbody.innerHTML = filtered.map(exam => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-4 px-6 font-semibold">${exam.year}년</td>
+          <td class="py-4 px-6 font-semibold">${exam.month}월</td>
+          <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td>
+          <td class="py-4 px-6">${exam.grade}</td>
+          <td class="py-4 px-6 text-center font-bold text-blue-600">${exam.questionCount}문항</td>
+          <td class="py-4 px-6 text-center">
+            <button onclick="openExamTypeSelector('${exam.id}')" class="text-amber-500 hover:text-amber-600 p-2 rounded-lg hover:bg-amber-50 transition" title="과제 문제 선택">
+              <i class="fa-solid fa-folder-open text-xl"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openExamTypeSelector(examId) {
+      alert('출제된 변형문제 선택 화면으로 이동합니다.');
+    }
+
     function getStoredApiKey() {
       return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim();
     }
@@ -757,7 +797,7 @@
       alert('Gemini API Key가 성공적으로 저장되었습니다!');
     }
 
-    // ⚡ 변형문제 대량 AI 생성 (에러 방지 및 로딩 스피너)
+    // ⚡ 변형문제 대량 AI 생성 및 메인 표 연동
     async function executeGeminiBatchGenerate() {
       const apiKey = getStoredApiKey();
       
@@ -767,6 +807,9 @@
         return;
       }
 
+      const adminYear = document.getElementById('adminYear').value.trim() || '2026';
+      const adminMonth = document.getElementById('adminMonth').value.trim() || '3';
+      const adminGrade = document.getElementById('adminGrade').value.trim() || '1';
       const passage = document.getElementById('adminPassageText').value.trim();
       const passageNum = document.getElementById('adminPassageNum').value.trim() || '18';
       const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
@@ -796,8 +839,7 @@ ${selectedTypes.join(', ')}
 
 [대량 출제 지침]:
 1. 각 유형별로 **${countPerType}개씩** 문제를 만드십시오.
-2. 각 문제의 지문에서 불필요하게 넓은 줄간격을 자동으로 다듬어 단락 형태로 구성하십시오.
-3. 선택지(①~⑤) 오답과 정답을 고품질 패러프레이징으로 다변화하십시오.
+2. 선택지(①~⑤) 오답과 정답을 고품질 패러프레이징으로 다변화하십시오.
 
 반드시 마크다운 없이 순수 JSON Array 형태로만 출력하십시오.
 [
@@ -832,10 +874,29 @@ ${selectedTypes.join(', ')}
 
         generatedQuestionsPool.unshift(...formatted);
 
+        // 💡 AI 문제 생성 완료 시 모의고사 목록(mockExams)에 자동 등록/업데이트
+        const examId = `${adminYear}-${adminMonth}-${adminGrade}`;
+        let existingExam = mockExams.find(e => e.id === examId);
+        
+        if (existingExam) {
+          existingExam.questionCount = (existingExam.questionCount || 0) + formatted.length;
+        } else {
+          mockExams.unshift({
+            id: examId,
+            year: adminYear,
+            month: adminMonth,
+            title: `${adminYear}년 ${adminMonth}월 학력평가`,
+            grade: `고${adminGrade}`,
+            questionCount: formatted.length
+          });
+        }
+
+        renderExamTable(); // 모의고사 목록 표 즉시 갱신
+
         logBox.innerHTML += `<div class="text-emerald-300 font-bold">🎉 성공! 대량 출제된 ${formatted.length}개 변형문제가 완벽 생성되었습니다.</div>`;
 
         setTimeout(() => {
-          alert(`축하합니다! 총 ${formatted.length}문항의 대량 변형문제가 완벽하게 생성되었습니다.`);
+          alert(`축하합니다! 총 ${formatted.length}문항의 대량 변형문제가 완벽하게 생성되어 [모의고사] 목록에 추가되었습니다.`);
           btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI 변형문제 자동 생성 시작';
           btn.disabled = false;
         }, 500);
@@ -867,13 +928,36 @@ ${selectedTypes.join(', ')}
         const el = document.getElementById('view-' + v);
         if (el) el.classList.add('hidden');
       });
+
       const target = document.getElementById('view-' + viewName);
       if (target) target.classList.remove('hidden');
+
+      const navMock = document.getElementById('nav-mock');
+      if (navMock) {
+        navMock.className = (viewName === 'examList')
+          ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-sm transition'
+          : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
+      }
+
+      const navMockReg = document.getElementById('nav-mock-register');
+      if (navMockReg) {
+        navMockReg.className = (viewName === 'mockRegisterPanel')
+          ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-teal-600 text-white shadow-sm transition'
+          : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
+      }
+
+      const navAdmin = document.getElementById('nav-admin');
+      if (navAdmin) {
+        navAdmin.className = (viewName === 'adminPanel')
+          ? 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold bg-amber-500 text-slate-950 shadow-sm transition'
+          : 'w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition';
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       render25PassageInputForms();
       renderPassageArchiveTable();
+      renderExamTable();
       checkApiKeyStatus();
     });
   </script>
