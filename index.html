@@ -73,36 +73,22 @@
     .type-chip:hover {
       background-color: #e2e8f0;
     }
-    .count-badge {
-      font-size: 10px;
-      color: #64748b;
-      background: #e2e8f0;
-      padding: 1px 5px;
-      border-radius: 9999px;
+
+    .drag-active {
+      border-color: #06b6d4 !important;
+      background-color: #ecfeff !important;
+      transform: scale(1.01);
     }
-    .passage-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #1e293b;
-      cursor: pointer;
+
+    .terminal-scroll::-webkit-scrollbar {
+      width: 6px;
     }
-    .passage-chip input:checked + span {
-      color: #2563eb;
+    .terminal-scroll::-webkit-scrollbar-track {
+      background: #0f172a;
     }
-    .p-badge {
-      font-size: 10px;
-      background: #94a3b8;
-      color: white;
-      padding: 0 4px;
-      border-radius: 4px;
-      font-weight: normal;
+    .terminal-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
     }
 
     @media print {
@@ -203,7 +189,6 @@
           <i class="fa-solid fa-chevron-right text-xs opacity-70"></i>
         </button>
 
-        <!-- 관리자 전용 메뉴 -->
         <div id="adminMenuSection" class="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
           <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
           
@@ -221,7 +206,6 @@
             <i class="fa-solid fa-bolt text-xs"></i>
           </button>
 
-          <!-- 💡 기출 PDF 자동분류 DB 메뉴 복구 완료 -->
           <button onclick="switchView('pdfParserPanel')" id="nav-parser" class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800 transition">
             <span class="flex items-center gap-3 text-cyan-400">
               <i class="fa-solid fa-file-pdf w-4"></i> 기출 PDF 자동분류 DB
@@ -245,7 +229,7 @@
     <!-- 컨텐츠 영역 -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
 
-      <!-- ==================== VIEW 1: 모의고사 목록 ==================== -->
+      <!-- VIEW 1: 모의고사 목록 -->
       <section id="view-examList" class="p-8 space-y-6 hidden">
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
@@ -304,7 +288,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 2: 유형 및 지문 선택 ==================== -->
+      <!-- VIEW 2: 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -357,7 +341,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 3: 2단 인쇄용 시험지 ==================== -->
+      <!-- VIEW 3: 2단 인쇄용 시험지 -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
         <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
@@ -376,7 +360,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 4: 25개 지문 직접 입력 모드 ==================== -->
+      <!-- VIEW 4: 25개 지문 직접 입력 모드 -->
       <section id="view-mockRegisterPanel" class="p-8 space-y-6">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -391,7 +375,6 @@
             </button>
           </div>
 
-          <!-- 공통 설정 바 -->
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3 text-xs font-bold text-slate-800">
               <span>등록할 모의고사 설정:</span>
@@ -432,11 +415,9 @@
             </button>
           </div>
 
-          <!-- 25개 지문 개별 입력 폼 리스트 -->
           <div id="passageInputsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto p-2"></div>
         </div>
 
-        <!-- DB에 적재된 지문 목록 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-3">
           <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-database text-teal-600"></i> 현재 학원 지문 ARCHIVE DB 목록 (<span id="totalArchivedCount">0</span>개 적재됨)
@@ -460,7 +441,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 5: 관리자 대량 실전 출제 모드 ==================== -->
+      <!-- VIEW 5: 관리자 대량 실전 출제 모드 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -544,7 +525,6 @@
                 </div>
               </div>
 
-              <!-- 생성 진행 상태창 -->
               <div id="generationLogBox" class="hidden bg-slate-900 text-emerald-400 p-3 rounded-xl text-xs font-mono max-h-28 overflow-y-auto space-y-1"></div>
 
               <div class="bg-slate-50 p-4 rounded-xl border space-y-2">
@@ -557,7 +537,7 @@
         </div>
       </section>
 
-      <!-- ==================== VIEW 6: 학교 기출 PDF 자동분류 & DB 빌더 ==================== -->
+      <!-- ==================== VIEW 6: 학교 기출 PDF 자동분류 & DB 빌더 (완전 복구) ==================== -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -565,35 +545,85 @@
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-file-pdf text-rose-500"></i> 학교 시험지 PDF 자동분류 및 기출 DB 빌더
               </h2>
-              <p class="text-xs text-slate-500 mt-0.5">학교별 실제 영어 시험지 PDF를 끌어다 놓으면, AI가 각 문항을 자동 분해하여 기출 학습 DB에 적재합니다.</p>
+              <p class="text-xs text-slate-500 mt-0.5">학교별 실제 영어 시험지 PDF를 여러 개 끌어다 놓으면, AI가 각 문항을 자동 분해하여 기출 학습 DB에 적재합니다.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
                 <i class="fa-solid fa-key text-amber-500"></i> API Key 설정
+              </button>
+              <button onclick="resetBenchmarkDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">
+                기출 DB 초기화
               </button>
             </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-5 space-y-4">
-              <div id="pdfDropZone" class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50">
-                <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+              <!-- Drag & Drop Zone -->
+              <div id="pdfDropZone" 
+                   class="border-2 border-dashed border-slate-300 hover:border-cyan-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50"
+                   onclick="document.getElementById('pdfFileInput').click()"
+                   ondragover="handleDragOver(event)"
+                   ondragleave="handleDragLeave(event)"
+                   ondrop="handleDrop(event)">
+                <input type="file" id="pdfFileInput" accept="application/pdf" multiple class="hidden" onchange="handleFileInputChange(event)" />
+                <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
                   <i class="fa-solid fa-cloud-arrow-up"></i>
                 </div>
-                <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭</h4>
-                <p class="text-[11px] text-slate-500 mt-1">파일을 선택하거나 여기에 끌어다 놓으세요.</p>
+                <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭 (다중 선택 가능)</h4>
+                <p class="text-[11px] text-slate-500 mt-1">파일을 끌어다 놓거나 클릭해서 다중 선택하세요.</p>
+                <div id="pdfUploadStatus" class="mt-3 text-xs font-bold text-cyan-600"></div>
+              </div>
+
+              <!-- 대기 중인 파일 목록 -->
+              <div id="queuedFilesContainer" class="hidden bg-slate-50 p-4 rounded-xl border space-y-2">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-800 border-b pb-2">
+                  <span>대기 중인 PDF 목록 (<span id="queuedFileCount">0</span>개)</span>
+                  <button onclick="clearQueuedFiles()" class="text-slate-400 hover:text-rose-500 text-[11px]">목록 비우기</button>
+                </div>
+                <div id="queuedFileList" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
+                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full mt-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow transition">
+                  <i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작
+                </button>
               </div>
             </div>
 
+            <!-- 터미널 로그 창 -->
             <div class="lg:col-span-7 flex flex-col space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                 <span>PDF 텍스트 추출 및 AI 분석 피드</span>
+                <span id="parsedItemCount" class="text-cyan-700 font-bold">분석 대기 중</span>
               </div>
-              <div id="pdfLogTerminal" class="h-[300px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto">
-                [SYSTEM READY] 준비 상태입니다...
+              <div id="pdfLogTerminal" class="h-[360px] max-h-[360px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto leading-relaxed border border-slate-800 terminal-scroll">
+                [SYSTEM READY] 준비 상태입니다. PDF 시험지를 드래그&드롭하면 AI 분석 피드가 시작됩니다...
               </div>
             </div>
           </div>
+
+          <!-- 기출 DB 목록 표 -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">3</span>문항)
+              </h3>
+            </div>
+
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-700 font-bold border-b">
+                    <th class="py-2.5 px-4 w-12 text-center">번호</th>
+                    <th class="py-2.5 px-4 w-44">학교 / 시험 구분</th>
+                    <th class="py-2.5 px-4 w-24 text-center">유형</th>
+                    <th class="py-2.5 px-4">문제 발문 / 핵심 킬러 포인트</th>
+                    <th class="py-2.5 px-4 w-28 text-center">출제 학습 반영</th>
+                  </tr>
+                </thead>
+                <tbody id="benchmarkTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -630,6 +660,253 @@
     let mockExams = [];
     let currentSelectedExam = null;
     let filteredQuestions = [];
+    let queuedPdfFiles = [];
+
+    let schoolBenchmarkDB = [
+      {
+        id: 'BM-1',
+        school: '휘문고',
+        exam: '1-1 중간',
+        type: '어법',
+        title: '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
+        trick: '관계대명사 what vs 접속사 that 구분 + 수일치 병렬구조 복합 함정'
+      },
+      {
+        id: 'BM-2',
+        school: '세화여고',
+        exam: '1-2 기말',
+        type: '어휘',
+        title: '다음 글의 밑줄 친 (A), (B), (C)의 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은?',
+        trick: '접두사 활용 반의어 변형 (valuable vs valueless, inevitable vs avoidable)'
+      },
+      {
+        id: 'BM-3',
+        school: '보성고',
+        exam: '2-1 중간',
+        type: '주관식',
+        title: '[서술형 3번] 다음 글의 빈칸에 들어갈 말을 [조건]에 맞게 영작하시오.',
+        trick: '조건부 영작 (주어진 단어 어순배열 + 분사구문 변형 1개 필수)'
+      }
+    ];
+
+    // PDF 파서 파일 관련 드래그앤드롭 로직
+    function cleanSchoolInfo(filename) {
+      let name = filename.replace(/\.pdf$/i, '').trim();
+      let schoolStr = '';
+      let examStr = '기출';
+
+      let schoolMatch = name.match(/([가-힣a-zA-Z0-9]+(고등학교|여고|외고|과고|고|여중|중학교|중))/);
+      if (schoolMatch) {
+        schoolStr = schoolMatch[0].replace('고등학교', '고').replace('중학교', '중');
+      } else {
+        const parts = name.split(/[_\-\s]+/);
+        schoolStr = parts[0] || '학교 기출';
+      }
+
+      if (name.includes('중간')) examStr = '중간고사';
+      else if (name.includes('기말')) examStr = '기말고사';
+
+      return { school: schoolStr, exam: examStr };
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('pdfDropZone');
+      if (dropZone) dropZone.classList.add('drag-active');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('pdfDropZone');
+      if (dropZone) dropZone.classList.remove('drag-active');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('pdfDropZone');
+      if (dropZone) dropZone.classList.remove('drag-active');
+
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) addFilesToQueue(Array.from(files));
+    }
+
+    function handleFileInputChange(e) {
+      const files = e.target.files;
+      if (files && files.length > 0) addFilesToQueue(Array.from(files));
+    }
+
+    function addFilesToQueue(files) {
+      const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      if (pdfFiles.length === 0) return alert('PDF 파일만 업로드할 수 있습니다.');
+      queuedPdfFiles.push(...pdfFiles);
+      renderQueuedFiles();
+    }
+
+    function renderQueuedFiles() {
+      const container = document.getElementById('queuedFilesContainer');
+      const list = document.getElementById('queuedFileList');
+      const countEl = document.getElementById('queuedFileCount');
+      const statusEl = document.getElementById('pdfUploadStatus');
+
+      if (!container || !list) return;
+
+      if (queuedPdfFiles.length === 0) {
+        container.classList.add('hidden');
+        if (statusEl) statusEl.innerText = '';
+        return;
+      }
+
+      container.classList.remove('hidden');
+      if (countEl) countEl.innerText = queuedPdfFiles.length;
+      if (statusEl) statusEl.innerText = `총 ${queuedPdfFiles.length}개의 PDF 파일 대기 중`;
+
+      list.innerHTML = queuedPdfFiles.map((file, idx) => `
+        <div class="flex items-center justify-between p-2 bg-white rounded border text-xs">
+          <span class="font-medium truncate">${file.name}</span>
+          <button onclick="removeQueuedFile(${idx})" class="text-slate-400 hover:text-rose-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `).join('');
+    }
+
+    function removeQueuedFile(idx) {
+      queuedPdfFiles.splice(idx, 1);
+      renderQueuedFiles();
+    }
+
+    function clearQueuedFiles() {
+      queuedPdfFiles = [];
+      renderQueuedFiles();
+    }
+
+    // PDF 파싱 및 AI 학습 DB 적재
+    async function startBatchPdfClassification() {
+      const apiKey = getStoredApiKey();
+      if (!apiKey) {
+        alert('Gemini API Key를 먼저 설정해 주세요.');
+        toggleApiKeyModal();
+        return;
+      }
+
+      if (queuedPdfFiles.length === 0) return alert('분석할 PDF 파일이 없습니다.');
+
+      const logBox = document.getElementById('pdfLogTerminal');
+      const btn = document.getElementById('btnStartBatch');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-bolt fa-spin"></i> 분석 진행 중...';
+      logBox.innerHTML = `<div>[FAST BATCH START] 총 ${queuedPdfFiles.length}개 시험지 동시 분석 시작...</div>`;
+
+      let totalAddedCount = 0;
+
+      for (let i = 0; i < queuedPdfFiles.length; i++) {
+        const file = queuedPdfFiles[i];
+        const { school, exam } = cleanSchoolInfo(file.name);
+        
+        logBox.innerHTML += `<div class="text-cyan-300">[${i+1}/${queuedPdfFiles.length}] [${school}] 텍스트 추출 중...</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
+
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          
+          let fullText = '';
+          for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+          }
+
+          logBox.innerHTML += `<div>✓ [${school}] 텍스트 추출 완료 (${fullText.length}자). Gemini AI 분석 요청...</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
+
+          const parserPrompt = `
+당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
+다음 [학교 시험지 텍스트]에서 각 문항들을 식별하여 JSON 배열로 출력하십시오.
+
+[학교/시험]: ${school} ${exam}
+[시험지 원문]:
+${fullText.slice(0, 15000)}
+
+출력형식: 순수 JSON Array
+[
+  {
+    "type": "어법",
+    "title": "1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "trick": "what vs that 구별 함정"
+  }
+]
+`;
+
+          const rawText = await callGeminiUniversal(apiKey, parserPrompt);
+          const parsedArray = extractJsonFromText(rawText);
+
+          if (Array.isArray(parsedArray)) {
+            parsedArray.forEach((q, idx) => {
+              schoolBenchmarkDB.unshift({
+                id: 'BM-' + Date.now() + '-' + i + '-' + idx,
+                school: school,
+                exam: exam,
+                type: q.type || '기타',
+                title: q.title || `문항 ${idx+1}`,
+                trick: q.trick || '학교 기출 핵심 패턴'
+              });
+            });
+
+            totalAddedCount += parsedArray.length;
+            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school}] 분석 완료! +${parsedArray.length}문항 적재</div>`;
+            renderBenchmarkTable();
+          }
+          logBox.scrollTop = logBox.scrollHeight;
+
+        } catch (err) {
+          logBox.innerHTML += `<div class="text-rose-400 font-bold">❌ [${school}] 실패: ${err.message}</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
+        }
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
+      alert(`🎉 완료! 총 ${totalAddedCount}문항이 기출 벤치마크 DB에 성공적으로 적재되었습니다.`);
+      clearQueuedFiles();
+    }
+
+    function renderBenchmarkTable() {
+      const tbody = document.getElementById('benchmarkTableBody');
+      const totalCount = document.getElementById('tableTotalCount');
+      const badge = document.getElementById('benchmarkCountBadge');
+
+      if (totalCount) totalCount.innerText = schoolBenchmarkDB.length;
+      if (badge) badge.innerText = `기출 ${schoolBenchmarkDB.length}제`;
+      if (!tbody) return;
+
+      tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
+          <td class="py-2.5 px-4">
+            <span class="inline-block font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200">${item.school}</span>
+            <span class="text-[11px] text-slate-500 ml-1 font-medium">${item.exam}</span>
+          </td>
+          <td class="py-2.5 px-4 text-center"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold text-[11px]">${item.type}</span></td>
+          <td class="py-2.5 px-4">
+            <div class="font-bold text-slate-800 line-clamp-1">${item.title}</div>
+            <div class="text-[11px] text-emerald-700 mt-0.5 line-clamp-1"><strong>함정 패턴:</strong> ${item.trick}</div>
+          </td>
+          <td class="py-2.5 px-4 text-center font-bold text-emerald-600 text-xs">
+            <i class="fa-solid fa-circle-check"></i> 자동 연동
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function resetBenchmarkDB() {
+      if (confirm('기출 벤치마크 DB를 초기 상태로 리셋하시겠습니까?')) {
+        schoolBenchmarkDB = schoolBenchmarkDB.slice(0, 3);
+        renderBenchmarkTable();
+      }
+    }
 
     async function callGeminiUniversal(apiKey, prompt, onLog) {
       const candidateModels = [
@@ -683,18 +960,13 @@
       clean = clean.replace(/```json/gi, '').replace(/```/g, '').trim();
 
       const firstBracket = clean.indexOf('[');
-      if (firstBracket !== -1) {
-        clean = clean.substring(firstBracket);
-      }
+      if (firstBracket !== -1) clean = clean.substring(firstBracket);
 
       let lastBracket = clean.lastIndexOf(']');
       if (lastBracket === -1) {
         const lastCurly = clean.lastIndexOf('}');
-        if (lastCurly !== -1) {
-          clean = clean.substring(0, lastCurly + 1) + ']';
-        } else {
-          clean = clean + '}]';
-        }
+        if (lastCurly !== -1) clean = clean.substring(0, lastCurly + 1) + ']';
+        else clean = clean + '}]';
       } else {
         clean = clean.substring(0, lastBracket + 1);
       }
@@ -1092,7 +1364,6 @@ ${selectedTypes.join(', ')}
       document.getElementById('loginModal').classList.remove('hidden');
     }
 
-    // 💡 모든 뷰(View) 전환 시 LNB 버튼 하이라이트 연결 처리
     function switchView(viewName) {
       ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel'].forEach(v => {
         const el = document.getElementById('view-' + v);
@@ -1134,6 +1405,7 @@ ${selectedTypes.join(', ')}
     document.addEventListener('DOMContentLoaded', () => {
       render25PassageInputForms();
       renderPassageArchiveTable();
+      renderBenchmarkTable();
       renderExamTable();
       checkApiKeyStatus();
     });
