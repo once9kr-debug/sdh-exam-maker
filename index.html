@@ -12,6 +12,7 @@
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     }
   </script>
+  <!-- Supabase 라이브러리 연동 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=Montserrat:wght@800;900&family=Roboto:wght@400;500;700&display=swap');
@@ -124,7 +125,6 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
-    /* 선택 화면용 난이도 버튼 전용 디자인 */
     .filter-diff-btn {
       padding: 6px 16px;
       font-size: 12px;
@@ -333,7 +333,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 난이도 선택 + 세분화 유형 및 지문 선택 (복원완료) -->
+      <!-- VIEW 2: 난이도 선택 + 세분화 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -347,7 +347,6 @@
           </div>
         </div>
 
-        <!-- 🎯 [복원] 출제 난이도 필터 선택 상자 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-layer-group text-amber-500"></i> 출제 난이도 필터 선택
@@ -360,7 +359,6 @@
           </div>
         </div>
 
-        <!-- 출제 유형별 문항수 선택 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -374,7 +372,6 @@
           <div id="typeChipContainer" class="flex flex-wrap items-center gap-2 pt-1"></div>
         </div>
 
-        <!-- 지문별 선택 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <div class="flex items-center justify-between border-b pb-3">
             <span class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -388,7 +385,6 @@
           <div id="passageChipContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1"></div>
         </div>
 
-        <!-- 출력 문항 갯수 설정 상자 -->
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-300 flex items-center justify-between">
           <div class="flex items-center gap-4 text-sm font-black text-slate-800">
             <span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded text-xs font-bold"><i class="fa-solid fa-print"></i> 최종 인쇄 설정</span>
@@ -693,6 +689,13 @@
   </div>
 
   <script>
+    // ----------------------------------------------------
+    // 🚀 [추가됨] Supabase 클라우드 데이터베이스 초기화 연결 🚀
+    // ----------------------------------------------------
+    const SUPABASE_URL = 'https://kqmogqlukkviddjsfyeb.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbW9ncWx1a2t2aWRkanNmeWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjc3NjYsImV4cCI6MjEwMzUwMzc2Nn0.nqWvvphNCdPGMDrEYLilk-wHmNkH2BhPTuvMwaCXqo8';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const passageNumberList = [
       '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
       '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41-42', '43-45'
@@ -716,10 +719,47 @@
       { category: '주관식', types: ['서술형', '단답형'], bg: 'bg-indigo-600' }
     ];
 
-    let schoolBenchmarkDB = [
-      { id: 'BM-1', school: '휘문고', exam: '1-1 중간', type: '어법', title: '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?', trick: '관계대명사 what vs 접속사 that 구분 함정' },
-      { id: 'BM-2', school: '세화여고', exam: '1-2 기말', type: '어휘', title: '밑줄 친 네모 안에서 문맥에 맞는 낱말은?', trick: '접두사 활용 반의어 변형' }
-    ];
+    let schoolBenchmarkDB = [];
+
+    // ----------------------------------------------------
+    // 🚀 [추가됨] Supabase 데이터 실시간 Fetch (가져오기) 로직
+    // ----------------------------------------------------
+    async function loadAllSupabaseData() {
+      // 1. 기출 DB 로드
+      const { data: bData } = await supabase.from('school_benchmark').select('*').order('created_at', { ascending: false });
+      if (bData) schoolBenchmarkDB = bData;
+      renderBenchmarkTable();
+
+      // 2. 지문 DB 로드
+      const { data: pData } = await supabase.from('passage_archive').select('*').order('created_at', { ascending: false });
+      if (pData) passageArchiveDB = pData;
+      renderPassageArchiveTable();
+
+      // 3. 생성된 문제 풀 로드
+      const { data: qData } = await supabase.from('generated_questions').select('*').order('created_at', { ascending: false });
+      if (qData) {
+        generatedQuestionsPool = qData;
+        
+        // 모의고사 세트 집계 (시험 목록 테이블 렌더링용)
+        const examMap = {};
+        passageArchiveDB.forEach(p => {
+          const setKey = `${p.year}-${p.month}-${p.grade}`;
+          if (!examMap[setKey]) examMap[setKey] = { id: setKey, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
+        });
+        
+        qData.forEach(q => {
+          // q.passageNum 형식이 '2026-3-1-18' 형태로 저장되어 있다고 가정
+          const parts = q.id.split('-');
+          if (parts.length > 3) {
+            const setKey = `${parts[1]}-${parts[2]}-${parts[3]}`;
+            if (examMap[setKey]) examMap[setKey].questionCount++;
+          }
+        });
+        
+        mockExams = Object.values(examMap).sort((a,b) => b.year.localeCompare(a.year));
+        renderExamTable();
+      }
+    }
 
     function setDifficulty(diff) {
       selectedDifficulty = diff;
@@ -819,6 +859,10 @@ ${fullText.slice(0, 15000)}
 
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
+            
+            // 🚀 [추가됨] Supabase 기출 DB 적재 로직
+            await supabase.from('school_benchmark').upsert(parsedArray);
+            
             schoolBenchmarkDB.unshift(...parsedArray);
             totalAddedCount += parsedArray.length;
             logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school} ${exam}] 분석 완료! +${parsedArray.length}문항 적재</div>`;
@@ -879,7 +923,13 @@ ${fullText.slice(0, 15000)}
       `).join('');
     }
 
-    function resetBenchmarkDB() { schoolBenchmarkDB = []; renderBenchmarkTable(); }
+    async function resetBenchmarkDB() { 
+      if(confirm('정말 기출 DB를 전체 초기화하시겠습니까? (클라우드 데이터 포함)')) {
+        await supabase.from('school_benchmark').delete().neq('id', 'dummy');
+        schoolBenchmarkDB = []; 
+        renderBenchmarkTable(); 
+      }
+    }
 
     async function callGeminiUniversal(apiKey, prompt) {
       const apiEndpoints = [
@@ -899,7 +949,7 @@ ${fullText.slice(0, 15000)}
       throw lastError || new Error('API 통신 실패');
     }
 
-    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty) {
+    function parseMarkdownQuestions(rawText, defaultPassageNum, defaultPassage, difficulty, setKey) {
       const results = [];
       rawText.split(/##\s+\[문항/g).forEach((block, idx) => {
         if (!block.trim()) return;
@@ -913,8 +963,8 @@ ${fullText.slice(0, 15000)}
           else if (t.match(/^[①②③④⑤]/)) options.push(t);
         });
         results.push({
-          id: 'Q-' + defaultPassageNum + '-' + type + '-' + Date.now() + '-' + idx,
-          passageNum: defaultPassageNum, type, difficulty: difficulty || '중',
+          id: 'Q-' + setKey + '-' + defaultPassageNum + '-' + type + '-' + Date.now() + '-' + idx,
+          passage_num: defaultPassageNum, type, difficulty: difficulty || '중',
           title: title || `[${defaultPassageNum}번 변형문항]`, passage: defaultPassage, options, answer: answer || '①', explanation
         });
       });
@@ -934,17 +984,28 @@ ${fullText.slice(0, 15000)}
       `).join('');
     }
 
-    function saveAll25Passages() {
+    async function saveAll25Passages() {
       const year = document.getElementById('regYear').value, month = document.getElementById('regMonth').value, grade = document.getElementById('regGrade').value;
+      const upsertData = [];
       passageNumberList.forEach(num => {
         const text = (document.getElementById(`inputP_${num}`)?.value || '').trim();
         if (text) {
           const key = `${year}-${month}-${grade}-${num}`;
+          upsertData.push({ key, year, month, grade, passage_num: num, sample: text.substring(0, 50) + '...', text });
+          
           passageArchiveDB = passageArchiveDB.filter(p => p.key !== key);
-          passageArchiveDB.unshift({ key, year, month, grade, passageNum: num, sample: text.substring(0, 50) + '...', text });
+          passageArchiveDB.unshift(upsertData[upsertData.length-1]);
         }
       });
-      renderPassageArchiveTable(); alert('🎉 DB 저장 완료!');
+      
+      if (upsertData.length > 0) {
+        // 🚀 [추가됨] Supabase 지문 DB 적재 로직
+        await supabase.from('passage_archive').upsert(upsertData);
+        renderPassageArchiveTable(); 
+        alert('🎉 클라우드 DB 저장 완료!');
+      } else {
+        alert('입력된 지문이 없습니다.');
+      }
     }
 
     function renderPassageArchiveTable() {
@@ -953,7 +1014,7 @@ ${fullText.slice(0, 15000)}
       if (tbody) tbody.innerHTML = passageArchiveDB.map(p => `
         <tr class="hover:bg-slate-50">
           <td class="py-2 px-4 text-center font-bold">${p.year}년</td><td class="py-2 px-4 text-center">${p.month}월</td>
-          <td class="py-2 px-4 text-center font-bold text-blue-600">고${p.grade}</td><td class="py-2 px-4 text-center font-black text-amber-600">${p.passageNum}번</td>
+          <td class="py-2 px-4 text-center font-bold text-blue-600">고${p.grade}</td><td class="py-2 px-4 text-center font-black text-amber-600">${p.passage_num}번</td>
           <td class="py-2 px-4 font-mono text-slate-600 truncate max-w-xs">${p.sample}</td><td class="py-2 px-4 text-center text-emerald-600 font-bold">등록완료</td>
           <td class="py-2 px-4 text-center"><button onclick="deleteSinglePassage('${p.key}')" class="text-rose-600 hover:underline">삭제</button></td>
         </tr>
@@ -968,7 +1029,12 @@ ${fullText.slice(0, 15000)}
       if (selectEl) selectEl.innerHTML = keys.length === 0 ? '<option value="">-- DB에 저장된 세트 없음 --</option>' : '<option value="">-- 모의고사 세트 선택 --</option>' + keys.map(k => `<option value="${k}">[${k}] 모의고사 세트 (${setMap[k]}개 지문)</option>`).join('');
     }
 
-    function deleteSinglePassage(key) { passageArchiveDB = passageArchiveDB.filter(p => p.key !== key); renderPassageArchiveTable(); }
+    async function deleteSinglePassage(key) { 
+      // 🚀 [추가됨] Supabase 개별 지문 삭제 로직
+      await supabase.from('passage_archive').delete().eq('key', key);
+      passageArchiveDB = passageArchiveDB.filter(p => p.key !== key); 
+      renderPassageArchiveTable(); 
+    }
 
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
@@ -1007,7 +1073,7 @@ ${fullText.slice(0, 15000)}
       const container = document.getElementById('passageChipContainer');
       if (!container) return;
       const pool = generatedQuestionsPool.filter(q => selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-      const passageCounts = {}; pool.forEach(q => { passageCounts[q.passageNum] = (passageCounts[q.passageNum] || 0) + 1; });
+      const passageCounts = {}; pool.forEach(q => { passageCounts[q.passage_num] = (passageCounts[q.passage_num] || 0) + 1; });
       container.innerHTML = passageNumberList.map(num => `
         <label class="passage-chip flex items-center justify-between">
           <div class="flex items-center gap-1.5"><input type="checkbox" name="passageFilter" value="${num}" checked onchange="updateSelectedCountText()" /><span>${num}번</span></div>
@@ -1024,7 +1090,9 @@ ${fullText.slice(0, 15000)}
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        return diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passageNum);
+        // 생성된 문제의 id에서 속한 모의고사 set 식별 (현재 화면에서 선택된 모의고사만 필터링)
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
       const el = document.getElementById('selectedTotalCount');
       if (el) el.innerText = matched.length;
@@ -1037,7 +1105,8 @@ ${fullText.slice(0, 15000)}
 
       let matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        return diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passageNum);
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
 
       if (matched.length === 0) return alert('선택하신 난이도/유형/지문 필터 조건에 해당하는 문제가 없습니다.');
@@ -1046,8 +1115,8 @@ ${fullText.slice(0, 15000)}
       filteredQuestions = matched.slice(0, limit);
 
       filteredQuestions.sort((a, b) => {
-        const numA = parseInt(a.passageNum.split('-')[0]) || 0;
-        const numB = parseInt(b.passageNum.split('-')[0]) || 0;
+        const numA = parseInt(a.passage_num.split('-')[0]) || 0;
+        const numB = parseInt(b.passage_num.split('-')[0]) || 0;
         return numA - numB;
       });
 
@@ -1068,7 +1137,7 @@ ${fullText.slice(0, 15000)}
           <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
             <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
               <div><span class="font-black text-slate-950">${idx + 1}.</span> <span>${q.title}</span></div>
-              <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passageNum}번 / ${q.type}]</span>
+              <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passage_num}번 / ${q.type}]</span>
             </div>
             <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
             ${q.options && q.options.length > 0 ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">${q.options.map(opt => `<div>${opt}</div>`).join('')}</div>` : ''}
@@ -1138,7 +1207,7 @@ ${fullText.slice(0, 15000)}
 [축적된 실제 학교 기출 킬러 함정 패턴]:
 ${benchmarkTricksSection}
 
-[영어 지문 (${pObj.passageNum}번)]:
+[영어 지문 (${pObj.passage_num}번)]:
 ${pObj.text}
 
 [요청된 세부 출제 유형]:
@@ -1161,15 +1230,19 @@ ${groupTypes.join(', ')}
 `;
             try {
               const rawText = await callGeminiUniversal(apiKey, prompt);
-              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passageNum, pObj.text, selectedDifficulty);
+              const parsedQuestions = parseMarkdownQuestions(rawText, pObj.passage_num, pObj.text, selectedDifficulty, setKey);
               if (parsedQuestions.length > 0) {
+                
+                // 🚀 [추가됨] Supabase 생성된 문제 풀 DB 연동 삽입 로직
+                await supabase.from('generated_questions').upsert(parsedQuestions);
+                
                 generatedQuestionsPool.unshift(...parsedQuestions);
                 totalGeneratedCount += parsedQuestions.length;
               }
             } catch (err) { console.error(err); }
           }
           logBox.querySelectorAll('.terminal-cursor').forEach(el => el.remove());
-          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passageNum}번 모든 세부 유형 완수</div>`;
+          logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 모든 세부 유형 완수</div>`;
           logBox.scrollTop = logBox.scrollHeight;
         }));
       }
@@ -1179,15 +1252,25 @@ ${groupTypes.join(', ')}
       const examId = `${parts[0]}-${parts[1]}-${parts[2]}`;
       let existingExam = mockExams.find(e => e.id === examId);
 
-      if (existingExam) existingExam.questionCount = (existingExam.questionCount || 0) + totalGeneratedCount;
-      else mockExams.unshift({ id: examId, year: parts[0], month: parts[1], title: `${parts[0]}년 ${parts[1]}월 학력평가`, grade: `고${parts[2]}`, questionCount: totalGeneratedCount });
+      if (existingExam) {
+        existingExam.questionCount = (existingExam.questionCount || 0) + totalGeneratedCount;
+      } else {
+        mockExams.unshift({ id: examId, year: parts[0], month: parts[1], title: `${parts[0]}년 ${parts[1]}월 학력평가`, grade: `고${parts[2]}`, questionCount: totalGeneratedCount });
+      }
 
       renderExamTable(); btn.disabled = false;
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 짤림 없는 세부 유형 출제 완전 완료! (총 +${totalGeneratedCount}문항 생성)</div>`;
-      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 누락 없이 생성되었습니다.`);
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 짤림 없는 세부 유형 출제 완전 완료! (총 +${totalGeneratedCount}문항 클라우드 저장)</div>`;
+      alert(`🎉 고품질 변형문제 출제 완료!\n[${setKey}] 총 ${totalGeneratedCount}개의 세부 변형문제가 누락 없이 클라우드에 생성되었습니다.`);
     }
 
-    function clearPassageArchiveDB() { if (confirm('지문 DB를 전체 초기화하시겠습니까?')) { passageArchiveDB = []; renderPassageArchiveTable(); } }
+    async function clearPassageArchiveDB() { 
+      if (confirm('지문 DB를 전체 초기화하시겠습니까? (클라우드 포함)')) { 
+        await supabase.from('passage_archive').delete().neq('id', 'dummy');
+        passageArchiveDB = []; 
+        renderPassageArchiveTable(); 
+      } 
+    }
+
     function handleLogin(e) { if (e) e.preventDefault(); document.getElementById('loginModal').classList.add('hidden'); switchView('mockRegisterPanel'); }
     function handleLogout() { document.getElementById('loginModal').classList.remove('hidden'); }
     function switchView(viewName) {
@@ -1196,7 +1279,9 @@ ${groupTypes.join(', ')}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      render25PassageInputForms(); renderPassageArchiveTable(); renderBenchmarkTable(); renderExamTable(); checkApiKeyStatus();
+      // 🚀 [추가됨] 앱 실행 시 클라우드 DB 데이터 불러오기
+      loadAllSupabaseData();
+      render25PassageInputForms(); checkApiKeyStatus();
     });
   </script>
 </body>
