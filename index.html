@@ -123,7 +123,6 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
-    /* 터미널 깜빡이는 커서 애니메이션 */
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -207,7 +206,6 @@
     </div>
   </div>
 
-  <!-- 메인 프레임 -->
   <div id="appContainer" class="flex flex-1 min-h-screen">
 
     <aside class="no-print w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
@@ -321,7 +319,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 유형 및 지문 선택 -->
+      <!-- VIEW 2: 세분화된 유형 및 지문 선택 -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -330,7 +328,7 @@
             </button>
             <div>
               <h2 id="selectViewTitle" class="text-xl font-bold text-slate-900">2026년 3월 학력평가 (고1)</h2>
-              <p class="text-xs text-slate-500">원하시는 출제 유형과 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
+              <p class="text-xs text-slate-500">원하시는 세부 출제 유형과 지문 번호를 선택한 후 과제용 시험지를 출제하세요.</p>
             </div>
           </div>
         </div>
@@ -456,7 +454,7 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 대량 출제 엔진 -->
+      <!-- VIEW 5: 세분화된 대량 출제 엔진 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -464,7 +462,7 @@
               <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 모의고사 세트별 대량 변형문제 AI 출제 엔진
               </h2>
-              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 일괄 출제합니다.</p>
+              <p class="text-xs text-slate-500">DB에 저장된 모의고사 세트(25개 지문)를 선택하고 세분화된 유형별로 출제합니다.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="toggleApiKeyModal()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5">
@@ -494,7 +492,7 @@
                 </div>
               </div>
 
-              <div class="space-y-2">
+              <div class="space-y-3">
                 <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 flex items-center justify-between">
                   <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
                     <i class="fa-solid fa-layer-group text-amber-600"></i> 지문 1개당 유형별 출제 수량
@@ -506,23 +504,62 @@
                   </select>
                 </div>
 
-                <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 변형문제 유형 선택</label>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="주제" checked /> 대의파악 (주제)</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="제목" checked /> 대의파악 (제목)</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="요지" checked /> 대의파악 (요지)</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="요약" checked /> 요약문 완성</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="어법" checked /> 어법상 틀린 것 찾기</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="어휘" checked /> 문맥상 어휘</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸 추론</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="순서" checked /> 글의 순서 배열</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="삽입" checked /> 문장 삽입</label>
-                  <label class="flex items-center gap-2 p-2.5 border rounded-xl hover:bg-slate-50 cursor-pointer"><input type="checkbox" name="adminGenType" value="주관식" checked /> 서술형 조건 영작</label>
+                <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 세부 변형문제 유형 선택</label>
+                
+                <!-- 세분화된 5대 카테고리 체크박스 선택 영역 -->
+                <div class="space-y-2 text-xs">
+                  <div class="p-2.5 bg-teal-50 border border-teal-200 rounded-xl space-y-1.5">
+                    <span class="font-bold text-teal-800 text-[11px] block">[대의파악]</span>
+                    <div class="grid grid-cols-3 gap-2">
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="주제" checked /> 주제</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="제목" checked /> 제목</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="주장" checked /> 주장</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="요지" checked /> 요지</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="목적" checked /> 목적</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="요약" checked /> 요약</label>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 bg-sky-50 border border-sky-200 rounded-xl space-y-1.5">
+                    <span class="font-bold text-sky-800 text-[11px] block">[내용이해]</span>
+                    <div class="grid grid-cols-2 gap-2">
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="일치" checked /> 일치</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="불일치" checked /> 불일치</label>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5">
+                    <span class="font-bold text-amber-800 text-[11px] block">[언어논리]</span>
+                    <div class="grid grid-cols-3 gap-2">
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="함축의미" checked /> 함축의미</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="연결사" checked /> 연결사</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="순서" checked /> 순서</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="삽입" checked /> 삽입</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="흐름" checked /> 흐름</label>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 bg-orange-50 border border-orange-200 rounded-xl space-y-1.5">
+                    <span class="font-bold text-orange-800 text-[11px] block">[어법/어휘]</span>
+                    <div class="grid grid-cols-2 gap-2">
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="어법" checked /> 어법</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="어휘" checked /> 어휘</label>
+                    </div>
+                  </div>
+
+                  <div class="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1.5">
+                    <span class="font-bold text-indigo-800 text-[11px] block">[주관식]</span>
+                    <div class="grid grid-cols-2 gap-2">
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="서술형" checked /> 서술형</label>
+                      <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="단답형" checked /> 단답형</label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <button onclick="executeFastParallelGenerate()" id="btnAdminGen" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow transition text-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 초고속 Gemini AI 변형문제 자동 생성 시작
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 세분화된 Gemini AI 변형문제 자동 생성 시작
               </button>
             </div>
 
@@ -595,7 +632,7 @@
           <div class="space-y-3 pt-2">
             <div class="flex items-center justify-between">
               <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">3</span>문항)
+                <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">2</span>문항)
               </h3>
             </div>
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -652,11 +689,13 @@
 
     let selectedDifficulty = '중';
 
+    // 🎯 [완벽 세분화된 5대 카테고리 & 19개 세부 유형 매칭 설정]
     const typeCategories = [
-      { category: '대의 파악', types: ['주제', '제목', '요지', '요약'], bg: 'bg-teal-500' },
-      { category: '언어 논리', types: ['빈칸', '순서', '삽입'], bg: 'bg-amber-500' },
+      { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-teal-500' },
+      { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-sky-500' },
+      { category: '언어 논리', types: ['함축의미', '빈칸', '연결사', '순서', '삽입', '흐름'], bg: 'bg-amber-500' },
       { category: '어법/어휘', types: ['어법', '어휘'], bg: 'bg-orange-500' },
-      { category: '서술형', types: ['주관식'], bg: 'bg-indigo-600' }
+      { category: '주관식', types: ['서술형', '단답형'], bg: 'bg-indigo-600' }
     ];
 
     let schoolBenchmarkDB = [
@@ -674,8 +713,27 @@
 
     function cleanSchoolInfo(filename) {
       let name = filename.replace(/\.pdf$/i, '').trim();
-      let schoolStr = name.split(/[_\-\s]+/)[0] || '학교 기출';
-      return { school: schoolStr, exam: '기출' };
+      name = name.replace(/\(개정\)/g, '').replace(/\(기출\)/g, '').replace(/20\d\d년?/g, '').trim();
+
+      let schoolStr = '학교 미상';
+      let examStr = '기출';
+
+      let schoolMatch = name.match(/([가-힣a-zA-Z0-9]+(고등학교|여고|외고|과고|고|여중|중학교|중))/);
+      if (schoolMatch) {
+        schoolStr = schoolMatch[0].replace('고등학교', '고').replace('중학교', '중');
+      } else {
+        const parts = name.split(/[_\-\s]+/);
+        schoolStr = parts[0] || '학교 기출';
+      }
+
+      if (name.includes('1-1') || name.includes('1학기 중간')) examStr = '1-1 중간';
+      else if (name.includes('1-2') || name.includes('1학기 기말')) examStr = '1-1 기말';
+      else if (name.includes('2-1') || name.includes('2학기 중간')) examStr = '2-1 중간';
+      else if (name.includes('2-2') || name.includes('2학기 기말')) examStr = '2-1 기말';
+      else if (name.includes('중간')) examStr = '중간고사';
+      else if (name.includes('기말')) examStr = '기말고사';
+
+      return { school: schoolStr, exam: examStr };
     }
 
     function handleDragOver(e) { e.preventDefault(); }
@@ -710,7 +768,6 @@
     function removeQueuedFile(idx) { queuedPdfFiles.splice(idx, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
-    // 🚀 복원된 초고속 동시 병렬 PDF AI 분석 엔진 + 동적 커서 피드
     async function startBatchPdfClassification() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -739,12 +796,16 @@
             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
           }
 
-          logBox.innerHTML += `<div class="text-cyan-300">[${i+1}/${queuedPdfFiles.length}] [${school}] 텍스트 추출 완. AI 분석 요청 중... <span class="terminal-cursor"></span></div>`;
+          logBox.innerHTML += `<div class="text-cyan-300">[${i+1}/${queuedPdfFiles.length}] [${school} ${exam}] AI 분석 요청 중... <span class="terminal-cursor"></span></div>`;
           logBox.scrollTop = logBox.scrollHeight;
 
           const parserPrompt = `
 당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
-다음 [학교 시험지 텍스트]에서 각 문항들을 식별하여 마크다운 목록으로 출력하십시오.
+주어진 [영어 시험지 텍스트]를 분석하여 개별 기출 문항들을 추출하십시오.
+
+[출력 규격 지침]:
+- 오직 기출 문제 발문만 추출하십시오. 안내문이나 설명 문구는 절대로 출력하지 마십시오.
+- 유형은 반드시 [주제, 제목, 주장, 요지, 목적, 요약, 일치, 불일치, 함축의미, 빈칸, 연결사, 순서, 삽입, 흐름, 어법, 어휘, 서술형, 단답형] 중 하나로 정밀 매칭하십시오.
 
 [학교/시험]: ${school} ${exam}
 [시험지 원문]:
@@ -752,7 +813,7 @@ ${fullText.slice(0, 15000)}
 
 출력형식 예시:
 ## [어법] 1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
-- 킬러패턴: what vs that 구별 함정
+- 킬러패턴: 관계대명사 what vs 접속사 that 구분 함정
 `;
 
           const rawText = await callGeminiUniversal(apiKey, parserPrompt);
@@ -761,9 +822,9 @@ ${fullText.slice(0, 15000)}
           if (Array.isArray(parsedArray) && parsedArray.length > 0) {
             schoolBenchmarkDB.unshift(...parsedArray);
             totalAddedCount += parsedArray.length;
-            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school}] 분석 완료! +${parsedArray.length}문항 적재 완료</div>`;
+            logBox.innerHTML += `<div class="text-emerald-300 font-bold">✨ [${school} ${exam}] 분석 완료! +${parsedArray.length}문항 적재 완료</div>`;
           } else {
-            logBox.innerHTML += `<div class="text-emerald-300">✓ [${school}] 분석 완료</div>`;
+            logBox.innerHTML += `<div class="text-emerald-300">✓ [${school} ${exam}] 분석 완료</div>`;
           }
           logBox.scrollTop = logBox.scrollHeight;
           renderBenchmarkTable();
@@ -774,38 +835,61 @@ ${fullText.slice(0, 15000)}
         }
       }));
 
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모든 기출 PDF 초고속 분석 및 DB 적재 완료! (총 +${totalAddedCount}문항)</div>`;
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 [COMPLETED] 모든 기출 PDF 분석 완료! (총 +${totalAddedCount}문항)</div>`;
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
-      alert(`🎉 분석 완료!\n총 ${totalAddedCount}개의 기출 문항 분석이 마무리되어 기출 DB에 적재되었습니다.`);
+      alert(`🎉 분석 완료!\n[${queuedPdfFiles.length}개 시험지] 총 ${totalAddedCount}개 문항이 기출 DB에 정상 적재되었습니다.`);
       clearQueuedFiles();
     }
 
+    // 🎯 [세분화된 19개 표준 유형 파서 적용]
     function parseMarkdownBenchmarkText(text, school, exam) {
       const results = [];
       const blocks = text.split(/##\s+/);
+
       blocks.forEach((block, idx) => {
         if (!block.trim()) return;
+
+        if (block.includes('대한민국 고등학교 영어 시험지 분석 전문가') || block.includes('출력형식 예시')) {
+          return;
+        }
+
         const lines = block.trim().split('\n');
         const firstLine = lines[0] || '';
         
-        let type = '기타';
+        let type = '주제';
         if (firstLine.includes('어법')) type = '어법';
         else if (firstLine.includes('어휘')) type = '어휘';
+        else if (firstLine.includes('함축')) type = '함축의미';
         else if (firstLine.includes('빈칸')) type = '빈칸';
+        else if (firstLine.includes('연결사')) type = '연결사';
         else if (firstLine.includes('순서')) type = '순서';
         else if (firstLine.includes('삽입')) type = '삽입';
-        else if (firstLine.includes('주관식') || firstLine.includes('서술형')) type = '주관식';
+        else if (firstLine.includes('흐름')) type = '흐름';
+        else if (firstLine.includes('불일치')) type = '불일치';
+        else if (firstLine.includes('일치')) type = '일치';
+        else if (firstLine.includes('요약')) type = '요약';
+        else if (firstLine.includes('목적')) type = '목적';
+        else if (firstLine.includes('주장')) type = '주장';
+        else if (firstLine.includes('제목')) type = '제목';
+        else if (firstLine.includes('요지')) type = '요지';
+        else if (firstLine.includes('단답형')) type = '단답형';
+        else if (firstLine.includes('서술형') || firstLine.includes('주관식')) type = '서술형';
 
-        results.push({
-          id: 'BM-' + Date.now() + '-' + idx,
-          school: school,
-          exam: exam,
-          type: type,
-          title: firstLine.replace(/\[.*?\]/g, '').trim(),
-          trick: lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').trim() : '학교 기출 핵심 패턴'
-        });
+        const cleanedTitle = firstLine.replace(/\[.*?\]/g, '').trim();
+
+        if (cleanedTitle && cleanedTitle.length > 5) {
+          results.push({
+            id: 'BM-' + Date.now() + '-' + idx,
+            school: school,
+            exam: exam,
+            type: type,
+            title: cleanedTitle,
+            trick: lines[1] ? lines[1].replace(/^[\-\*]\s*/, '').trim() : '학교 기출 핵심 패턴'
+          });
+        }
       });
+
       return results;
     }
 
@@ -867,11 +951,31 @@ ${fullText.slice(0, 15000)}
       blocks.forEach((block, idx) => {
         if (!block.trim()) return;
         const lines = block.trim().split('\n');
-        let title = '', options = [], answer = '', explanation = '', type = '변형';
+        let title = '', options = [], answer = '', explanation = '', type = '주제';
 
         lines.forEach(line => {
           const l = line.trim();
-          if (l.startsWith('유형:')) type = l.replace('유형:', '').trim();
+          if (l.startsWith('유형:')) {
+            const typeStr = l.replace('유형:', '').trim();
+            if (typeStr.includes('어법')) type = '어법';
+            else if (typeStr.includes('어휘')) type = '어휘';
+            else if (typeStr.includes('함축')) type = '함축의미';
+            else if (typeStr.includes('빈칸')) type = '빈칸';
+            else if (typeStr.includes('연결사')) type = '연결사';
+            else if (typeStr.includes('순서')) type = '순서';
+            else if (typeStr.includes('삽입')) type = '삽입';
+            else if (typeStr.includes('흐름')) type = '흐름';
+            else if (typeStr.includes('불일치')) type = '불일치';
+            else if (typeStr.includes('일치')) type = '일치';
+            else if (typeStr.includes('요약')) type = '요약';
+            else if (typeStr.includes('목적')) type = '목적';
+            else if (typeStr.includes('주장')) type = '주장';
+            else if (typeStr.includes('제목')) type = '제목';
+            else if (typeStr.includes('요지')) type = '요지';
+            else if (typeStr.includes('단답형')) type = '단답형';
+            else if (typeStr.includes('서술형') || typeStr.includes('주관식')) type = '서술형';
+            else type = '주제';
+          }
           else if (l.startsWith('발문:')) title = l.replace('발문:', '').trim();
           else if (l.startsWith('정답:')) answer = l.replace('정답:', '').trim();
           else if (l.startsWith('해설:')) explanation = l.replace('해설:', '').trim();
