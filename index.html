@@ -30,26 +30,28 @@
       font-family: 'Roboto', 'Noto Sans KR', sans-serif;
     }
 
+    /* 화면용 2단 레이아웃 */
     .exam-columns-2 {
       column-count: 2;
-      column-gap: 32px;
+      column-gap: 28px;
       column-rule: 1px solid #cbd5e1;
     }
+
     .question-block {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      margin-bottom: 26px;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      margin-bottom: 22px;
     }
 
     .passage-box {
-      border: 1px solid #475569;
-      padding: 10px 14px;
+      border: 1px solid #334155;
+      padding: 8px 12px;
       border-radius: 4px;
-      line-height: 1.65;
-      font-size: 13.5px;
+      line-height: 1.6;
+      font-size: 12.5px;
       background: #ffffff;
-      margin-top: 6px;
-      margin-bottom: 8px;
+      margin-top: 4px;
+      margin-bottom: 6px;
     }
 
     .type-chip {
@@ -123,6 +125,7 @@
       box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
+    /* 터미널 커서 스타일 */
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -137,14 +140,24 @@
       animation: blink 0.8s infinite;
     }
 
+    /* 🖨️ 인쇄 및 PDF 출력 전용 정밀 미디어 쿼리 (웹주소/날짜 삭제, 2단 고급 정렬) */
     @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 10mm 12mm !important;
+      }
+
       body {
         background: white !important;
         color: black !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
+
       .no-print {
         display: none !important;
       }
+
       .print-area {
         display: block !important;
         width: 100% !important;
@@ -153,9 +166,29 @@
         box-shadow: none !important;
         border: none !important;
       }
-      @page {
-        size: A4 portrait;
-        margin: 15mm 12mm 15mm 12mm;
+
+      .print-header-box {
+        display: block !important;
+      }
+
+      .exam-columns-2 {
+        column-count: 2 !important;
+        column-gap: 24px !important;
+        column-rule: 0.8px solid #94a3b8 !important;
+      }
+
+      .question-block {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin-bottom: 20px !important;
+      }
+
+      .passage-box {
+        border: 1px solid #1e293b !important;
+        padding: 6px 10px !important;
+        font-size: 11.5px !important;
+        line-height: 1.55 !important;
+        background: #ffffff !important;
       }
     }
   </style>
@@ -372,21 +405,32 @@
         </div>
       </section>
 
-      <!-- VIEW 3: 2단 인쇄용 시험지 -->
+      <!-- VIEW 3: 2단 인쇄용 정밀 시험지 (개편완료) -->
       <section id="view-paperView" class="p-8 space-y-6 hidden">
         <div class="no-print bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
           <button onclick="switchView('typeSelect')" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 flex items-center justify-center">
             <i class="fa-solid fa-arrow-left"></i>
           </button>
-          <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow">
+          <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-5 py-3 rounded-xl font-bold flex items-center gap-2 shadow-md">
             <i class="fa-solid fa-print"></i> 인쇄 및 PDF 저장
           </button>
         </div>
 
-        <div class="print-area bg-white p-10 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
-          <h1 id="examSheetMainTitle" class="text-xl font-black text-slate-950 tracking-tight mb-6 pb-2 border-b-2 border-slate-900">
-            영어과 과제용 변형문제집
-          </h1>
+        <div class="print-area bg-white p-8 rounded-2xl shadow-md border border-slate-300 max-w-5xl mx-auto">
+          <!-- 🖨️ 인쇄 전용 내신 시험지 스타일 깔끔 상단 헤더 -->
+          <div class="print-header-box border-b-2 border-slate-900 pb-3 mb-6 hidden">
+            <div class="flex items-end justify-between">
+              <div>
+                <span class="text-[10px] font-black text-slate-500 tracking-wider uppercase block">SDH PREMIUM DECODING EXAM</span>
+                <h1 id="paperHeaderTitle" class="text-xl font-black text-slate-950 tracking-tight">2026학년도 영어과 고등부 내신대비 변형문제집</h1>
+              </div>
+              <div class="flex items-center gap-3 text-xs">
+                <div class="border border-slate-900 px-3 py-1.5 font-bold">점수 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / 100점</div>
+                <div class="border border-slate-900 px-4 py-1.5 font-bold">이름 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+              </div>
+            </div>
+          </div>
+
           <div id="paperContent" class="exam-columns-2 text-slate-900 text-sm"></div>
         </div>
       </section>
@@ -454,7 +498,7 @@
         </div>
       </section>
 
-      <!-- VIEW 5: 수량 선택 노란색 UI 완전 삭제 및 백엔드 고정 엔진 적용 -->
+      <!-- VIEW 5: 세분화된 대량 출제 엔진 -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div class="flex items-center justify-between border-b pb-4 mb-4">
@@ -982,7 +1026,7 @@ ${fullText.slice(0, 15000)}
           type: type,
           title: title || `[${defaultPassageNum}번 변형문항]`,
           passage: defaultPassage,
-          options: options.length > 0 ? options : ['① 보기 1', '② 보기 2', '③ 보기 3', '④ 보기 4', '⑤ 보기 5'],
+          options: options,
           answer: answer || '①',
           explanation: explanation
         });
@@ -1197,29 +1241,49 @@ ${fullText.slice(0, 15000)}
       switchView('paperView');
     }
 
+    // 🖨️ [개편완료] 실제 내신 기출 시험지 스타일 렌더러 (서술형 답안 박스 및 정밀 2단 배치)
     function renderPaper() {
       const container = document.getElementById('paperContent');
       if (!container) return;
 
-      container.innerHTML = filteredQuestions.map((q, idx) => `
-        <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[13px]">
-          <div class="font-bold text-[14px] flex items-start gap-1">
-            <span class="font-black text-slate-950">${idx + 1}.</span>
-            <span>${q.title}</span>
-            <span class="text-[10px] text-slate-500 font-sans ml-auto shrink-0">[${q.passageNum}번]</span>
-          </div>
+      if (currentSelectedExam) {
+        const headerTitle = document.getElementById('paperHeaderTitle');
+        if (headerTitle) headerTitle.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade}) 변형문제집`;
+      }
 
-          <div class="passage-box exam-eng-font text-slate-800">
-            ${q.passage.replace(/\n/g, '<br/>')}
-          </div>
+      container.innerHTML = filteredQuestions.map((q, idx) => {
+        const isSubjective = (q.type === '서술형' || q.type === '단답형');
 
-          ${q.options && q.options.length > 0 ? `
-            <div class="grid grid-cols-1 gap-0.5 pl-2 mt-2 text-[12.5px] exam-eng-font text-slate-800">
-              ${q.options.map(opt => `<div>${opt}</div>`).join('')}
+        return `
+          <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
+            <div class="font-bold text-[13.5px] flex items-start justify-between gap-2 mb-1">
+              <div>
+                <span class="font-black text-slate-950">${idx + 1}.</span>
+                <span>${q.title}</span>
+              </div>
+              <span class="text-[10px] text-slate-500 font-sans shrink-0 border border-slate-300 px-1.5 py-0.5 rounded">[${q.passageNum}번 / ${q.type}]</span>
             </div>
-          ` : ''}
-        </div>
-      `).join('');
+
+            <div class="passage-box exam-eng-font text-slate-800">
+              ${q.passage.replace(/\n/g, '<br/>')}
+            </div>
+
+            ${q.options && q.options.length > 0 ? `
+              <div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font text-slate-800">
+                ${q.options.map(opt => `<div>${opt}</div>`).join('')}
+              </div>
+            ` : ''}
+
+            ${isSubjective ? `
+              <div class="mt-3 border border-slate-400 p-2.5 rounded bg-slate-50">
+                <span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span>
+                <div class="border-b border-dashed border-slate-300 h-6"></div>
+                <div class="border-b border-dashed border-slate-300 h-6"></div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function getStoredApiKey() { return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim(); }
@@ -1253,7 +1317,6 @@ ${fullText.slice(0, 15000)}
       alert('Gemini API Key 저장 완료!');
     }
 
-    // 🚀 [백엔드 수량 고정 + 카테고리 분할 호출 엔진]
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
