@@ -87,7 +87,7 @@ async function executeFastParallelGenerate() {
 
   const logBox = document.getElementById('generationLogBox');
   logBox.classList.remove('hidden');
-  logBox.innerHTML = `<div>🚀 [11개 핵심유형 + 기출DB 벤치마크 연동] 출제 가동...</div>`;
+  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 + 기출DB 벤치마크 연동] 출제 가동...</div>`;
 
   const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
     ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
@@ -108,38 +108,40 @@ ${pObj.full_text}
 ${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
 
 [출제 요청 난이도]: ${selectedDifficulty}
-[출제 요청 유형들]: ${selectedTypes.join(', ')}
+[출제 요청 유형들 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
 
-위 지문을 바탕으로, 기출 킬러 패턴을 적용하여 요청된 유형별 변형문제를 1문항씩 생성해 JSON 배열로 출력하세요.
+위 지문을 바탕으로, 기출 킬러 패턴을 적용하여 요청된 선택 유형 ${selectedTypes.length}개를 단 하나도 누락하지 말고 각 유형당 정확히 1문항씩 출력하세요.
 
-⚠️ 필수 출력 필드 규격:
-1. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 뽑아낸 삽입용 문장을 명시하세요.
-2. '빈칸' 유형: 반드시 "target_blank_word" 필드에 본문에서 빈칸으로 뚫을 정확한 단어를 명시하세요.
-3. '어법/어휘' 유형: "target_words" 필드에 [ { "orig": "원문단어", "mod": "변형단어" } ] 5개 배열을 만드세요.
-
-JSON 출력 예시:
-[
-  {
-    "type": "삽입",
-    "given_sentence": "He found that, regardless of the industry, it was incredibly important...",
-    "options": ["①", "②", "③", "④", "⑤"],
-    "answer": "②",
-    "explanation": "해설 작성"
-  }
-]
+⚠️ 필수 규칙:
+1. 반환되는 JSON 배열의 길이(문항 수)는 정확히 ${selectedTypes.length}개여야 합니다.
+2. '주관식(서술/단답형)' 유형도 반드시 1문항 포함하여 출력하세요.
+3. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 뽑아낸 삽입용 문장을 명시하세요.
+4. '빈칸' 유형: 반드시 "target_blank_word" 필드에 본문에서 빈칸으로 뚫을 정확한 단어를 명시하세요.
+5. '어법/어휘' 유형: "target_words" 필드에 [ { "orig": "원문단어", "mod": "변형단어" } ] 5개 배열을 만드세요.
 `;
     try {
       const rawJson = await callGeminiUniversal(apiKey, promptText);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
+
       if (Array.isArray(parsed)) {
         const seenTypes = new Set();
         const exactItems = [];
 
         for (let item of parsed) {
-          const itemType = item.type || selectedTypes[0];
-          if (selectedTypes.includes(itemType) && !seenTypes.has(itemType)) {
-            seenTypes.add(itemType);
+          const rawType = item.type || '';
+          
+          // 선택된 유형 이름과 AI 반환 이름 간 정밀 매칭
+          const matchedType = selectedTypes.find(st => 
+            st === rawType || 
+            (st.includes('주관식') && (rawType.includes('주관식') || rawType.includes('서술') || rawType.includes('단답'))) ||
+            (st.includes('일치') && rawType.includes('일치')) ||
+            (st.includes('주제') && (rawType.includes('주제') || rawType.includes('제목')))
+          );
+
+          if (matchedType && !seenTypes.has(matchedType)) {
+            seenTypes.add(matchedType);
+            item.type = matchedType; 
             exactItems.push(item);
           }
         }
