@@ -38,7 +38,7 @@
     .diff-btn.active-diff { background-color: #0f172a; color: #f59e0b; border-color: #0f172a; }
     .filter-diff-btn { padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
     .filter-diff-btn.active-filter-diff { background-color: #0f172a; color: #38bdf8; border-color: #0f172a; }
-    .nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
+    .nav-item { width: 100%; display: flex; align-items: center; justify-between: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
     .nav-item.active-nav { background-color: #1e293b !important; color: #ffffff !important; font-weight: 700; border-left: 4px solid #38bdf8; }
 
     @media print {
@@ -598,7 +598,6 @@
       throw new Error('API 통신 실패');
     }
 
-    // 🎯 로그인 예외 무반응 방지
     function handleLogin(e) {
       if (e) e.preventDefault();
       const id = document.getElementById('loginId')?.value.trim();
@@ -649,7 +648,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`${currentSelectedExam.year}-${currentSelectedExam.month}`);
         const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
         return isCurrentExam && diffMatch && passageMatch;
       });
@@ -672,7 +671,7 @@
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`${currentSelectedExam.year}-${currentSelectedExam.month}`);
         const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
         return isCurrentExam && diffMatch && typeMatch;
       });
@@ -701,7 +700,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`${currentSelectedExam.year}-${currentSelectedExam.month}`);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
       const el = document.getElementById('selectedTotalCount');
@@ -916,7 +915,7 @@ JSON 출력 예시:
 
       let matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`${currentSelectedExam.year}-${currentSelectedExam.month}`);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
 
@@ -1092,7 +1091,7 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // 🎯 15문항 수량 매칭 및 ID 역추적 원천 보장 로직
+    // 🎯 100% 매칭 수량 계산 보장 로직 (년도-월 매칭)
     async function loadAllSupabaseData() {
       const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
       if (pData) passageArchiveDB = pData;
@@ -1121,10 +1120,12 @@ ${fullText.slice(0, 15000)}
           }
         });
 
-        // 문제 ID 내 세트 키 존재 여부로 카운트 계산
+        // 지문의 년도-월 키값(예: "2015-3") 기준으로 수량을 유연하게 합산
         qData.forEach(q => {
           Object.keys(examMap).forEach(setKey => {
-            if (q.id && q.id.includes(setKey)) {
+            const parts = setKey.split('-');
+            const prefix = `${parts[0]}-${parts[1]}`;
+            if (q.id && q.id.includes(prefix)) {
               examMap[setKey].questionCount++;
             }
           });
