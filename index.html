@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SDH STUDIO - 고등부 영어 변형문제 출제 시스템</title>
+  
+  <!-- Tailwind CSS 및 외부 프레임워크 우선 로드 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <!-- 시험지 전용 출판 스타일 시트 연결 -->
-  <link rel="stylesheet" href="css/exam-paper.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     if (window.pdfjsLib) {
@@ -15,6 +15,9 @@
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 커스텀 출판 스타일시트 (Tailwind 다음에 로드) -->
+  <link rel="stylesheet" href="css/exam-paper.css" />
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
@@ -83,9 +86,11 @@
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
       <!-- VIEW: 목록 -->
       <section id="view-examList" class="p-8 space-y-6">
-        <div class="bg-white p-5 rounded-2xl border flex items-center justify-between">
+        <div class="bg-white p-5 rounded-2xl border flex items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <span class="text-xs font-bold bg-slate-100 px-2.5 py-1 rounded">교재 선택</span>
+            <span class="text-xs font-bold bg-slate-100 px-2.5 py-1 rounded border border-slate-200 shrink-0">교재 선택</span>
+            <span class="text-xs font-bold text-slate-700 shrink-0">고등</span>
+            <select id="filterCategory" class="border text-xs rounded-lg px-3 py-2 bg-white"><option>모의고사</option></select>
             <select id="filterYear" class="border text-xs rounded-lg px-3 py-2 bg-white"></select>
             <select id="filterMonth" class="border text-xs rounded-lg px-3 py-2 bg-white"></select>
             <button onclick="loadAllSupabaseData()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold"><i class="fa-solid fa-arrows-rotate"></i></button>
@@ -238,6 +243,18 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- API 키 모달 -->
+  <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-slate-200">
+      <h3 class="font-bold text-base mb-4"><i class="fa-solid fa-key text-amber-500 mr-2"></i>Gemini API Key 설정</h3>
+      <input type="password" id="inputApiKey" placeholder="AIzaSy..." class="w-full p-2.5 border rounded-lg text-sm mb-4 font-mono" />
+      <div class="flex justify-end gap-2">
+        <button onclick="toggleApiKeyModal()" class="px-4 py-2 bg-slate-100 text-xs font-bold rounded">취소</button>
+        <button onclick="saveApiKey()" class="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded">저장</button>
+      </div>
+    </div>
   </div>
 
   <!-- JS 모듈 순서대로 로드 -->
@@ -434,8 +451,29 @@
     }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
+    function initDropdownOptions() {
+      const years = Array.from({length: 12}, (_, i) => 2026 - i);
+      const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
+      const grades = [1, 2, 3];
+
+      const regYearEl = document.getElementById('regYear');
+      const regMonthEl = document.getElementById('regMonth');
+      const regGradeEl = document.getElementById('regGrade');
+
+      if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
+      if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
+      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}">${g===3?'고3':`고${g}`}</option>`).join('');
+
+      const filterYearEl = document.getElementById('filterYear');
+      const filterMonthEl = document.getElementById('filterMonth');
+
+      if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
+      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       checkLoggedUserSession();
+      initDropdownOptions();
       render25PassageInputForms();
       checkApiKeyStatus();
     });
