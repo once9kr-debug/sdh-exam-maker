@@ -24,6 +24,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
 
+  // 🎯 1. 어법/어휘: 보기 기호 ①~⑤ 강제 고정
   if (qType.includes('어법') || qType.includes('어휘')) {
     if (Array.isArray(item.target_words) && item.target_words.length === 5) {
       let p = origPassage;
@@ -33,18 +34,10 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
       });
       finalPassage = p;
     }
-    // 🎯 [오류 1 완벽 해결] 어법/어휘 보기 기호를 강제로 ①~⑤로 교정
     finalOptions = ['①', '②', '③', '④', '⑤'];
   } else if (qType.includes('빈칸')) {
     if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
       finalPassage = origPassage.replace(item.target_blank_word, '__________');
-    } else {
-      const words = origPassage.split(' ');
-      if (words.length > 10) {
-        const midIdx = Math.floor(words.length / 2);
-        words[midIdx] = '__________';
-        finalPassage = words.join(' ');
-      }
     }
   } else if (qType.includes('함축의미')) {
     if (item.target_phrase && origPassage.includes(item.target_phrase)) {
@@ -64,28 +57,28 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     }
   } else if (qType.includes('요약')) {
     summaryText = item.summary_text || '';
-    // 🎯 [오류 2 완벽 해결] JSON 형태 선택지를 ① (A)단어 - (B)단어 형태로 이쁘게 변환
+    // 🎯 2. 요약문 선택지: JSON 형태 제거 후 깔끔한 문자열 포맷팅
     if (finalOptions.length > 0) {
       finalOptions = finalOptions.map((o, idx) => {
         const sym = ['①', '②', '③', '④', '⑤'][idx];
-        if (typeof o === 'object') {
+        if (typeof o === 'object' && o !== null) {
           return `${sym} (A) ${o.A || o.a || ''}  ---  (B) ${o.B || o.b || ''}`;
-        } else if (typeof o === 'string' && o.startsWith('{')) {
+        } else if (typeof o === 'string' && o.trim().startsWith('{')) {
           try {
-            const parsedObj = JSON.parse(o);
-            return `${sym} (A) ${parsedObj.A || ''}  ---  (B) ${parsedObj.B || ''}`;
+            const p = JSON.parse(o);
+            return `${sym} (A) ${p.A || ''}  ---  (B) ${p.B || ''}`;
           } catch(e) { return `${sym} ${o}`; }
         }
-        return o;
+        return `${sym} ${o}`;
       });
     }
   } else if (qType.includes('주관식')) {
     conditionText = item.condition_text || '[조건] 본문 어휘 및 구문 맥락을 활용하여 작성하시오.';
   }
 
-  // 🎯 [오류 3 완벽 해결] 서술형 정답 포맷 정돈
+  // 🎯 3. 서술형 정답 텍스트 정밀 변환
   let ansText = item.answer || '본문 맥락에 맞는 조건별 정답';
-  if (typeof ansText === 'object') {
+  if (typeof ansText === 'object' && ansText !== null) {
     ansText = Object.entries(ansText).map(([k, v]) => `(${k}) ${v}`).join(' / ');
   }
 
@@ -93,7 +86,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     passage_id: passageId, set_key: setKey, passage_num: String(passageNum), type: qType,
     difficulty: selectedDifficulty || '상', title: finalTitle, passage: finalPassage,
     given_box: givenBoxText, condition_box: conditionText, summary_box: summaryText,
-    options: finalOptions, answer: ansText, explanation: item.explanation || '본문 맥락 및 기출 패턴 기반 정밀 해설입니다.'
+    options: finalOptions, answer: String(ansText), explanation: item.explanation || '본문 맥락 기반 정밀 해설'
   };
 }
 
@@ -108,7 +101,7 @@ async function executeFastParallelGenerate() {
   );
 
   if (targetPassages.length === 0) {
-    return alert(`선택한 세트[${setKey}]에 등록된 지문이 없습니다. 지문 DB를 먼저 등록해주세요.`);
+    return alert(`선택한 세트[${setKey}]에 등록된 지문이 없습니다.`);
   }
 
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
@@ -116,12 +109,13 @@ async function executeFastParallelGenerate() {
 
   const logBox = document.getElementById('generationLogBox');
   logBox.classList.remove('hidden');
-  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 + 기출DB 연동] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
+  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형] 출제 시작...</div>`;
 
   const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
     ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
   ).join('\n');
 
+  // 🎯 기존 꼬인 문제 완전 제거 후 재출제
   await supabaseClient.from('questions').delete().eq('set_key', setKey).eq('difficulty', selectedDifficulty);
 
   let totalCount = 0;
@@ -130,20 +124,21 @@ async function executeFastParallelGenerate() {
     const promptText = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 
-[출제 대상 영어 지문 (${pObj.passage_num}번)]:
+[지문 ${pObj.passage_num}번]:
 ${pObj.full_text}
 
-[학원 축적 실제 학교 기출 킬러 패턴 참고 자료]:
-${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
+[학교 기출 참고]:
+${benchmarkContext || "주요 고교 변형 패턴"}
 
-[출제 요청 난이도]: ${selectedDifficulty}
-[출제 요청 유형들 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
+[난이도]: ${selectedDifficulty}
+[요청 유형 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
 
-위 지문을 바탕으로, 요청된 유형 ${selectedTypes.length}개를 하나도 누락하지 말고 각 유형당 정확히 1문항씩 출력하세요.
+위 지문으로 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
 
-⚠️ 서술형 및 요약문 필수 작성 지침:
-1. '주관식(서술/단답형)' 유형 생성 시, answer 필드에 모범 답안 문장을 절대로 생략하지 말고 완벽한 완성형 문장으로 작성하세요.
-2. '요약' 유형 생성 시, options 필드는 [ {"A": "단어1", "B": "단어2"} ... ] 형태의 객체 배열로 정밀 구성하세요.
+⚠️ 서술형 및 요약문 필수 지침:
+1. '주관식(서술/단답형)' 생성 시: answer 필드에 모범 답안 완결 문장을 반드시 적으세요.
+2. '요약' 생성 시: options 필드를 [ {"A": "단어1", "B": "단어2"} ... ] 형태로 구성하세요.
+3. '어법/어휘' 생성 시: target_words 필드에 [ {"orig": "원문단어", "mod": "변형단어"} ] 5개 배열을 만드세요.
 `;
     try {
       const rawJson = await callGeminiUniversal(apiKey, promptText);
@@ -178,15 +173,16 @@ ${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
         logBox.scrollTop = logBox.scrollHeight;
       }
     } catch (e) {
-      logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passage_num}번 처리 에러: ${e.message}</div>`;
+      logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passage_num}번 에러: ${e.message}</div>`;
     }
   }
 
   logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
-  alert(`🎉 [난이도: ${selectedDifficulty}] 기출 벤치마크 반영 ${totalCount}문항 출제 완료!`);
+  alert(`🎉 [난이도: ${selectedDifficulty}] ${totalCount}문항 새로 출제 완료!`);
   await loadAllSupabaseData();
 }
 
+// 🎯 4. 빠른 정답표 그리드 레이아웃 깨짐 방지
 function renderPaper() {
   const qContainer = document.getElementById('paperContent');
   const quickGrid = document.getElementById('quickAnswerGrid');
@@ -209,18 +205,21 @@ function renderPaper() {
           <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형/단답형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
         ` : ''}
         ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-        ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${typeof o === 'object' ? JSON.stringify(o) : o}</div>`).join('')}</div>` : ''}
+        ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${o}</div>`).join('')}</div>` : ''}
       </div>
     `;
   }).join('');
 
   if (quickGrid) {
     quickGrid.innerHTML = filteredQuestions.map((q, idx) => {
-      const displayAns = q.type.includes('주관식') ? '서술형' : (q.answer.length > 8 ? q.answer.substring(0, 8) + '...' : q.answer);
+      let displayAns = q.type.includes('주관식') ? '서술형' : q.answer;
+      if (displayAns.includes('{')) displayAns = '정답 참조';
+      if (displayAns.length > 6) displayAns = displayAns.substring(0, 6) + '..';
+
       return `
-        <div class="border p-1 rounded bg-white min-h-[48px] flex flex-col justify-center items-center shadow-sm">
+        <div class="border p-1 rounded bg-white min-h-[44px] flex flex-col justify-center items-center shadow-sm">
           <span class="text-[9px] text-slate-400 font-bold mb-0.5">${idx + 1}번</span>
-          <span class="font-black text-[11px] text-slate-800 truncate w-full text-center px-0.5">${displayAns}</span>
+          <span class="font-black text-[10px] text-slate-800 truncate w-full text-center px-0.5">${displayAns}</span>
         </div>
       `;
     }).join('');
