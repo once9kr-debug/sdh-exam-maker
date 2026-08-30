@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SDH STUDIO - 고등부 영어 변형문제 출제 시스템</title>
   
-  <!-- Tailwind CSS 및 외부 프레임워크 우선 로드 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -16,7 +15,6 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- 커스텀 출판 스타일시트 (Tailwind 다음에 로드) -->
   <link rel="stylesheet" href="css/exam-paper.css" />
 </head>
 <body class="min-h-screen flex flex-col antialiased">
@@ -51,9 +49,10 @@
   </div>
 
   <div id="appContainer" class="flex flex-1 min-h-screen">
+    <!-- 좌측 사이드바 (완전 복구) -->
     <aside class="no-print w-64 bg-slate-950 text-white flex flex-col shrink-0 border-r border-slate-800">
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
-        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center cursor-pointer" onclick="switchView('examList')">
+        <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm cursor-pointer" onclick="switchView('examList')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 100" class="h-8 w-auto">
             <rect x="18" y="16" width="64" height="64" rx="14" fill="#334155" transform="rotate(-9 50 48)"/>
             <rect x="12" y="10" width="64" height="64" rx="14" fill="#000000" transform="rotate(-9 44 42)"/>
@@ -62,25 +61,49 @@
             <text x="202" y="68" font-family="'Montserrat', sans-serif" font-size="54" font-weight="800" fill="#000000" letter-spacing="4">STUDIO</text>
           </svg>
         </div>
+        <div class="flex items-center justify-between px-1 mt-0.5">
+          <span class="text-[10px] text-slate-400 font-medium tracking-wide">EXAM GENERATOR</span>
+          <span id="userBadge" class="text-[10px] bg-slate-800 text-cyan-300 px-2 py-0.5 rounded border border-cyan-800 font-bold">관리자 모드</span>
+        </div>
       </div>
+
       <nav class="p-4 space-y-1.5 flex-1">
         <button onclick="switchView('examList')" id="nav-examList" class="nav-item active-nav">
           <span class="flex items-center gap-3"><i class="fa-solid fa-file-lines w-4"></i> 모의고사</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </button>
-        <div class="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
+
+        <button onclick="alert('외부지문 변형문제 출제 기능 준비 중입니다.')" id="nav-external" class="nav-item">
+          <span class="flex items-center gap-3 text-slate-400"><i class="fa-solid fa-folder-plus w-4"></i> 외부지문</span>
+          <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">준비중</span>
+        </button>
+
+        <div id="adminMenuSection" class="pt-4 mt-4 border-t border-slate-800 space-y-1.5">
+          <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Administrator</p>
           <button onclick="switchView('adminPanel')" id="nav-adminPanel" class="nav-item">
             <span class="flex items-center gap-3 text-amber-400"><i class="fa-solid fa-wand-magic-sparkles w-4"></i> 변형문제 AI출제</span>
+            <i class="fa-solid fa-bolt text-xs text-amber-400"></i>
           </button>
           <button onclick="switchView('mockRegisterPanel')" id="nav-mockRegisterPanel" class="nav-item">
             <span class="flex items-center gap-3 text-teal-400"><i class="fa-solid fa-list-check w-4"></i> 모의고사 DB등록</span>
+            <i class="fa-solid fa-plus text-xs text-teal-400"></i>
           </button>
           <button onclick="switchView('pdfParserPanel')" id="nav-pdfParserPanel" class="nav-item">
             <span class="flex items-center gap-3 text-cyan-400"><i class="fa-solid fa-file-pdf w-4"></i> 기출문제 DB등록</span>
-            <span id="benchmarkCountBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full font-bold">기출 0제</span>
+            <span id="benchmarkCountBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full font-bold border border-cyan-800">기출 0제</span>
           </button>
         </div>
       </nav>
+
+      <div class="p-4 border-t border-slate-800 flex items-center justify-between">
+        <button onclick="switchView('myPage')" id="nav-myPage" class="flex items-center gap-2 text-xs text-slate-300 hover:text-white transition">
+          <i class="fa-solid fa-circle-user text-base text-cyan-400"></i>
+          <span id="currentUserName">원장 선생님</span>
+        </button>
+        <button onclick="handleLogout()" class="text-xs text-slate-400 hover:text-rose-400 transition" title="로그아웃">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
     </aside>
 
     <main class="flex-1 flex flex-col min-w-0 bg-slate-100 overflow-y-auto">
@@ -217,18 +240,27 @@
         </div>
       </section>
 
-      <!-- VIEW: PDF 기출 파서 -->
+      <!-- VIEW: PDF 기출 파서 (드래그앤드롭 이벤트 적용) -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl border space-y-6">
           <div class="grid grid-cols-12 gap-6">
             <div class="col-span-5 space-y-4">
-              <div id="pdfDropZone" class="border-2 border-dashed border-cyan-200 rounded-2xl p-6 text-center cursor-pointer bg-cyan-50/30" onclick="document.getElementById('pdfFileInput').click()">
+              <div id="pdfDropZone" 
+                   class="border-2 border-dashed border-cyan-200 rounded-2xl p-6 text-center cursor-pointer bg-cyan-50/30 hover:bg-cyan-50/60 transition"
+                   onclick="document.getElementById('pdfFileInput').click()"
+                   ondragover="handleDragOver(event)"
+                   ondragleave="handleDragLeave(event)"
+                   ondrop="handleDrop(event)">
                 <input type="file" id="pdfFileInput" accept="application/pdf" multiple class="hidden" onchange="handleFileInputChange(event)" />
-                <h4 class="font-bold text-sm">학교 시험지 PDF 드래그 & 드롭</h4>
+                <div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭</h4>
+                <p class="text-[11px] text-slate-500 mt-1">클릭하거나 PDF 파일을 이곳에 끌어다 놓으세요</p>
               </div>
               <div id="queuedFilesContainer" class="hidden bg-slate-50 p-4 rounded-xl border space-y-2">
-                <div id="queuedFileList" class="max-h-32 overflow-y-auto text-xs"></div>
-                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full bg-cyan-600 text-white font-bold py-3 rounded-xl text-xs"><i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작</button>
+                <div id="queuedFileList" class="max-h-32 overflow-y-auto text-xs space-y-1"></div>
+                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full bg-cyan-600 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2"><i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작</button>
               </div>
             </div>
             <div class="col-span-7 flex flex-col">
@@ -239,6 +271,27 @@
             <table class="w-full text-left text-xs">
               <tbody id="benchmarkTableBody" class="divide-y text-slate-700"></tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: My Page (복구) -->
+      <section id="view-myPage" class="p-8 space-y-6 hidden">
+        <div class="bg-white p-6 rounded-2xl border space-y-6">
+          <div class="flex items-center justify-between border-b pb-4">
+            <h2 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-circle-user text-cyan-600"></i> My Page</h2>
+            <span class="text-xs bg-slate-900 text-cyan-300 px-3 py-1 rounded-full font-bold">원장 선생님</span>
+          </div>
+          <div class="grid grid-cols-12 gap-6">
+            <div class="col-span-5 bg-slate-50 p-5 rounded-2xl border space-y-4">
+              <h3 class="font-bold text-sm">비밀번호 변경</h3>
+              <input type="password" id="myNewPw" placeholder="새 비밀번호 입력" class="w-full p-2.5 border rounded-lg bg-white text-xs" />
+              <button onclick="alert('비밀번호가 변경되었습니다.')" class="w-full bg-slate-900 text-white font-bold py-2.5 rounded-lg text-xs">비밀번호 변경 완료</button>
+            </div>
+            <div class="col-span-7 space-y-3">
+              <h3 class="font-bold text-sm">내 최종 출력 문제지 보관함</h3>
+              <div class="border rounded-2xl p-4 text-center text-xs text-slate-400 bg-white">최근 출력 이력이 없습니다.</div>
+            </div>
           </div>
         </div>
       </section>
@@ -316,6 +369,11 @@
       }
     }
 
+    function handleLogout() {
+      sessionStorage.removeItem('SDH_LOGGED_USER');
+      document.getElementById('loginModal')?.classList.remove('hidden');
+    }
+
     function checkLoggedUserSession() {
       if (sessionStorage.getItem('SDH_LOGGED_USER')) {
         document.getElementById('loginModal')?.classList.add('hidden');
@@ -324,10 +382,12 @@
     }
 
     function switchView(v) {
-      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel'].forEach(id => {
+      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel', 'myPage'].forEach(id => {
         document.getElementById('view-' + id)?.classList.add('hidden');
+        document.getElementById('nav-' + id)?.classList.remove('active-nav');
       });
       document.getElementById('view-' + v)?.classList.remove('hidden');
+      document.getElementById('nav-' + v)?.classList.add('active-nav');
     }
 
     function renderExamTable() {
@@ -438,17 +498,32 @@
       if (selectEl) selectEl.innerHTML = '<option value="">-- 모의고사 세트 선택 --</option>' + Object.keys(setMap).map(k => `<option value="${k}">[${k}] 모의고사 세트 (${setMap[k]}개 지문)</option>`).join('');
     }
 
-    function handleDragOver(e) { e.preventDefault(); }
-    function handleDrop(e) { e.preventDefault(); addFilesToQueue(Array.from(e.dataTransfer.files)); }
+    // 🎯 PDF 드래그 앤 드롭 핸들러
+    function handleDragOver(e) { e.preventDefault(); e.stopPropagation(); }
+    function handleDragLeave(e) { e.preventDefault(); e.stopPropagation(); }
+    function handleDrop(e) { e.preventDefault(); e.stopPropagation(); addFilesToQueue(Array.from(e.dataTransfer.files)); }
     function handleFileInputChange(e) { addFilesToQueue(Array.from(e.target.files)); }
-    function addFilesToQueue(files) { queuedPdfFiles.push(...files.filter(f => f.name.toLowerCase().endsWith('.pdf'))); renderQueuedFiles(); }
+    
+    function addFilesToQueue(files) { 
+      const pdfs = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+      if (pdfs.length === 0) return alert('PDF 파일만 선택이 가능합니다.');
+      queuedPdfFiles.push(...pdfs); 
+      renderQueuedFiles(); 
+    }
+    
     function renderQueuedFiles() {
       const list = document.getElementById('queuedFileList'), c = document.getElementById('queuedFilesContainer');
       if (!list || !c) return;
       if (queuedPdfFiles.length === 0) return c.classList.add('hidden');
       c.classList.remove('hidden');
-      list.innerHTML = queuedPdfFiles.map(f => `<div class="p-1 border bg-white truncate">${f.name}</div>`).join('');
+      list.innerHTML = queuedPdfFiles.map((f, i) => `
+        <div class="p-2 border rounded bg-white flex justify-between items-center text-xs">
+          <span class="truncate">${f.name}</span>
+          <button onclick="removeQueuedFile(${i})" class="text-rose-500 hover:font-bold"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `).join('');
     }
+    function removeQueuedFile(i) { queuedPdfFiles.splice(i, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
     function initDropdownOptions() {
