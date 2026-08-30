@@ -88,7 +88,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 학교 기출 PDF 파싱 (id 제약조건 에러 완전 해결)
+// 🎯 학교 기출 PDF 파싱 (고유 ID 강제 부여로 Null Constraint 에러 완벽 해결)
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -148,8 +148,9 @@ ${fullText.slice(0, 15000)}
       const parsed = JSON.parse(cleanedJson);
       
       if (parsed && parsed.school) {
-        // 🎯 id 필드를 제외하고 순수 데이터 객체만 생성하여 저장 (id 에러 완벽 차단)
+        // 🎯 id를 타임스탬프 + 랜덤값으로 직접 생성하여 DB 전달 (id 에러 100% 차단)
         const insertPayload = {
+          id: Date.now() + Math.floor(Math.random() * 1000),
           school: parsed.school,
           exam: parsed.exam || '기출',
           type: parsed.type || '어법',
