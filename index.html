@@ -598,7 +598,7 @@
       throw new Error('API 통신 실패');
     }
 
-    // 🎯 로그인 로직 교정 (무반응 에러 해결)
+    // 🎯 로그인 예외 무반응 방지
     function handleLogin(e) {
       if (e) e.preventDefault();
       const id = document.getElementById('loginId')?.value.trim();
@@ -649,7 +649,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
         const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
         return isCurrentExam && diffMatch && passageMatch;
       });
@@ -672,7 +672,7 @@
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
         const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
         return isCurrentExam && diffMatch && typeMatch;
       });
@@ -701,7 +701,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
       const el = document.getElementById('selectedTotalCount');
@@ -880,7 +880,6 @@ JSON 출력 예시:
       }
     }
 
-    // 🎯 표 레이아웃 및 학년 데이터 바인딩 완벽 수정
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
       const yearFilter = document.getElementById('filterYear')?.value || '';
@@ -917,7 +916,7 @@ JSON 출력 예시:
 
       let matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
+        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
 
@@ -1093,7 +1092,7 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // 🎯 ID 규격 매칭 정밀 역추적 로직 포함
+    // 🎯 15문항 수량 매칭 및 ID 역추적 원천 보장 로직
     async function loadAllSupabaseData() {
       const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
       if (pData) passageArchiveDB = pData;
@@ -1122,14 +1121,13 @@ ${fullText.slice(0, 15000)}
           }
         });
 
+        // 문제 ID 내 세트 키 존재 여부로 카운트 계산
         qData.forEach(q => {
-          const match = q.id.match(/^Q-(\d{4}-\d+-\d+)-/);
-          if (match && match[1]) {
-            const setKey = match[1];
-            if (examMap[setKey]) {
+          Object.keys(examMap).forEach(setKey => {
+            if (q.id && q.id.includes(setKey)) {
               examMap[setKey].questionCount++;
             }
-          }
+          });
         });
 
         mockExams = Object.values(examMap);
