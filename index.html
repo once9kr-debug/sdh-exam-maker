@@ -257,7 +257,6 @@
         </div>
       </section>
 
-      <!-- VIEW: 변형문제 AI 출제 (🎯 11개 핵심 유형) -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex items-center justify-between border-b pb-4">
@@ -301,7 +300,6 @@
                   </div>
                 </div>
                 
-                <!-- 🎯 11개 핵심 유형 체크박스 그룹 -->
                 <div id="adminGenTypeBox" class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                   <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="주제/제목" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">1. 주제/제목</span></label>
                   <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="함축의미" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">2. 함축의미</span></label>
@@ -539,7 +537,7 @@
     const standardTitleMap = {
       '주제/제목': '다음 글의 주제 및 제목으로 가장 적절한 것은?',
       '함축의미': '다음 글의 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?',
-      '일치/불일치': '다음 글의 내용과 일치하거/불일치하는 것은?',
+      '일치/불일치': '다음 글의 내용과 일치하거나 불일치하는 것은?',
       '어법': '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
       '어휘': '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
       '빈칸': '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
@@ -550,7 +548,6 @@
       '주관식(서술/단답형)': '[주관식 서술/단답형] 다음 글을 읽고 [조건]에 맞추어 답안을 작성하시오.'
     };
 
-    // 🎯 11개 핵심 유형 칩 카테고리 구성
     const typeCategories = [
       { category: '대의/내용', types: ['주제/제목', '함축의미', '일치/불일치', '요약'], bg: 'bg-amber-500' },
       { category: '어법/어휘', types: ['어법', '어휘'], bg: 'bg-sky-600' },
@@ -595,14 +592,14 @@
       renderTypeChips(); renderPassageChips(); updateSelectedCountText();
     }
 
-    async function callGeminiUniversal(apiKey, prompt) {
+    async function callGeminiUniversal(apiKey, promptText) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } })
+        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } })
       });
       if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
-      throw new Error('API 통신 실패');
+      throw new Error(`API 통신 실패 (Status: ${res.status})`);
     }
 
     function handleLogin(e) {
@@ -783,7 +780,7 @@
       };
     }
 
-    // 🎯 11개 핵심 유형 프롬프트 가동 엔진
+    // 🎯 에러 로그 시각화 및 파싱 정밀 교정 출제 엔진
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -800,7 +797,7 @@
       logBox.classList.remove('hidden');
       logBox.innerHTML = `<div>🚀 [11개 핵심유형] 출제 가동 - 세트: ${setKey} / 난이도: ${selectedDifficulty}...</div>`;
 
-      // 동일 세트 & 난이도 기존 문제만 교체
+      // 기존 해당 난이도 문제만 안전하게 비우기
       await supabaseClient.from('questions')
         .delete()
         .eq('set_key', setKey)
@@ -809,7 +806,7 @@
       let totalCount = 0;
 
       for (let pObj of targetPassages) {
-        const prompt = `
+        const promptText = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 [지문 (${pObj.passage_num}번)]:
 ${pObj.full_text}
@@ -817,9 +814,8 @@ ${pObj.full_text}
 [출제 난이도]: ${selectedDifficulty}
 [요청 유형들]: ${selectedTypes.join(', ')}
 
-지문 1개당 요청된 유형을 각 1문항씩 생성하여 JSON 배열로 출력하세요.
-'주관식(서술/단답형)' 유형의 경우, options는 빈 배열 []로 두고 condition_text([조건]) 및 주관식 정답/해설을 간결하게 작성하세요.
-해설은 2문장 이내로 핵심만 작성하세요.
+위 지문을 바탕으로 요청된 각 유형별 변형문제를 1문항씩 작성하여 JSON 배열로 출력하세요.
+'주관식(서술/단답형)' 유형의 경우 options는 빈 배열 []로 지정하세요.
 
 JSON 출력 예시:
 [
@@ -827,25 +823,33 @@ JSON 출력 예시:
     "type": "주제/제목",
     "options": ["① opt1", "② opt2", "③ opt3", "④ opt4", "⑤ opt5"],
     "answer": "①",
-    "explanation": "핵심 주제 해설"
+    "explanation": "해설 작성"
   }
 ]
 `;
         try {
-          const rawJson = await callGeminiUniversal(apiKey, prompt);
+          const rawJson = await callGeminiUniversal(apiKey, promptText);
           let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
           const parsed = JSON.parse(cleanedJson);
           if (Array.isArray(parsed)) {
             const verifiedItems = parsed.map((item) => processVerifiedQuestion(item, pObj.full_text, item.type || selectedTypes[0], setKey, pObj.passage_num, pObj.id));
-            await supabaseClient.from('questions').insert(verifiedItems);
-            totalCount += verifiedItems.length;
-            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완료 [난이도: ${selectedDifficulty}] (+${verifiedItems.length}문항)</div>`;
+            const { data, error } = await supabaseClient.from('questions').insert(verifiedItems).select();
+            if (error) {
+              logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passage_num}번 DB 저장 에러: ${error.message}</div>`;
+            } else {
+              totalCount += verifiedItems.length;
+              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 [난이도: ${selectedDifficulty}] (+${verifiedItems.length}문항)</div>`;
+            }
             logBox.scrollTop = logBox.scrollHeight;
           }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+          console.error(e);
+          logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passage_num}번 처리 중 예외 발생: ${e.message}</div>`;
+          logBox.scrollTop = logBox.scrollHeight;
+        }
       }
 
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 프로세스 완료! 총 ${totalCount}문항 적재됨</div>`;
       alert(`🎉 [난이도: ${selectedDifficulty}] 핵심유형 ${totalCount}문항 출제 완료!`);
       await loadAllSupabaseData();
     }
@@ -1084,7 +1088,7 @@ ${fullText.slice(0, 15000)}
 ## [어법] 1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
 - 킬러패턴: 준동사(v-ing) vs 본동사 위치 착시 및 수일치 복합 함정
 `;
-          const rawText = await callGeminiUniversal(apiKey, prompt);
+          const rawText = await callGeminiUniversal(apiKey, parserPrompt);
           logBox.innerHTML += `<div class="text-emerald-300">✓ [${file.name}] 기출 분석 완료</div>`;
         } catch (err) {
           logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 분석 에러</div>`;
