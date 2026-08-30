@@ -114,9 +114,18 @@
             <span class="text-xs font-bold bg-slate-100 px-2.5 py-1 rounded border border-slate-200 shrink-0">교재 선택</span>
             <span class="text-xs font-bold text-slate-700 shrink-0">고등</span>
             <select id="filterCategory" class="border text-xs rounded-lg px-3 py-2 bg-white"><option>모의고사</option></select>
+            
+            <!-- 🎯 학년 전체 드롭다운 추가 -->
+            <select id="filterGrade" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white font-bold text-slate-700">
+              <option value="">학년 전체</option>
+              <option value="고1">고1</option>
+              <option value="고2">고2</option>
+              <option value="고3">고3</option>
+            </select>
+            
             <select id="filterYear" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">년도 전체</option></select>
             <select id="filterMonth" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">월 전체</option></select>
-            <button onclick="loadAllSupabaseData()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold"><i class="fa-solid fa-arrows-rotate"></i></button>
+            <button onclick="loadAllSupabaseData()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold" title="새로고침"><i class="fa-solid fa-arrows-rotate"></i></button>
           </div>
         </div>
         <div class="bg-white rounded-2xl border overflow-hidden">
@@ -417,18 +426,20 @@
       document.getElementById('nav-' + v)?.classList.add('active-nav');
     }
 
-    // 🎯 필터 드롭다운 연결 목록 렌더링
+    // 🎯 [학년, 년도, 월 다중 필터링 정밀 연동]
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
+      const selGrade = document.getElementById('filterGrade')?.value || '';
       const selYear = document.getElementById('filterYear')?.value || '';
       const selMonth = document.getElementById('filterMonth')?.value || '';
 
       if (!tbody) return;
 
       const filteredExams = mockExams.filter(e => {
+        const gradeMatch = !selGrade || String(e.grade) === String(selGrade);
         const yearMatch = !selYear || String(e.year) === String(selYear);
         const monthMatch = !selMonth || String(e.month) === String(selMonth);
-        return yearMatch && monthMatch;
+        return gradeMatch && yearMatch && monthMatch;
       });
 
       if (filteredExams.length === 0) {
@@ -576,7 +587,7 @@
     function removeQueuedFile(i) { queuedPdfFiles.splice(i, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
-    // 🎯 [핵심 드롭다운 옵션 전체 복구 로직]
+    // 🎯 [학년, 년도, 월 옵션 생성 로직]
     function initDropdownOptions() {
       const years = Array.from({length: 12}, (_, i) => 2026 - i);
       const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
