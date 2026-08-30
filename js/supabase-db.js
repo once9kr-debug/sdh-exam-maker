@@ -11,6 +11,7 @@ function updateBenchmarkCountUI(count) {
   if (totalCountEl) totalCountEl.innerText = count;
 }
 
+// 🎯 학년/월 파싱 복구 및 세트 맵 정밀화
 async function loadAllSupabaseData() {
   const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
   passageArchiveDB = pData || [];
@@ -27,14 +28,29 @@ async function loadAllSupabaseData() {
 
   const examMap = {};
   passageArchiveDB.forEach(p => {
-    if (!examMap[p.set_key]) {
-      examMap[p.set_key] = { id: p.set_key, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
+    // grade 및 month 값 보정
+    const pYear = p.year || '2024';
+    const pMonth = p.month || '3';
+    const pGrade = p.grade ? (String(p.grade).startsWith('고') ? p.grade : `고${p.grade}`) : '고1';
+    const setKey = p.set_key || `${pYear}-${pMonth}`;
+
+    if (!examMap[setKey]) {
+      examMap[setKey] = {
+        id: setKey,
+        year: pYear,
+        month: pMonth,
+        grade: pGrade,
+        title: `${pYear}년 ${pMonth}월 학력평가`,
+        questionCount: 0
+      };
     }
   });
 
   generatedQuestionsPool.forEach(q => {
-    if (examMap[q.set_key]) {
-      examMap[q.set_key].questionCount++;
+    // 유연한 set_key 매칭
+    const matchedKey = Object.keys(examMap).find(k => k === q.set_key || k.startsWith(q.set_key) || q.set_key.startsWith(k));
+    if (matchedKey) {
+      examMap[matchedKey].questionCount++;
     }
   });
 
@@ -188,7 +204,6 @@ ${fullText.slice(0, 15000)}
   clearQueuedFiles();
 }
 
-// 🎯 [핵심 필터링 복구] 기존 267개 데이터의 title/trick/type 전체를 스캔하여 서술형 분류
 function renderBenchmarkFolderView() {
   const container = document.getElementById('benchmarkFolderContainer');
   if (!container) return;
@@ -214,7 +229,6 @@ function renderBenchmarkFolderView() {
     const trick = item.trick || '';
     const fullText = `${t} ${title} ${trick}`;
 
-    // 서술형 키워드 정밀 감지
     const isSubjective = /서술|주관|영작|배열|완성|조건|단답|쓰시오|작성/i.test(fullText);
 
     if (isSubjective) {
