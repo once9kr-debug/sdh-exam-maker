@@ -77,7 +77,6 @@ async function clearPassageArchiveDB() {
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// 🎯 API 503 에러 대비 재시도 호출 함수
 async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -89,7 +88,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 학교 기출 PDF 파싱 (오타 수정완료 및 실시간 카운팅 반영)
+// 🎯 학교 기출 PDF 파싱 (id 제약조건 에러 완전 해결)
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -144,13 +143,24 @@ ${fullText.slice(0, 15000)}
 `;
       await sleep(1200);
 
-      // 🎯 변수명 오타 수정 (parserPrompt로 인자 전달)
       const rawJson = await callGeminiWithRetry(apiKey, parserPrompt);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
       
       if (parsed && parsed.school) {
-        const { data: inserted, error } = await supabaseClient.from('school_benchmark').insert([parsed]).select();
+        // 🎯 id 필드를 제외하고 순수 데이터 객체만 생성하여 저장 (id 에러 완벽 차단)
+        const insertPayload = {
+          school: parsed.school,
+          exam: parsed.exam || '기출',
+          type: parsed.type || '어법',
+          title: parsed.title || '기출 분석 결과',
+          trick: parsed.trick || '핵심 패턴 분석 완료'
+        };
+
+        const { data: inserted, error } = await supabaseClient
+          .from('school_benchmark')
+          .insert([insertPayload])
+          .select();
         
         if (!error && inserted && inserted.length > 0) {
           schoolBenchmarkDB.unshift(inserted[0]);
