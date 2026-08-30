@@ -178,7 +178,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 모의고사 세트 선택 (칩 복원 적용) -->
+      <!-- VIEW 2: 모의고사 세트 선택 (칩 복원 및 정상 매칭) -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -529,7 +529,7 @@
     const passageNumberList = ['18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41-42', '43-45'];
     let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], filteredQuestions = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
     let currentUser = null, userAccountsDB = { 'admin': { pw: '1234', role: 'admin', name: '원장 선생님' } };
-    let selectedDifficulty = '중';
+    let selectedDifficulty = '상';
     let selectedFilterDifficulty = '혼합';
 
     const standardTitleMap = {
@@ -593,13 +593,7 @@
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-  contents: [{ parts: [{ text: prompt }] }],
-  generationConfig: { 
-    temperature: 0.1,
-    responseMimeType: "application/json" // 🎯 AI가 오직 유효한 JSON만 반환하도록 강제
-  }
-})
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.1, responseMimeType: "application/json" } })
       });
       if (res.ok) return (await res.json()).candidates[0].content.parts[0].text;
       throw new Error('API 통신 실패');
@@ -647,7 +641,7 @@
       document.getElementById('currentUserName').innerText = currentUser.name;
     }
 
-    // 🎯 칩 복원 렌더링 로직
+    // 🎯 칩 복원 렌더링 로직 (ID 하이픈 상충 방지 통일)
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
@@ -655,7 +649,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
         const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
         return isCurrentExam && diffMatch && passageMatch;
       });
@@ -678,7 +672,7 @@
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
         const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
         return isCurrentExam && diffMatch && typeMatch;
       });
@@ -707,7 +701,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
       const el = document.getElementById('selectedTotalCount');
@@ -716,54 +710,67 @@
 
     function openExamTypeSelector(examId) {
       currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
-      if (currentSelectedExam) document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade})`;
+      if (currentSelectedExam) document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade || '고3'})`;
       renderTypeChips();
       renderPassageChips();
       updateSelectedCountText();
       switchView('typeSelect');
     }
 
-function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
-  let finalPassage = origPassage; // 🎯 1. 원문 지문 100% 보존
-  let givenBoxText = '';
-  let conditionText = '';
-  let summaryText = '';
+    // 🎯 ID 결합 및 자바스크립트 구조 파싱 교정
+    function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
+      let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
+      let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
 
-  // 🎯 2. 어법/어휘: 서버가 직접 ①~⑤ 밑줄(<u>) 태그 주입
-  if ((qType === '어법' || qType === '어휘') && Array.isArray(item.target_words)) {
-    let p = origPassage;
-    item.target_words.slice(0, 5).forEach((w, i) => {
-      const sym = ['①', '②', '③', '④', '⑤'][i];
-      p = p.replace(w.orig, `${sym} <u>${w.mod || w.orig}</u>`);
-    });
-    finalPassage = p;
-  } 
-  // 🎯 3. 순서/삽입: 서버가 [주어진 글] 상단 박스 강제 분리
-  else if (qType === '순서' || qType === '삽입') {
-    const sentences = origPassage.split('. ');
-    givenBoxText = item.given_sentence || (sentences.slice(0, 2).join('. ') + '.');
-    finalPassage = sentences.slice(2).join('. ');
-  } 
-  // 🎯 4. 서술형: [조건] 및 [요약문] 박스 독립 결합
-  else if (qType === '서술형' || qType === '단답형') {
-    conditionText = item.condition_text || '[조건] 본문에서 알맞은 단어를 찾아 쓰시오.';
-    summaryText = item.summary_text || '';
-  }
+      if (qType === '어법' || qType === '어휘') {
+        if (Array.isArray(item.target_words) && item.target_words.length === 5) {
+          let p = origPassage;
+          item.target_words.forEach((w, i) => {
+            const sym = ['①', '②', '③', '④', '⑤'][i];
+            p = p.replace(w.orig || w, `${sym} <u>${w.mod || w.orig || w}</u>`);
+          });
+          finalPassage = p;
+        }
+      } else if (qType === '빈칸' || qType === '단답형') {
+        if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
+          finalPassage = origPassage.replace(item.target_blank_word, '__________');
+        }
+      } else if (qType === '함축의미') {
+        if (item.target_phrase && origPassage.includes(item.target_phrase)) {
+          finalPassage = origPassage.replace(item.target_phrase, `<u>${item.target_phrase}</u>`);
+        }
+      } else if (qType === '순서') {
+        const sentences = origPassage.split('. ');
+        givenBoxText = sentences.slice(0, 2).join('. ') + '.';
+        const remainPart = sentences.slice(2).join('. ');
+        const third = Math.floor(remainPart.length / 3);
+        finalPassage = `(A) ${remainPart.substring(0, third)}\n(B) ${remainPart.substring(third, third*2)}\n(C) ${remainPart.substring(third*2)}`;
+      } else if (qType === '삽입') {
+        givenBoxText = item.given_sentence || '주어진 문장 예시';
+        const s = origPassage.split('. ');
+        if (s.length >= 5) {
+          finalPassage = `${s[0]}. ( ① ) ${s[1]}. ( ② ) ${s[2]}. ( ③ ) ${s[3]}. ( ④ ) ${s[4]}. ( ⑤ ) ${s.slice(5).join('. ')}`;
+        }
+      } else if (qType === '서술형') {
+        conditionText = item.condition_text || '[조건] 본문 어휘 활용 작성';
+        summaryText = item.summary_text || '';
+      }
 
-  return {
-    id: `Q-${setKey}-${passageNum}-${qType}-${idx+1}`,
-    passage_num: passageNum,
-    type: qType,
-    title: standardTitleMap[qType], // 표준 한국어 발문 고정
-    passage: finalPassage,
-    given_box: givenBoxText,
-    condition_box: conditionText,
-    summary_box: summaryText,
-    options: item.options || [],
-    answer: item.answer || '①',
-    explanation: item.explanation || ''
-  };
-}
+      return {
+        id: `Q-${setKey}-${passageNum}-${qType}-${idx+1}-${Math.random().toString(36).substring(2,7)}`,
+        passage_num: String(passageNum),
+        type: qType,
+        difficulty: selectedDifficulty || '상',
+        title: finalTitle,
+        passage: finalPassage,
+        given_box: givenBoxText,
+        condition_box: conditionText,
+        summary_box: summaryText,
+        options: Array.isArray(item.options) ? item.options : [],
+        answer: item.answer || '①',
+        explanation: item.explanation || '본문 맥락 해설'
+      };
+    }
 
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
@@ -772,9 +779,12 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, i
       if (!setKey) return alert('모의고사 세트를 선택하세요.');
 
       const targetPassages = passageArchiveDB.filter(p => `${p.year}-${p.month}-${p.grade}` === setKey);
-      const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
-      const logBox = document.getElementById('generationLogBox');
+      if (targetPassages.length === 0) return alert('선택한 세트에 지문이 없습니다.');
 
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
+      if (selectedTypes.length === 0) return alert('유형을 선택하세요.');
+
+      const logBox = document.getElementById('generationLogBox');
       logBox.classList.remove('hidden');
       logBox.innerHTML = `<div>🚀 완전 검증 출제 가동 (${setKey})...</div>`;
 
@@ -782,52 +792,42 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, i
       generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
 
       let totalCount = 0;
-      const BATCH_SIZE = 3;
-      for (let i = 0; i < targetPassages.length; i += BATCH_SIZE) {
-        const chunk = targetPassages.slice(i, i + BATCH_SIZE);
 
-        await Promise.all(chunk.map(async (pObj) => {
-const prompt = `
+      for (let pObj of targetPassages) {
+        const prompt = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
-[영어 지문]:
+아래 [영어 지문 (${pObj.passage_num}번)]:
 ${pObj.text}
 
-[요청 유형]: ${selectedTypes.join(', ')}
+[출제 요청 유형들]:
+${selectedTypes.join(', ')}
 
-지문 전체를 다시 쓰지 말고, 오직 아래 JSON 구조로만 데이터를 추출하십시오:
+JSON 출력 예시:
 [
   {
-    "type": "어법",
-    "target_words": [{"orig": "원문단어1", "mod": "변형단어1"}, {"orig": "원문단어2", "mod": "원문단어2"}],
-    "options": ["① 단어1", "② 단어2", "③ 단어3", "④ 단어4", "⑤ 단어5"],
+    "type": "주제",
+    "options": ["① opt1", "② opt2", "③ opt3", "④ opt4", "⑤ opt5"],
     "answer": "①",
-    "explanation": "해설"
-  },
-  {
-    "type": "서술형",
-    "condition_text": "[조건] 본문 어휘 활용 10단어 이내",
-    "summary_text": "영문 요약문 문장 (빈칸 포함)",
-    "answer": "정답영단어",
-    "explanation": "해설"
+    "explanation": "상세 해설"
   }
 ]
 `;
-          try {
-            const rawJson = await callGeminiUniversal(apiKey, prompt);
-            let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsed = JSON.parse(cleanedJson);
-            if (Array.isArray(parsed)) {
-              const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
-              await supabaseClient.from('generated_questions').upsert(verifiedItems);
-              generatedQuestionsPool.unshift(...verifiedItems);
-              totalCount += verifiedItems.length;
-              logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 적재 완료 (+${verifiedItems.length}문항)</div>`;
-            }
-          } catch (e) { console.error(e); }
-        }));
+        try {
+          const rawJson = await callGeminiUniversal(apiKey, prompt);
+          let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanedJson);
+          if (Array.isArray(parsed)) {
+            const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
+            await supabaseClient.from('generated_questions').upsert(verifiedItems);
+            generatedQuestionsPool.unshift(...verifiedItems);
+            totalCount += verifiedItems.length;
+            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완료 (+${verifiedItems.length}문항)</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+          }
+        } catch (e) { console.error(e); }
       }
 
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재</div>`;
+      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
       alert('🎉 출제 완료!');
       loadAllSupabaseData();
     }
@@ -878,13 +878,32 @@ ${pObj.text}
       }
     }
 
+    // 🎯 표 레이아웃 밀림 및 학원용 표기 전면 교정
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
-      if (tbody) tbody.innerHTML = mockExams.map(e => `
+      const yearFilter = document.getElementById('filterYear')?.value || '';
+      const monthFilter = document.getElementById('filterMonth')?.value || '';
+      const gradeFilter = document.getElementById('filterGrade')?.value || '';
+
+      const filteredExams = mockExams.filter(e => {
+        const matchYear = !yearFilter || e.year === yearFilter;
+        const matchMonth = !monthFilter || e.month === monthFilter;
+        const matchGrade = !gradeFilter || e.grade === `고${gradeFilter}` || e.grade === e.grade;
+        return matchYear && matchMonth && matchGrade;
+      });
+
+      if (tbody) tbody.innerHTML = filteredExams.map(exam => `
         <tr class="hover:bg-slate-50">
-          <td class="py-3.5 px-6">${e.year}년</td><td class="py-3.5 px-6">${e.month}월</td><td class="py-3.5 px-6 font-bold text-slate-900">${e.title}</td>
-          <td class="py-3.5 px-6 font-bold text-cyan-600 text-center">${e.questionCount}문항</td>
-          <td class="py-3.5 px-6 text-center"><button onclick="openExamTypeSelector('${e.id}')" class="text-cyan-600 font-bold p-2"><i class="fa-solid fa-folder-open text-lg"></i></button></td>
+          <td class="py-4 px-6 font-semibold">${exam.year}년</td>
+          <td class="py-4 px-6 font-semibold">${exam.month}월</td>
+          <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td>
+          <td class="py-4 px-6 font-bold text-slate-700">${exam.grade || '고3'}</td>
+          <td class="py-4 px-6 text-center font-bold text-cyan-600">${exam.questionCount || 0}문항</td>
+          <td class="py-4 px-6 text-center">
+            <button onclick="openExamTypeSelector('${exam.id}')" class="text-cyan-600 hover:bg-cyan-50 p-2 rounded-lg" title="과제 보기 및 필터링">
+              <i class="fa-solid fa-folder-open text-xl"></i>
+            </button>
+          </td>
         </tr>
       `).join('');
     }
@@ -896,7 +915,7 @@ ${pObj.text}
 
       let matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(currentSelectedExam.id);
+        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
 
@@ -927,7 +946,7 @@ ${pObj.text}
 
       if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
       if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
-      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===1?'selected':''}>고${g}</option>`).join('');
+      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===3?'selected':''}>고${g}</option>`).join('');
 
       const filterYearEl = document.getElementById('filterYear');
       const filterMonthEl = document.getElementById('filterMonth');
@@ -946,7 +965,7 @@ ${pObj.text}
     async function saveAll25Passages() {
       const year = document.getElementById('regYear')?.value || '2024';
       const month = document.getElementById('regMonth')?.value || '6';
-      const grade = document.getElementById('regGrade')?.value || '1';
+      const grade = document.getElementById('regGrade')?.value || '3';
       const upsertData = [];
       passageNumberList.forEach(num => {
         const text = document.getElementById(`inputP_${num}`)?.value.trim();
@@ -1087,7 +1106,7 @@ ${fullText.slice(0, 15000)}
         const examMap = {};
         passageArchiveDB.forEach(p => {
           const k = `${p.year}-${p.month}-${p.grade}`;
-          if (!examMap[k]) examMap[k] = { id: k, year: p.year, month: p.month, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
+          if (!examMap[k]) examMap[k] = { id: k, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
         });
         qData.forEach(q => {
           const parts = q.id.split('-');
