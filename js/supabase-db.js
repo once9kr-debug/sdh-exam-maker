@@ -86,7 +86,6 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 파서 프롬프트 내 서술형 인식 지침 대폭 강화
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -134,13 +133,13 @@ ${fullText.slice(0, 15000)}
 {
   "school": "학교명",
   "exam": "시험구분",
-  "type": "유형 (반드시 어법, 빈칸, 순서, 삽입, 서술형, 주제 중 1개 정확히 선택)",
+  "type": "유형 (반드시 어법, 빈칸, 순서, 삽입, 서술형, 주제 중 1개 선택)",
   "title": "발문 요약",
   "trick": "핵심 킬러 함정 패턴 분석 1문장"
 }
 
-⚠️ [필수 분류 규격 규칙]:
-1. 객관식 선택지(①~⑤)가 없고, <보기> 단어 배열, 영작, 조건부 문장 완성, 단답형 작성 문제는 발문에 '빈칸'이라는 단어가 있더라도 무조건 type을 "서술형"으로 지정하세요!
+⚠️ [서술형 강력 구분 지침]:
+객관식 선택지(①~⑤)가 없고 <보기> 단어 배열, 영작, 조건을 보고 답안을 작성하는 문제는 발문에 '빈칸'이 포함되어 있더라도 type을 반드시 "서술형"으로 표기하세요.
 `;
       await sleep(1200);
 
@@ -189,7 +188,7 @@ ${fullText.slice(0, 15000)}
   clearQueuedFiles();
 }
 
-// 🎯 주관식 / 서술형 폴더 분류 기준 대폭 확장 (서술, 주관식, 영작, 배열, 단답, 완성)
+// 🎯 [핵심 필터링 복구] 기존 267개 데이터의 title/trick/type 전체를 스캔하여 서술형 분류
 function renderBenchmarkFolderView() {
   const container = document.getElementById('benchmarkFolderContainer');
   if (!container) return;
@@ -212,9 +211,13 @@ function renderBenchmarkFolderView() {
   schoolBenchmarkDB.forEach(item => {
     const t = item.type || '';
     const title = item.title || '';
+    const trick = item.trick || '';
+    const fullText = `${t} ${title} ${trick}`;
 
-    // 🎯 정밀 서술형 분류 조건: type 또는 title에 서술/주관식/영작/배열/완성 단어가 들어있으면 서술형 폴더로 분류
-    if (t.includes('서술') || t.includes('주관식') || t.includes('영작') || t.includes('배열') || t.includes('완성') || title.includes('서술') || title.includes('완성하시오')) {
+    // 서술형 키워드 정밀 감지
+    const isSubjective = /서술|주관|영작|배열|완성|조건|단답|쓰시오|작성/i.test(fullText);
+
+    if (isSubjective) {
       groups['서술형'].push(item);
     } else if (t.includes('어법') || t.includes('어휘')) {
       groups['어법'].push(item);
