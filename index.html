@@ -115,7 +115,9 @@
             <span class="text-xs font-bold text-slate-700 shrink-0">고등</span>
             <select id="filterCategory" class="border text-xs rounded-lg px-3 py-2 bg-white"><option>모의고사</option></select>
             
-            <!-- 🎯 학년 전체 드롭다운 추가 -->
+            <!-- 🎯 년도 전체 -> 월 전체 -> 학년 전체 순서 배치 -->
+            <select id="filterYear" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">년도 전체</option></select>
+            <select id="filterMonth" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">월 전체</option></select>
             <select id="filterGrade" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white font-bold text-slate-700">
               <option value="">학년 전체</option>
               <option value="고1">고1</option>
@@ -123,8 +125,6 @@
               <option value="고3">고3</option>
             </select>
             
-            <select id="filterYear" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">년도 전체</option></select>
-            <select id="filterMonth" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">월 전체</option></select>
             <button onclick="loadAllSupabaseData()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold" title="새로고침"><i class="fa-solid fa-arrows-rotate"></i></button>
           </div>
         </div>
@@ -426,7 +426,6 @@
       document.getElementById('nav-' + v)?.classList.add('active-nav');
     }
 
-    // 🎯 [학년, 년도, 월 다중 필터링 정밀 연동]
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
       const selGrade = document.getElementById('filterGrade')?.value || '';
@@ -587,7 +586,6 @@
     function removeQueuedFile(i) { queuedPdfFiles.splice(i, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
-    // 🎯 [학년, 년도, 월 옵션 생성 로직]
     function initDropdownOptions() {
       const years = Array.from({length: 12}, (_, i) => 2026 - i);
       const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
