@@ -4,22 +4,29 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
 
-// 🎯 DB 전체 동기화 및 정확한 실시간 수량 갱신
+// 🎯 [핵심] 페이지 제한 없는 전체 개수 정밀 수집 로직
 async function loadAllSupabaseData() {
   const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
   passageArchiveDB = pData || [];
   renderPassageArchiveTable();
 
-  // 🎯 Supabase 정확한 카운트 및 데이터 100% 수집
-  const { data: bData, count: bCount } = await supabaseClient.from('school_benchmark').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+  // range(0, 5000)으로 제한을 완전 해제하여 262개 넘는 전체 데이터 한 번에 조회
+  const { data: bData, count: bCount } = await supabaseClient
+    .from('school_benchmark')
+    .select('*', { count: 'exact' })
+    .range(0, 5000)
+    .order('created_at', { ascending: false });
+
   schoolBenchmarkDB = bData || [];
   
-  // 수량 뱃지 즉시 업데이트
-  const realCount = bCount || schoolBenchmarkDB.length;
+  // 실제 DB에 존재하는 단 1개까지 포함한 정밀 수량 표기
+  const realTotal = bCount !== null ? bCount : schoolBenchmarkDB.length;
+
   const badge = document.getElementById('benchmarkCountBadge');
   const totalCountEl = document.getElementById('tableTotalCount');
-  if (badge) badge.innerText = `기출 ${realCount}제`;
-  if (totalCountEl) totalCountEl.innerText = realCount;
+  
+  if (badge) badge.innerText = `기출 ${realTotal}제`;
+  if (totalCountEl) totalCountEl.innerText = realTotal;
 
   renderBenchmarkFolderView();
 
@@ -76,19 +83,18 @@ async function clearPassageArchiveDB() {
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// 🎯 API 503 에러 발생 시 자동 재시도(Retry) 호출 함수
 async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await callGeminiUniversal(apiKey, promptText);
     } catch (err) {
       if (attempt === maxRetries) throw err;
-      await sleep(2000 * attempt); // 2초, 4초 대기 후 재시도
+      await sleep(2000 * attempt);
     }
   }
 }
 
-// 🎯 학교 기출 PDF 파싱 및 DB 즉시 반영 (재시도 및 정밀 수량 갱신)
+// 🎯 PDF 분석 후 새로고침 보장 파서
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -141,9 +147,8 @@ ${fullText.slice(0, 15000)}
   "trick": "핵심 킬러 함정 패턴 분석 1문장"
 }
 `;
-      await sleep(1200); // 간격 지연
+      await sleep(1200);
 
-      // 🎯 503 에러 대비 재시도 호출
       const rawJson = await callGeminiWithRetry(apiKey, parserPrompt);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
@@ -167,18 +172,15 @@ ${fullText.slice(0, 15000)}
   btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
   clearQueuedFiles();
   
-  // 🎯 DB 재조회 및 사이드바/테이블 수량 즉시 실시간 반영
+  // 🎯 강제 즉시 새로고침
   await loadAllSupabaseData(); 
 }
 
-// 🎯 유형별 토글 아코디언 폴더 view 렌더링 함수
 function renderBenchmarkFolderView() {
   const container = document.getElementById('benchmarkFolderContainer');
   if (!container) return;
 
-  const totalCount = schoolBenchmarkDB.length;
-
-  if (totalCount === 0) {
+  if (schoolBenchmarkDB.length === 0) {
     container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed">축적된 기출 DB가 없습니다. PDF 시험지를 드롭하여 등록하세요.</div>`;
     return;
   }
