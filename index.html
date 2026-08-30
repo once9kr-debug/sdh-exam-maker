@@ -114,8 +114,8 @@
             <span class="text-xs font-bold bg-slate-100 px-2.5 py-1 rounded border border-slate-200 shrink-0">교재 선택</span>
             <span class="text-xs font-bold text-slate-700 shrink-0">고등</span>
             <select id="filterCategory" class="border text-xs rounded-lg px-3 py-2 bg-white"><option>모의고사</option></select>
-            <select id="filterYear" class="border text-xs rounded-lg px-3 py-2 bg-white"></select>
-            <select id="filterMonth" class="border text-xs rounded-lg px-3 py-2 bg-white"></select>
+            <select id="filterYear" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">년도 전체</option></select>
+            <select id="filterMonth" onchange="renderExamTable()" class="border text-xs rounded-lg px-3 py-2 bg-white"><option value="">월 전체</option></select>
             <button onclick="loadAllSupabaseData()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold"><i class="fa-solid fa-arrows-rotate"></i></button>
           </div>
         </div>
@@ -240,7 +240,7 @@
         </div>
       </section>
 
-      <!-- VIEW: PDF 기출 파서 (유형별 토글 아코디언 레이아웃 적용) -->
+      <!-- VIEW: PDF 기출 파서 -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl border space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -290,7 +290,6 @@
             </div>
           </div>
 
-          <!-- 🎯 유형별 토글 아코디언 폴더 뷰 영역 -->
           <div class="space-y-3 pt-2">
             <div class="flex items-center justify-between">
               <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -418,9 +417,26 @@
       document.getElementById('nav-' + v)?.classList.add('active-nav');
     }
 
+    // 🎯 필터 드롭다운 연결 목록 렌더링
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
-      if (tbody) tbody.innerHTML = mockExams.map(exam => `
+      const selYear = document.getElementById('filterYear')?.value || '';
+      const selMonth = document.getElementById('filterMonth')?.value || '';
+
+      if (!tbody) return;
+
+      const filteredExams = mockExams.filter(e => {
+        const yearMatch = !selYear || String(e.year) === String(selYear);
+        const monthMatch = !selMonth || String(e.month) === String(selMonth);
+        return yearMatch && monthMatch;
+      });
+
+      if (filteredExams.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">조건에 일치하는 모의고사 DB가 없습니다.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredExams.map(exam => `
         <tr class="hover:bg-slate-50">
           <td class="py-4 px-6 font-semibold">${exam.year}년</td>
           <td class="py-4 px-6 font-semibold">${exam.month}월</td>
@@ -428,7 +444,7 @@
           <td class="py-4 px-6 font-bold text-slate-700">${exam.grade}</td>
           <td class="py-4 px-6 text-center font-bold text-cyan-600">${exam.questionCount || 0}문항</td>
           <td class="py-4 px-6 text-center">
-            <button onclick="openExamTypeSelector('${exam.id}')" class="text-cyan-600"><i class="fa-solid fa-folder-open text-xl"></i></button>
+            <button onclick="openExamTypeSelector('${exam.id}')" class="text-cyan-600 hover:text-cyan-800"><i class="fa-solid fa-folder-open text-xl"></i></button>
           </td>
         </tr>
       `).join('');
@@ -560,6 +576,7 @@
     function removeQueuedFile(i) { queuedPdfFiles.splice(i, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
+    // 🎯 [핵심 드롭다운 옵션 전체 복구 로직]
     function initDropdownOptions() {
       const years = Array.from({length: 12}, (_, i) => 2026 - i);
       const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
@@ -576,8 +593,12 @@
       const filterYearEl = document.getElementById('filterYear');
       const filterMonthEl = document.getElementById('filterMonth');
 
-      if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
-      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `${m}월</option>`).join('');
+      if (filterYearEl) {
+        filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
+      }
+      if (filterMonthEl) {
+        filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
