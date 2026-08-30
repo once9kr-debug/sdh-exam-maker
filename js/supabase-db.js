@@ -1,5 +1,73 @@
-// js/supabase-db.js 내 startBatchPdfClassification 함수 업데이트
+const SUPABASE_URL = 'https://kqmogqlukkviddjsfyeb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbW9ncWx1a2t2aWRkanNmeWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjc3NjYsImV4cCI6MjEwMzUwMzc2Nn0.nqWvvphNCdPGMDrEYLilk-wHmNkH2BhPTuvMwaCXqo8';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
+
+// 🎯 DB 전체 동기화 및 사이드바 뱃지 실시간 업데이트
+async function loadAllSupabaseData() {
+  const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
+  passageArchiveDB = pData || [];
+  renderPassageArchiveTable();
+
+  const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
+  schoolBenchmarkDB = bData || [];
+  renderBenchmarkFolderView(); // 유형별 폴더뷰 렌더링
+
+  const { data: qData } = await supabaseClient.from('questions').select('*').order('created_at', { ascending: false });
+  generatedQuestionsPool = qData || [];
+
+  const examMap = {};
+  passageArchiveDB.forEach(p => {
+    if (!examMap[p.set_key]) {
+      examMap[p.set_key] = { id: p.set_key, year: p.year, month: p.month, grade: `고${p.grade}`, title: `${p.year}년 ${p.month}월 학력평가`, questionCount: 0 };
+    }
+  });
+
+  generatedQuestionsPool.forEach(q => {
+    if (examMap[q.set_key]) {
+      examMap[q.set_key].questionCount++;
+    }
+  });
+
+  mockExams = Object.values(examMap);
+  renderExamTable();
+}
+
+async function saveAll25Passages() {
+  const year = document.getElementById('regYear')?.value || '2024';
+  const month = document.getElementById('regMonth')?.value || '6';
+  const grade = document.getElementById('regGrade')?.value || '3';
+  const setKey = `${year}-${month}-${grade}`;
+  const upsertData = [];
+
+  passageNumberList.forEach(num => {
+    const text = document.getElementById(`inputP_${num}`)?.value.trim();
+    if (text) upsertData.push({ set_key: setKey, year, month, grade, passage_num: num, sample_text: text.substring(0, 30) + '...', full_text: text });
+  });
+
+  if (upsertData.length > 0) {
+    await supabaseClient.from('passages').upsert(upsertData);
+    alert('🎉 지문 DB 저장 완료!');
+    await loadAllSupabaseData();
+  }
+}
+
+async function deleteSinglePassage(id) {
+  await supabaseClient.from('passages').delete().eq('id', id);
+  await loadAllSupabaseData();
+}
+
+async function clearPassageArchiveDB() {
+  if (confirm('지문 및 생성된 문제 DB를 전체 초기화하시겠습니까?')) {
+    await supabaseClient.from('passages').delete().neq('id', 0);
+    await loadAllSupabaseData();
+  }
+}
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// 🎯 학교 기출 PDF 파싱 및 DB 즉시 반영 (동적 로딩 피드 포함)
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -19,15 +87,14 @@ async function startBatchPdfClassification() {
     const percent = Math.round(((i) / queuedPdfFiles.length) * 100);
     const progressBar = '▓'.repeat(Math.floor(percent / 10)) + '░'.repeat(10 - Math.floor(percent / 10));
 
-    // 우측 상단 뱃지 동적 업데이트
     if (statusBadge) {
       statusBadge.innerHTML = `<span class="text-amber-500 font-bold"><i class="fa-solid fa-sync fa-spin mr-1"></i>[${i+1}/${queuedPdfFiles.length}] 분석 중 (${percent}%)</span>`;
     }
 
     logBox.innerHTML += `
-      <div class="my-1 text-slate-400">──────────────────────────────────────────</div>
+      <div class="my-1 text-slate-600">──────────────────────────────────────────</div>
       <div class="text-cyan-300 font-bold">[PROGRESS: ${progressBar} ${percent}%]</div>
-      <div class="text-amber-400 animate-pulse">⏳ [${i+1}/${queuedPdfFiles.length}] '${file.name}' AI 킬러 패턴 분석 중... <i class="fa-solid fa-circle-notch fa-spin"></i></div>
+      <div class="text-amber-400">⏳ [${i+1}/${queuedPdfFiles.length}] '${file.name}' AI 킬러 패턴 분석 중... <i class="fa-solid fa-circle-notch fa-spin"></i></div>
     `;
     logBox.scrollTop = logBox.scrollHeight;
 
@@ -48,12 +115,12 @@ ${fullText.slice(0, 15000)}
 {
   "school": "학교명",
   "exam": "시험구분",
-  "type": "유형",
+  "type": "유형 (어법, 빈칸, 순서, 삽입, 서술형, 주제 중 1개 선택)",
   "title": "발문 요약",
   "trick": "핵심 킬러 함정 패턴 분석 1문장"
 }
 `;
-      await sleep(1000); // API 초과 방지 지연
+      await sleep(1000);
 
       const rawJson = await callGeminiUniversal(apiKey, parserPrompt);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -71,7 +138,6 @@ ${fullText.slice(0, 15000)}
     logBox.scrollTop = logBox.scrollHeight;
   }
 
-  // 완료 후 UI 원복
   if (statusBadge) statusBadge.innerHTML = `<span class="text-emerald-400 font-bold">✓ 전체 분석 완료</span>`;
   logBox.innerHTML += `<div class="text-cyan-300 font-bold mt-3">🎉 전체 PDF 분석 및 DB 적재 완벽 완료!</div>`;
   
@@ -79,5 +145,93 @@ ${fullText.slice(0, 15000)}
   btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
   clearQueuedFiles();
   
+  // 🎯 DB 재조회 및 사이드바/테이블 수량 즉시 실시간 반영
   await loadAllSupabaseData(); 
+}
+
+// 🎯 유형별 토글 아코디언 폴더 view 렌더링 함수
+function renderBenchmarkFolderView() {
+  const container = document.getElementById('benchmarkFolderContainer');
+  const totalCountEl = document.getElementById('tableTotalCount');
+  const badge = document.getElementById('benchmarkCountBadge');
+
+  const totalCount = schoolBenchmarkDB.length;
+  if (totalCountEl) totalCountEl.innerText = totalCount;
+  if (badge) badge.innerText = `기출 ${totalCount}제`;
+
+  if (!container) return;
+
+  if (totalCount === 0) {
+    container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed">축적된 기출 DB가 없습니다. PDF 시험지를 드롭하여 등록하세요.</div>`;
+    return;
+  }
+
+  // 유형 카테고리 정의
+  const categories = [
+    { key: '어법', label: '어법 / 어휘 유형', icon: 'fa-spell-check', bg: 'bg-sky-50 border-sky-200 text-sky-900', badgeBg: 'bg-sky-600' },
+    { key: '빈칸', label: '빈칸 추론 유형', icon: 'fa-square-minus', bg: 'bg-cyan-50 border-cyan-200 text-cyan-900', badgeBg: 'bg-cyan-600' },
+    { key: '순서', label: '순서 / 삽입 / 흐름 유형', icon: 'fa-arrow-down-short-wide', bg: 'bg-indigo-50 border-indigo-200 text-indigo-900', badgeBg: 'bg-indigo-600' },
+    { key: '서술형', label: '주관식 / 서술형 유형', icon: 'fa-pen-to-square', bg: 'bg-amber-50 border-amber-200 text-amber-900', badgeBg: 'bg-amber-600' },
+    { key: '기타', label: '대의 파악 / 기타 유형', icon: 'fa-file-lines', bg: 'bg-slate-50 border-slate-200 text-slate-900', badgeBg: 'bg-slate-700' }
+  ];
+
+  // 카테고리별 그룹화
+  const groups = { 어법: [], 빈칸: [], 순서: [], 서술형: [], 기타: [] };
+  
+  schoolBenchmarkDB.forEach(item => {
+    const t = item.type || '';
+    if (t.includes('어법') || t.includes('어휘')) groups['어법'].push(item);
+    else if (t.includes('빈칸')) groups['빈칸'].push(item);
+    else if (t.includes('순서') || t.includes('삽입') || t.includes('흐름')) groups['순서'].push(item);
+    else if (t.includes('서술') || t.includes('주관식')) groups['서술형'].push(item);
+    else groups['기타'].push(item);
+  });
+
+  container.innerHTML = categories.map((cat, folderIdx) => {
+    const list = groups[cat.key] || [];
+    return `
+      <div class="border rounded-2xl overflow-hidden bg-white shadow-sm transition">
+        <!-- 폴더 헤더 (클릭 시 토글) -->
+        <button onclick="toggleBenchmarkFolder(${folderIdx})" class="w-full p-4 flex items-center justify-between ${cat.bg} font-bold text-sm">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid ${cat.icon} text-lg"></i>
+            <span>${cat.label}</span>
+            <span class="${cat.badgeBg} text-white text-[10px] px-2.5 py-0.5 rounded-full font-extrabold">${list.length}건</span>
+          </div>
+          <i id="folderIcon_${folderIdx}" class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+        </button>
+        
+        <!-- 폴더 내부 항목 리스트 (기본 닫힘 상태) -->
+        <div id="folderContent_${folderIdx}" class="hidden divide-y divide-slate-100 border-t">
+          ${list.length === 0 ? `<div class="p-4 text-center text-xs text-slate-400">등록된 기출이 없습니다.</div>` : list.map((item, idx) => `
+            <div class="p-3.5 hover:bg-slate-50 transition flex items-start gap-4 text-xs">
+              <span class="font-bold text-slate-400 w-6 shrink-0 text-center">${idx + 1}</span>
+              <div class="w-44 shrink-0 font-bold text-slate-800">${item.school || '고등학교'} <span class="text-[11px] text-slate-500 font-normal">(${item.exam || '기출'})</span></div>
+              <div class="flex-1">
+                <div class="font-bold text-slate-900 mb-0.5">${item.title}</div>
+                <div class="text-[11px] text-emerald-700"><strong>킬러 패턴:</strong> ${item.trick}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 🎯 토글 동작 함수
+function toggleBenchmarkFolder(idx) {
+  const content = document.getElementById(`folderContent_${idx}`);
+  const icon = document.getElementById(`folderIcon_${idx}`);
+  if (content) {
+    content.classList.toggle('hidden');
+    if (icon) icon.classList.toggle('rotate-180');
+  }
+}
+
+async function resetBenchmarkDB() {
+  if(confirm('정말 기출 DB를 전체 초기화하시겠습니까?')) {
+    await supabaseClient.from('school_benchmark').delete().neq('id', 0);
+    await loadAllSupabaseData();
+  }
 }
