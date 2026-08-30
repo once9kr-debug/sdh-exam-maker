@@ -24,7 +24,6 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
 
-  // 어법/어휘 보기 기호 ①~⑤ 강제 교정
   if (qType.includes('어법') || qType.includes('어휘')) {
     if (Array.isArray(item.target_words) && item.target_words.length === 5) {
       let p = origPassage;
@@ -85,7 +84,6 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     conditionText = item.condition_text || '[조건] 본문 어휘 및 구문 맥락을 활용하여 작성하시오.';
   }
 
-  // 정답 텍스트 객체/JSON 파싱 완벽 보정
   let ansText = item.answer || '본문 맥락에 맞는 조건별 정답';
   if (typeof ansText === 'object' && ansText !== null) {
     ansText = Object.entries(ansText).map(([k, v]) => `(${k}) ${v}`).join(' / ');
@@ -110,30 +108,43 @@ async function executeFastParallelGenerate() {
   const setKey = document.getElementById('selectMockSet').value;
   if (!setKey) return alert('모의고사 세트를 선택하세요.');
 
-  // 🎯 [유연한 세트키 검색] 형식 불일치로 인한 0문항 방지 완벽 처리
-  const rawKey = setKey.trim();
-  const targetPassages = passageArchiveDB.filter(p => {
-    if (!p.set_key) return false;
-    const pKey = p.set_key.trim();
-    return pKey === rawKey || rawKey.includes(pKey) || pKey.includes(rawKey);
-  });
+  const logBox = document.getElementById('generationLogBox');
+  logBox.classList.remove('hidden');
 
+  // 🎯 [근본 차단] 문자열 완벽 일치에 의존하지 않고 다중 조건 검색으로 지문 수집
+  let targetPassages = passageArchiveDB.filter(p => p.set_key === setKey);
+
+  // 1차 검색 실패 시 년도/월 추출 방식 보완 검색
   if (targetPassages.length === 0) {
-    return alert(`선택한 세트[${setKey}]에 매칭되는 지문이 DB에 없습니다. 지문 등록 여부를 확인해주세요.`);
+    const numbers = setKey.match(/\d+/g);
+    if (numbers && numbers.length >= 2) {
+      const year = numbers[0];
+      const month = numbers[1];
+      targetPassages = passageArchiveDB.filter(p => 
+        String(p.year) === year && String(p.month) === month
+      );
+    }
+  }
+
+  // 여전히 지문이 없는 경우 안내 로그 출력 후 안전 중단
+  if (targetPassages.length === 0) {
+    logBox.innerHTML = `
+      <div class="text-rose-400 font-bold">❌ 지문 검색 실패</div>
+      <div class="text-slate-400 text-xs mt-1">선택 세트 [${setKey}]에 해당되는 지문을 DB에서 찾지 못했습니다.</div>
+      <div class="text-slate-400 text-xs">현재 등록된 전체 지문 수: ${passageArchiveDB.length}개</div>
+    `;
+    return alert(`선택 세트[${setKey}]의 지문 데이터를 지문 DB에서 찾을 수 없습니다. 지문 등록 여부를 확인해 주세요.`);
   }
 
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
   if (selectedTypes.length === 0) return alert('유형을 선택하세요.');
 
-  const logBox = document.getElementById('generationLogBox');
-  logBox.classList.remove('hidden');
-  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 생성] 총 ${targetPassages.length}개 지문 출제 가동...</div>`;
+  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 정밀 생성] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
 
   const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
     ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
   ).join('\n');
 
-  // 기존 꼬인 문항 삭제 후 재생성
   await supabaseClient.from('questions').delete().eq('set_key', setKey).eq('difficulty', selectedDifficulty);
 
   let totalCount = 0;
