@@ -4,30 +4,25 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
 
-// 🎯 [핵심] 페이지 제한 없는 전체 개수 정밀 수집 로직
+// 🎯 수량 뱃지 즉시 UI 반영 헬퍼 함수
+function updateBenchmarkCountUI(count) {
+  const badge = document.getElementById('benchmarkCountBadge');
+  const totalCountEl = document.getElementById('tableTotalCount');
+  if (badge) badge.innerText = `기출 ${count}제`;
+  if (totalCountEl) totalCountEl.innerText = count;
+}
+
+// 🎯 DB 전체 동기화
 async function loadAllSupabaseData() {
   const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
   passageArchiveDB = pData || [];
   renderPassageArchiveTable();
 
-  // range(0, 5000)으로 제한을 완전 해제하여 262개 넘는 전체 데이터 한 번에 조회
-  const { data: bData, count: bCount } = await supabaseClient
-    .from('school_benchmark')
-    .select('*', { count: 'exact' })
-    .range(0, 5000)
-    .order('created_at', { ascending: false });
-
+  // 기출 DB 전체 수집
+  const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
   schoolBenchmarkDB = bData || [];
   
-  // 실제 DB에 존재하는 단 1개까지 포함한 정밀 수량 표기
-  const realTotal = bCount !== null ? bCount : schoolBenchmarkDB.length;
-
-  const badge = document.getElementById('benchmarkCountBadge');
-  const totalCountEl = document.getElementById('tableTotalCount');
-  
-  if (badge) badge.innerText = `기출 ${realTotal}제`;
-  if (totalCountEl) totalCountEl.innerText = realTotal;
-
+  updateBenchmarkCountUI(schoolBenchmarkDB.length);
   renderBenchmarkFolderView();
 
   const { data: qData } = await supabaseClient.from('questions').select('*').order('created_at', { ascending: false });
@@ -94,7 +89,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 PDF 분석 후 새로고침 보장 파서
+// 🎯 학교 기출 PDF 파싱 (1개 성공할 때마다 즉시 카운터 +1 & 폴더 리스트 실시간 갱신)
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -149,13 +144,24 @@ ${fullText.slice(0, 15000)}
 `;
       await sleep(1200);
 
-      const rawJson = await callGeminiWithRetry(apiKey, parserPrompt);
+      const rawJson = await callGeminiWithRetry(apiKey, promptText);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
       
       if (parsed && parsed.school) {
-        await supabaseClient.from('school_benchmark').insert([parsed]);
-        logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ [${file.name}] DB 적재 성공!</div>`;
+        // DB 인서트
+        const { data: inserted, error } = await supabaseClient.from('school_benchmark').insert([parsed]).select();
+        
+        if (!error && inserted && inserted.length > 0) {
+          // 🎯 DB 인서트 성공 시 메모리 데이터에 즉시 추가 및 실시간 UI +1 업데이트
+          schoolBenchmarkDB.unshift(inserted[0]);
+          updateBenchmarkCountUI(schoolBenchmarkDB.length);
+          renderBenchmarkFolderView(); // 폴더 목록 실시간 갱신
+
+          logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ [${file.name}] DB 적재 성공! (현재 기출: ${schoolBenchmarkDB.length}제)</div>`;
+        } else {
+          logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] DB 저장 실패: ${error?.message || '알 수 없는 오류'}</div>`;
+        }
       } else {
         logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 데이터 형식이 올바르지 않습니다.</div>`;
       }
@@ -166,16 +172,14 @@ ${fullText.slice(0, 15000)}
   }
 
   if (statusBadge) statusBadge.innerHTML = `<span class="text-emerald-400 font-bold">✓ 전체 분석 완료</span>`;
-  logBox.innerHTML += `<div class="text-cyan-300 font-bold mt-3">🎉 전체 PDF 분석 및 DB 적재 완벽 완료!</div>`;
+  logBox.innerHTML += `<div class="text-cyan-300 font-bold mt-3">🎉 전체 PDF 분석 및 DB 적재 완료! (총 ${schoolBenchmarkDB.length}제 축적됨)</div>`;
   
   btn.disabled = false; 
   btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
   clearQueuedFiles();
-  
-  // 🎯 강제 즉시 새로고침
-  await loadAllSupabaseData(); 
 }
 
+// 🎯 유형별 토글 아코디언 폴더 view 렌더링
 function renderBenchmarkFolderView() {
   const container = document.getElementById('benchmarkFolderContainer');
   if (!container) return;
