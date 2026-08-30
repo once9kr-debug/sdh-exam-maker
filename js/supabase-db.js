@@ -4,7 +4,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
 
-// 🎯 수량 뱃지 즉시 UI 반영 헬퍼 함수
+// 🎯 수량 뱃지 즉시 UI 반영
 function updateBenchmarkCountUI(count) {
   const badge = document.getElementById('benchmarkCountBadge');
   const totalCountEl = document.getElementById('tableTotalCount');
@@ -18,7 +18,6 @@ async function loadAllSupabaseData() {
   passageArchiveDB = pData || [];
   renderPassageArchiveTable();
 
-  // 기출 DB 전체 수집
   const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
   schoolBenchmarkDB = bData || [];
   
@@ -78,6 +77,7 @@ async function clearPassageArchiveDB() {
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// 🎯 API 503 에러 대비 재시도 호출 함수
 async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -89,7 +89,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 학교 기출 PDF 파싱 (1개 성공할 때마다 즉시 카운터 +1 & 폴더 리스트 실시간 갱신)
+// 🎯 학교 기출 PDF 파싱 (오타 수정완료 및 실시간 카운팅 반영)
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -144,19 +144,18 @@ ${fullText.slice(0, 15000)}
 `;
       await sleep(1200);
 
-      const rawJson = await callGeminiWithRetry(apiKey, promptText);
+      // 🎯 변수명 오타 수정 (parserPrompt로 인자 전달)
+      const rawJson = await callGeminiWithRetry(apiKey, parserPrompt);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
       
       if (parsed && parsed.school) {
-        // DB 인서트
         const { data: inserted, error } = await supabaseClient.from('school_benchmark').insert([parsed]).select();
         
         if (!error && inserted && inserted.length > 0) {
-          // 🎯 DB 인서트 성공 시 메모리 데이터에 즉시 추가 및 실시간 UI +1 업데이트
           schoolBenchmarkDB.unshift(inserted[0]);
           updateBenchmarkCountUI(schoolBenchmarkDB.length);
-          renderBenchmarkFolderView(); // 폴더 목록 실시간 갱신
+          renderBenchmarkFolderView();
 
           logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ [${file.name}] DB 적재 성공! (현재 기출: ${schoolBenchmarkDB.length}제)</div>`;
         } else {
