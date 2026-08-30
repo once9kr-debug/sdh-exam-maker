@@ -4,15 +4,24 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
 
-// 🎯 DB 전체 동기화 및 사이드바 뱃지 실시간 업데이트
+// 🎯 DB 전체 동기화 및 정확한 실시간 수량 갱신
 async function loadAllSupabaseData() {
   const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
   passageArchiveDB = pData || [];
   renderPassageArchiveTable();
 
-  const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
+  // 🎯 Supabase 정확한 카운트 및 데이터 100% 수집
+  const { data: bData, count: bCount } = await supabaseClient.from('school_benchmark').select('*', { count: 'exact' }).order('created_at', { ascending: false });
   schoolBenchmarkDB = bData || [];
-  renderBenchmarkFolderView(); // 유형별 폴더뷰 렌더링
+  
+  // 수량 뱃지 즉시 업데이트
+  const realCount = bCount || schoolBenchmarkDB.length;
+  const badge = document.getElementById('benchmarkCountBadge');
+  const totalCountEl = document.getElementById('tableTotalCount');
+  if (badge) badge.innerText = `기출 ${realCount}제`;
+  if (totalCountEl) totalCountEl.innerText = realCount;
+
+  renderBenchmarkFolderView();
 
   const { data: qData } = await supabaseClient.from('questions').select('*').order('created_at', { ascending: false });
   generatedQuestionsPool = qData || [];
@@ -67,7 +76,19 @@ async function clearPassageArchiveDB() {
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// 🎯 학교 기출 PDF 파싱 및 DB 즉시 반영 (동적 로딩 피드 포함)
+// 🎯 API 503 에러 발생 시 자동 재시도(Retry) 호출 함수
+async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await callGeminiUniversal(apiKey, promptText);
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      await sleep(2000 * attempt); // 2초, 4초 대기 후 재시도
+    }
+  }
+}
+
+// 🎯 학교 기출 PDF 파싱 및 DB 즉시 반영 (재시도 및 정밀 수량 갱신)
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -120,9 +141,10 @@ ${fullText.slice(0, 15000)}
   "trick": "핵심 킬러 함정 패턴 분석 1문장"
 }
 `;
-      await sleep(1000);
+      await sleep(1200); // 간격 지연
 
-      const rawJson = await callGeminiUniversal(apiKey, parserPrompt);
+      // 🎯 503 에러 대비 재시도 호출
+      const rawJson = await callGeminiWithRetry(apiKey, parserPrompt);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
       
@@ -152,21 +174,15 @@ ${fullText.slice(0, 15000)}
 // 🎯 유형별 토글 아코디언 폴더 view 렌더링 함수
 function renderBenchmarkFolderView() {
   const container = document.getElementById('benchmarkFolderContainer');
-  const totalCountEl = document.getElementById('tableTotalCount');
-  const badge = document.getElementById('benchmarkCountBadge');
+  if (!container) return;
 
   const totalCount = schoolBenchmarkDB.length;
-  if (totalCountEl) totalCountEl.innerText = totalCount;
-  if (badge) badge.innerText = `기출 ${totalCount}제`;
-
-  if (!container) return;
 
   if (totalCount === 0) {
     container.innerHTML = `<div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed">축적된 기출 DB가 없습니다. PDF 시험지를 드롭하여 등록하세요.</div>`;
     return;
   }
 
-  // 유형 카테고리 정의
   const categories = [
     { key: '어법', label: '어법 / 어휘 유형', icon: 'fa-spell-check', bg: 'bg-sky-50 border-sky-200 text-sky-900', badgeBg: 'bg-sky-600' },
     { key: '빈칸', label: '빈칸 추론 유형', icon: 'fa-square-minus', bg: 'bg-cyan-50 border-cyan-200 text-cyan-900', badgeBg: 'bg-cyan-600' },
@@ -175,7 +191,6 @@ function renderBenchmarkFolderView() {
     { key: '기타', label: '대의 파악 / 기타 유형', icon: 'fa-file-lines', bg: 'bg-slate-50 border-slate-200 text-slate-900', badgeBg: 'bg-slate-700' }
   ];
 
-  // 카테고리별 그룹화
   const groups = { 어법: [], 빈칸: [], 순서: [], 서술형: [], 기타: [] };
   
   schoolBenchmarkDB.forEach(item => {
@@ -191,7 +206,6 @@ function renderBenchmarkFolderView() {
     const list = groups[cat.key] || [];
     return `
       <div class="border rounded-2xl overflow-hidden bg-white shadow-sm transition">
-        <!-- 폴더 헤더 (클릭 시 토글) -->
         <button onclick="toggleBenchmarkFolder(${folderIdx})" class="w-full p-4 flex items-center justify-between ${cat.bg} font-bold text-sm">
           <div class="flex items-center gap-3">
             <i class="fa-solid ${cat.icon} text-lg"></i>
@@ -201,7 +215,6 @@ function renderBenchmarkFolderView() {
           <i id="folderIcon_${folderIdx}" class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
         </button>
         
-        <!-- 폴더 내부 항목 리스트 (기본 닫힘 상태) -->
         <div id="folderContent_${folderIdx}" class="hidden divide-y divide-slate-100 border-t">
           ${list.length === 0 ? `<div class="p-4 text-center text-xs text-slate-400">등록된 기출이 없습니다.</div>` : list.map((item, idx) => `
             <div class="p-3.5 hover:bg-slate-50 transition flex items-start gap-4 text-xs">
@@ -219,7 +232,6 @@ function renderBenchmarkFolderView() {
   }).join('');
 }
 
-// 🎯 토글 동작 함수
 function toggleBenchmarkFolder(idx) {
   const content = document.getElementById(`folderContent_${idx}`);
   const icon = document.getElementById(`folderIcon_${idx}`);
