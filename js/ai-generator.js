@@ -24,7 +24,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
 
-  // 🎯 1. 어법/어휘: 본문 밑줄 ①~⑤ 대체 및 하단 보기 ①~⑤ 강제 통일
+  // 어법/어휘 보기 기호 ①~⑤ 강제 교정
   if (qType.includes('어법') || qType.includes('어휘')) {
     if (Array.isArray(item.target_words) && item.target_words.length === 5) {
       let p = origPassage;
@@ -38,7 +38,6 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
       });
       finalPassage = p;
     }
-    // 어법/어휘 문제 하단 선택지는 항상 깔끔하게 ①~⑤로 렌더링
     finalOptions = ['①', '②', '③', '④', '⑤'];
   } else if (qType.includes('빈칸')) {
     if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
@@ -55,7 +54,6 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     const third = Math.floor(remainPart.length / 3);
     finalPassage = `(A) ${remainPart.substring(0, third)}\n(B) ${remainPart.substring(third, third*2)}\n(C) ${remainPart.substring(third*2)}`;
   } else if (qType.includes('삽입')) {
-    // 🎯 2. 삽입 문제: 안내문구가 들어갔을 경우 본문 첫 문장을 자동 지정
     let gSent = item.given_sentence || item.given_box || '';
     if (!gSent || gSent.includes('주어진 문장을 읽고')) {
       const sList = origPassage.split('. ');
@@ -69,7 +67,6 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     }
   } else if (qType.includes('요약')) {
     summaryText = item.summary_text || '';
-    // 🎯 3. 요약문 선택지 정돈
     if (finalOptions.length > 0) {
       finalOptions = finalOptions.map((o, idx) => {
         const sym = ['①', '②', '③', '④', '⑤'][idx];
@@ -88,7 +85,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     conditionText = item.condition_text || '[조건] 본문 어휘 및 구문 맥락을 활용하여 작성하시오.';
   }
 
-  // 🎯 4. 정답 해설란의 JSON 표기 방지
+  // 정답 텍스트 객체/JSON 파싱 완벽 보정
   let ansText = item.answer || '본문 맥락에 맞는 조건별 정답';
   if (typeof ansText === 'object' && ansText !== null) {
     ansText = Object.entries(ansText).map(([k, v]) => `(${k}) ${v}`).join(' / ');
@@ -113,12 +110,16 @@ async function executeFastParallelGenerate() {
   const setKey = document.getElementById('selectMockSet').value;
   if (!setKey) return alert('모의고사 세트를 선택하세요.');
 
-  const targetPassages = passageArchiveDB.filter(p => 
-    p.set_key === setKey || p.set_key?.trim() === setKey.trim()
-  );
+  // 🎯 [유연한 세트키 검색] 형식 불일치로 인한 0문항 방지 완벽 처리
+  const rawKey = setKey.trim();
+  const targetPassages = passageArchiveDB.filter(p => {
+    if (!p.set_key) return false;
+    const pKey = p.set_key.trim();
+    return pKey === rawKey || rawKey.includes(pKey) || pKey.includes(rawKey);
+  });
 
   if (targetPassages.length === 0) {
-    return alert(`선택한 세트[${setKey}]에 등록된 지문이 없습니다.`);
+    return alert(`선택한 세트[${setKey}]에 매칭되는 지문이 DB에 없습니다. 지문 등록 여부를 확인해주세요.`);
   }
 
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
@@ -126,12 +127,13 @@ async function executeFastParallelGenerate() {
 
   const logBox = document.getElementById('generationLogBox');
   logBox.classList.remove('hidden');
-  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 정밀 생성] 출제 가동...</div>`;
+  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 생성] 총 ${targetPassages.length}개 지문 출제 가동...</div>`;
 
   const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
     ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
   ).join('\n');
 
+  // 기존 꼬인 문항 삭제 후 재생성
   await supabaseClient.from('questions').delete().eq('set_key', setKey).eq('difficulty', selectedDifficulty);
 
   let totalCount = 0;
@@ -152,9 +154,9 @@ ${benchmarkContext || "주요 고교 변형 패턴"}
 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
 
 ⚠️ 규격 지침:
-1. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 발췌한 실제 문장을 작성하세요. 절대 설명 문구를 넣지 마세요.
+1. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 발췌한 실제 문장을 작성하세요.
 2. '어법/어휘' 유형: target_words 필드에 [ {"orig": "본문단어1", "mod": "변형단어1"}, ... ] 5개 객체를 만드세요.
-3. '주관식' 유형: answer 필드에 모범 답안 문장을 적으세요.
+3. '주관식' 유형: answer 필드에 완결된 모범 답안 문장을 적으세요.
 `;
     try {
       const rawJson = await callGeminiUniversal(apiKey, promptText);
