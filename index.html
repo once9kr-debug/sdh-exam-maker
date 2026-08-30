@@ -38,7 +38,7 @@
     .diff-btn.active-diff { background-color: #0f172a; color: #f59e0b; border-color: #0f172a; }
     .filter-diff-btn { padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
     .filter-diff-btn.active-filter-diff { background-color: #0f172a; color: #38bdf8; border-color: #0f172a; }
-    .nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
+    .nav-item { width: 100%; display: flex; align-items: center; justify-between: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
     .nav-item.active-nav { background-color: #1e293b !important; color: #ffffff !important; font-weight: 700; border-left: 4px solid #38bdf8; }
 
     @media print {
@@ -56,7 +56,6 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- 로그인 팝업 모달 -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
@@ -161,7 +160,7 @@
             <select id="filterYear" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
             <select id="filterMonth" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
             <select id="filterGrade" class="border border-slate-300 text-xs rounded-lg px-3 py-2 bg-white font-medium"></select>
-            <button onclick="renderExamTable()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold shadow-sm"><i class="fa-solid fa-arrows-rotate"></i></button>
+            <button onclick="loadAllSupabaseData()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg font-bold shadow-sm" title="DB 새로고침"><i class="fa-solid fa-arrows-rotate"></i></button>
           </div>
         </div>
 
@@ -779,6 +778,7 @@
       };
     }
 
+    // 🎯 출제 완료 후 Supabase DB 전체 재조회 필수 가동
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -796,7 +796,6 @@
       logBox.innerHTML = `<div>🚀 완전 검증 출제 가동 (${setKey})...</div>`;
 
       await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
-      generatedQuestionsPool = generatedQuestionsPool.filter(q => !q.id.startsWith(`Q-${setKey}-`));
 
       let totalCount = 0;
 
@@ -826,7 +825,6 @@ JSON 출력 예시:
           if (Array.isArray(parsed)) {
             const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
             await supabaseClient.from('generated_questions').upsert(verifiedItems);
-            generatedQuestionsPool.unshift(...verifiedItems);
             totalCount += verifiedItems.length;
             logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완료 (+${verifiedItems.length}문항)</div>`;
             logBox.scrollTop = logBox.scrollHeight;
@@ -836,7 +834,9 @@ JSON 출력 예시:
 
       logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
       alert('🎉 출제 완료!');
-      loadAllSupabaseData();
+      
+      // 🎯 [핵심 추가] DB에서 생성된 최신 데이터를 강제 재로드하여 화면 수량 동기화
+      await loadAllSupabaseData();
     }
 
     function renderPaper() {
@@ -953,7 +953,7 @@ JSON 출력 예시:
 
       if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
       if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
-      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}" ${g===3?'selected':''}>고${g}</option>`).join('');
+      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}">${g===3?'고3':`고${g}`}</option>`).join('');
 
       const filterYearEl = document.getElementById('filterYear');
       const filterMonthEl = document.getElementById('filterMonth');
@@ -1020,9 +1020,8 @@ JSON 출력 예시:
       }
     }
 
-    // 🎯 변형문제 DB 테이블 누적 데이터 초기화 함수 추가
     async function clearGeneratedQuestionsDB() {
-      if (confirm('생성된 변형문제 DB를 전체 초기화하시겠습니까? (이전 생성 문제 포함 전부 삭제)')) {
+      if (confirm('생성된 변형문제 DB를 전체 초기화하시겠습니까?')) {
         await supabaseClient.from('generated_questions').delete().neq('id', 'dummy');
         generatedQuestionsPool = [];
         alert('🎉 변형문제 DB 초기화가 완료되었습니다.');
@@ -1117,7 +1116,7 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // 🎯 세트 키별 정밀 매칭 및 카운트
+    // 🎯 Supabase 데이터 정밀 매칭
     async function loadAllSupabaseData() {
       const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
       if (pData) passageArchiveDB = pData;
@@ -1132,7 +1131,6 @@ ${fullText.slice(0, 15000)}
         generatedQuestionsPool = qData;
         const examMap = {};
 
-        // 1. 현재 DB 지문 기반 시험지 세트 생성
         passageArchiveDB.forEach(p => {
           const k = `${p.year}-${p.month}-${p.grade}`;
           if (!examMap[k]) {
@@ -1147,12 +1145,11 @@ ${fullText.slice(0, 15000)}
           }
         });
 
-        // 2. 정확한 연도-월 키 매칭으로 카운트 계산
+        // 🎯 연도 및 시행월 매칭을 통한 세트 문항 수 즉시 갱신
         qData.forEach(q => {
           Object.keys(examMap).forEach(setKey => {
             const [y, m] = setKey.split('-');
-            const prefix = `${y}-${m}`;
-            if (q.id && q.id.includes(prefix)) {
+            if (q.id && q.id.includes(`${y}-${m}`)) {
               examMap[setKey].questionCount++;
             }
           });
