@@ -49,7 +49,7 @@
   </div>
 
   <div id="appContainer" class="flex flex-1 min-h-screen">
-    <!-- 좌측 사이드바 (완전 복구) -->
+    <!-- 좌측 사이드바 -->
     <aside class="no-print w-64 bg-slate-950 text-white flex flex-col shrink-0 border-r border-slate-800">
       <div class="p-4 border-b border-slate-800 flex flex-col gap-2">
         <div class="bg-white px-3 py-2 rounded-xl flex items-center justify-center shadow-sm cursor-pointer" onclick="switchView('examList')">
@@ -240,9 +240,19 @@
         </div>
       </section>
 
-      <!-- VIEW: PDF 기출 파서 (드래그앤드롭 이벤트 적용) -->
+      <!-- VIEW: PDF 기출 파서 (드롭존 리스트 및 테이블 헤더 완전 복구) -->
       <section id="view-pdfParserPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl border space-y-6">
+          <div class="flex items-center justify-between border-b pb-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-cyan-600"></i> 기출문제 DB 등록
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">학교 시험지 PDF를 드래그&드롭하여 킬러 패턴을 분석 및 적재합니다.</p>
+            </div>
+            <button onclick="resetBenchmarkDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">기출 DB 초기화</button>
+          </div>
+
           <div class="grid grid-cols-12 gap-6">
             <div class="col-span-5 space-y-4">
               <div id="pdfDropZone" 
@@ -258,24 +268,54 @@
                 <h4 class="font-bold text-sm text-slate-800">학교 시험지 PDF 드래그 & 드롭</h4>
                 <p class="text-[11px] text-slate-500 mt-1">클릭하거나 PDF 파일을 이곳에 끌어다 놓으세요</p>
               </div>
+
+              <!-- 🎯 드롭존 하단 대기 목록 및 시작 버튼 복구 -->
               <div id="queuedFilesContainer" class="hidden bg-slate-50 p-4 rounded-xl border space-y-2">
-                <div id="queuedFileList" class="max-h-32 overflow-y-auto text-xs space-y-1"></div>
-                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full bg-cyan-600 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2"><i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작</button>
+                <div class="flex items-center justify-between text-xs font-bold text-slate-800 border-b pb-2">
+                  <span>대기 중인 PDF 목록 (<span id="queuedFileCount" class="text-cyan-600 font-bold">0</span>개)</span>
+                  <button onclick="clearQueuedFiles()" class="text-slate-400 hover:text-rose-500 text-[11px]">목록 비우기</button>
+                </div>
+                <div id="queuedFileList" class="max-h-36 overflow-y-auto text-xs space-y-1"></div>
+                <button onclick="startBatchPdfClassification()" id="btnStartBatch" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+                  <i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작
+                </button>
               </div>
             </div>
-            <div class="col-span-7 flex flex-col">
-              <div id="pdfLogTerminal" class="h-[360px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto">[SYSTEM READY] PDF 드래그&드롭 대기 중...</div>
+
+            <div class="col-span-7 flex flex-col space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span>PDF 텍스트 추출 및 AI 분석 피드</span>
+                <span id="parsedItemCount" class="text-cyan-700 font-bold">분석 대기 중</span>
+              </div>
+              <div id="pdfLogTerminal" class="h-[380px] bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono text-xs overflow-y-auto border border-slate-800 leading-relaxed">[SYSTEM READY] PDF 드래그&드롭 대기 중...</div>
             </div>
           </div>
-          <div class="border rounded-xl overflow-hidden">
-            <table class="w-full text-left text-xs">
-              <tbody id="benchmarkTableBody" class="divide-y text-slate-700"></tbody>
-            </table>
+
+          <!-- 🎯 하단 축적 테이블 (제목 헤더 <thead> 완전 복구) -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-database text-cyan-600"></i> 축적된 학교 기출 벤치마크 DB (<span id="tableTotalCount">0</span>문항)
+              </h3>
+            </div>
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-slate-900 text-slate-200 font-bold border-b">
+                    <th class="py-2.5 px-4 w-12 text-center">No.</th>
+                    <th class="py-2.5 px-4 w-48">학교 / 시험 구분</th>
+                    <th class="py-2.5 px-4 w-24 text-center">유형</th>
+                    <th class="py-2.5 px-4">문제 발문 / 핵심 킬러 포인트 분석 내용</th>
+                  </tr>
+                </thead>
+                <tbody id="benchmarkTableBody" class="divide-y text-slate-700"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- VIEW: My Page (복구) -->
+      <!-- VIEW: My Page -->
       <section id="view-myPage" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl border space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
@@ -310,7 +350,7 @@
     </div>
   </div>
 
-  <!-- JS 모듈 순서대로 로드 -->
+  <!-- JS 모듈 로드 -->
   <script src="js/supabase-db.js"></script>
   <script src="js/ai-generator.js"></script>
   <script>
@@ -512,17 +552,24 @@
     }
     
     function renderQueuedFiles() {
-      const list = document.getElementById('queuedFileList'), c = document.getElementById('queuedFilesContainer');
+      const list = document.getElementById('queuedFileList');
+      const c = document.getElementById('queuedFilesContainer');
+      const countEl = document.getElementById('queuedFileCount');
+      
       if (!list || !c) return;
+      if (countEl) countEl.innerText = queuedPdfFiles.length;
+
       if (queuedPdfFiles.length === 0) return c.classList.add('hidden');
       c.classList.remove('hidden');
+      
       list.innerHTML = queuedPdfFiles.map((f, i) => `
-        <div class="p-2 border rounded bg-white flex justify-between items-center text-xs">
-          <span class="truncate">${f.name}</span>
-          <button onclick="removeQueuedFile(${i})" class="text-rose-500 hover:font-bold"><i class="fa-solid fa-xmark"></i></button>
+        <div class="p-2 border rounded bg-white flex justify-between items-center text-xs shadow-sm">
+          <span class="truncate text-slate-700 font-medium">${f.name}</span>
+          <button onclick="removeQueuedFile(${i})" class="text-slate-400 hover:text-rose-500 transition px-1"><i class="fa-solid fa-xmark"></i></button>
         </div>
       `).join('');
     }
+    
     function removeQueuedFile(i) { queuedPdfFiles.splice(i, 1); renderQueuedFiles(); }
     function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
 
@@ -543,7 +590,7 @@
       const filterMonthEl = document.getElementById('filterMonth');
 
       if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
-      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
+      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `${m}월</option>`).join('');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
