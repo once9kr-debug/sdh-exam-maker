@@ -4,7 +4,6 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let passageArchiveDB = [], generatedQuestionsPool = [], mockExams = [], schoolBenchmarkDB = [], queuedPdfFiles = [];
 
-// 🎯 수량 뱃지 즉시 UI 반영
 function updateBenchmarkCountUI(count) {
   const badge = document.getElementById('benchmarkCountBadge');
   const totalCountEl = document.getElementById('tableTotalCount');
@@ -12,7 +11,6 @@ function updateBenchmarkCountUI(count) {
   if (totalCountEl) totalCountEl.innerText = count;
 }
 
-// 🎯 DB 전체 동기화
 async function loadAllSupabaseData() {
   const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
   passageArchiveDB = pData || [];
@@ -88,7 +86,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 학교 기출 PDF 파싱 (고유 ID 강제 부여로 Null Constraint 에러 완벽 해결)
+// 🎯 파서 프롬프트 내 서술형 인식 지침 대폭 강화
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -136,10 +134,13 @@ ${fullText.slice(0, 15000)}
 {
   "school": "학교명",
   "exam": "시험구분",
-  "type": "유형 (어법, 빈칸, 순서, 삽입, 서술형, 주제 중 1개 선택)",
+  "type": "유형 (반드시 어법, 빈칸, 순서, 삽입, 서술형, 주제 중 1개 정확히 선택)",
   "title": "발문 요약",
   "trick": "핵심 킬러 함정 패턴 분석 1문장"
 }
+
+⚠️ [필수 분류 규격 규칙]:
+1. 객관식 선택지(①~⑤)가 없고, <보기> 단어 배열, 영작, 조건부 문장 완성, 단답형 작성 문제는 발문에 '빈칸'이라는 단어가 있더라도 무조건 type을 "서술형"으로 지정하세요!
 `;
       await sleep(1200);
 
@@ -148,7 +149,6 @@ ${fullText.slice(0, 15000)}
       const parsed = JSON.parse(cleanedJson);
       
       if (parsed && parsed.school) {
-        // 🎯 id를 타임스탬프 + 랜덤값으로 직접 생성하여 DB 전달 (id 에러 100% 차단)
         const insertPayload = {
           id: Date.now() + Math.floor(Math.random() * 1000),
           school: parsed.school,
@@ -189,7 +189,7 @@ ${fullText.slice(0, 15000)}
   clearQueuedFiles();
 }
 
-// 🎯 유형별 토글 아코디언 폴더 view 렌더링
+// 🎯 주관식 / 서술형 폴더 분류 기준 대폭 확장 (서술, 주관식, 영작, 배열, 단답, 완성)
 function renderBenchmarkFolderView() {
   const container = document.getElementById('benchmarkFolderContainer');
   if (!container) return;
@@ -211,11 +211,20 @@ function renderBenchmarkFolderView() {
   
   schoolBenchmarkDB.forEach(item => {
     const t = item.type || '';
-    if (t.includes('어법') || t.includes('어휘')) groups['어법'].push(item);
-    else if (t.includes('빈칸')) groups['빈칸'].push(item);
-    else if (t.includes('순서') || t.includes('삽입') || t.includes('흐름')) groups['순서'].push(item);
-    else if (t.includes('서술') || t.includes('주관식')) groups['서술형'].push(item);
-    else groups['기타'].push(item);
+    const title = item.title || '';
+
+    // 🎯 정밀 서술형 분류 조건: type 또는 title에 서술/주관식/영작/배열/완성 단어가 들어있으면 서술형 폴더로 분류
+    if (t.includes('서술') || t.includes('주관식') || t.includes('영작') || t.includes('배열') || t.includes('완성') || title.includes('서술') || title.includes('완성하시오')) {
+      groups['서술형'].push(item);
+    } else if (t.includes('어법') || t.includes('어휘')) {
+      groups['어법'].push(item);
+    } else if (t.includes('빈칸')) {
+      groups['빈칸'].push(item);
+    } else if (t.includes('순서') || t.includes('삽입') || t.includes('흐름')) {
+      groups['순서'].push(item);
+    } else {
+      groups['기타'].push(item);
+    }
   });
 
   container.innerHTML = categories.map((cat, folderIdx) => {
