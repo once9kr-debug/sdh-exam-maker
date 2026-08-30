@@ -38,7 +38,7 @@
     .diff-btn.active-diff { background-color: #0f172a; color: #f59e0b; border-color: #0f172a; }
     .filter-diff-btn { padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
     .filter-diff-btn.active-filter-diff { background-color: #0f172a; color: #38bdf8; border-color: #0f172a; }
-    .nav-item { width: 100%; display: flex; align-items: center; justify-between: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
+    .nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
     .nav-item.active-nav { background-color: #1e293b !important; color: #ffffff !important; font-weight: 700; border-left: 4px solid #38bdf8; }
 
     @media print {
@@ -56,6 +56,7 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
+  <!-- 로그인 팝업 모달 -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
@@ -342,8 +343,7 @@
               <p class="text-xs text-slate-500 mt-0.5">상단 모의고사 정보 설정 후 각 지문 번호에 맞게 영어 본문만 붙여넣으세요.</p>
             </div>
             <div class="flex gap-2">
-              <button onclick="clearPassageArchiveDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">지문 DB 초기화</button>
-              <button onclick="clearGeneratedQuestionsDB()" class="text-xs text-amber-700 hover:bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-lg font-bold">변형문제 DB 초기화</button>
+              <button onclick="clearPassageArchiveDB()" class="text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg font-bold">지문/문제 전체 초기화</button>
             </div>
           </div>
 
@@ -532,6 +532,7 @@
     let currentUser = null, userAccountsDB = { 'admin': { pw: '1234', role: 'admin', name: '원장 선생님' } };
     let selectedDifficulty = '상';
     let selectedFilterDifficulty = '혼합';
+    let currentSelectedExam = null;
 
     const standardTitleMap = {
       '주제': '다음 글의 주제로 가장 적절한 것은?',
@@ -643,6 +644,7 @@
       if (el) el.innerText = currentUser.name;
     }
 
+    // 🎯 외래키(passage_id) 및 set_key 기반 유형 칩 렌더링
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
@@ -650,8 +652,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const prefix = currentSelectedExam ? `${currentSelectedExam.year}-${currentSelectedExam.month}` : '';
-        const isCurrentExam = prefix && q.id && q.id.includes(prefix);
+        const isCurrentExam = currentSelectedExam && (q.set_key === currentSelectedExam.id);
         const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
         return isCurrentExam && diffMatch && passageMatch;
       });
@@ -674,8 +675,7 @@
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const prefix = currentSelectedExam ? `${currentSelectedExam.year}-${currentSelectedExam.month}` : '';
-        const isCurrentExam = prefix && q.id && q.id.includes(prefix);
+        const isCurrentExam = currentSelectedExam && (q.set_key === currentSelectedExam.id);
         const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
         return isCurrentExam && diffMatch && typeMatch;
       });
@@ -704,8 +704,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const prefix = currentSelectedExam ? `${currentSelectedExam.year}-${currentSelectedExam.month}` : '';
-        const isCurrentExam = prefix && q.id && q.id.includes(prefix);
+        const isCurrentExam = currentSelectedExam && (q.set_key === currentSelectedExam.id);
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
       const el = document.getElementById('selectedTotalCount');
@@ -724,7 +723,7 @@
       switchView('typeSelect');
     }
 
-    function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
+    function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
       let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
       let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
 
@@ -763,7 +762,8 @@
       }
 
       return {
-        id: `Q-${setKey}-${passageNum}-${qType}-${idx+1}-${Math.random().toString(36).substring(2,7)}`,
+        passage_id: passageId,            -- 🎯 SQL Foreign Key 연결
+        set_key: setKey,
         passage_num: String(passageNum),
         type: qType,
         difficulty: selectedDifficulty || '상',
@@ -778,14 +778,14 @@
       };
     }
 
-    // 🎯 출제 완료 후 Supabase DB 전체 재조회 필수 가동
+    // 🎯 새 'questions' SQL 테이블 출제 엔진
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
       const setKey = document.getElementById('selectMockSet').value;
       if (!setKey) return alert('모의고사 세트를 선택하세요.');
 
-      const targetPassages = passageArchiveDB.filter(p => `${p.year}-${p.month}-${p.grade}` === setKey);
+      const targetPassages = passageArchiveDB.filter(p => p.set_key === setKey);
       if (targetPassages.length === 0) return alert('선택한 세트에 지문이 없습니다.');
 
       const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
@@ -793,9 +793,10 @@
 
       const logBox = document.getElementById('generationLogBox');
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 완전 검증 출제 가동 (${setKey})...</div>`;
+      logBox.innerHTML = `<div>🚀 [SQL RELATIONAL ENGINE] 출제 시작 (${setKey})...</div>`;
 
-      await supabaseClient.from('generated_questions').delete().like('id', `Q-${setKey}-%`);
+      // 기존 해당 세트 문제 깔끔히 삭제
+      await supabaseClient.from('questions').delete().eq('set_key', setKey);
 
       let totalCount = 0;
 
@@ -803,7 +804,7 @@
         const prompt = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 아래 [영어 지문 (${pObj.passage_num}번)]:
-${pObj.text}
+${pObj.full_text}
 
 [출제 요청 유형들]:
 ${selectedTypes.join(', ')}
@@ -820,352 +821,4 @@ JSON 출력 예시:
 `;
         try {
           const rawJson = await callGeminiUniversal(apiKey, prompt);
-          let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-          const parsed = JSON.parse(cleanedJson);
-          if (Array.isArray(parsed)) {
-            const verifiedItems = parsed.map((item, idx) => processVerifiedQuestion(item, pObj.text, item.type || selectedTypes[0], setKey, pObj.passage_num, idx));
-            await supabaseClient.from('generated_questions').upsert(verifiedItems);
-            totalCount += verifiedItems.length;
-            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완료 (+${verifiedItems.length}문항)</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
-          }
-        } catch (e) { console.error(e); }
-      }
-
-      logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
-      alert('🎉 출제 완료!');
-      
-      // 🎯 [핵심 추가] DB에서 생성된 최신 데이터를 강제 재로드하여 화면 수량 동기화
-      await loadAllSupabaseData();
-    }
-
-    function renderPaper() {
-      const qContainer = document.getElementById('paperContent');
-      const quickGrid = document.getElementById('quickAnswerGrid');
-      const aContainer = document.getElementById('answerDetailContent');
-
-      if (!qContainer) return;
-
-      qContainer.innerHTML = filteredQuestions.map((q, idx) => {
-        const isSubjective = (q.type === '서술형' || q.type === '단답형');
-        return `
-          <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
-            <div class="font-bold text-[13.5px] mb-1">
-              <span>${idx + 1}. ${q.title}</span>
-              <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type}]</span>
-            </div>
-            ${q.given_box ? `<div class="given-box exam-eng-font font-medium"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
-            <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
-            ${isSubjective ? `
-              ${q.condition_box ? `<div class="text-[11px] font-bold text-slate-800 my-1">${q.condition_box}</div>` : ''}
-              ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-              <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
-            ` : ''}
-            ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${o}</div>`).join('')}</div>` : ''}
-          </div>
-        `;
-      }).join('');
-
-      if (quickGrid) {
-        quickGrid.innerHTML = filteredQuestions.map((q, idx) => `
-          <div class="border p-1 rounded bg-white h-10 flex flex-col justify-center items-center">
-            <span class="text-[9px] text-slate-400 font-bold">${idx + 1}번</span>
-            <span class="font-black text-xs">${(q.type === '서술형' || q.type === '단답형') ? '서술형' : q.answer}</span>
-          </div>
-        `).join('');
-      }
-
-      if (aContainer) {
-        aContainer.innerHTML = filteredQuestions.map((q, idx) => `
-          <div class="question-block border-b pb-2 mb-2">
-            <div class="font-bold text-slate-900 mb-1">[${idx + 1}번 정답 : <strong class="text-blue-700">${q.answer}</strong>]</div>
-            <div class="text-[11px] text-slate-700 font-sans bg-slate-50 p-2 rounded">${q.explanation}</div>
-          </div>
-        `).join('');
-      }
-    }
-
-    function renderExamTable() {
-      const tbody = document.getElementById('examTableBody');
-      const yearFilter = document.getElementById('filterYear')?.value || '';
-      const monthFilter = document.getElementById('filterMonth')?.value || '';
-      const gradeFilter = document.getElementById('filterGrade')?.value || '';
-
-      const filteredExams = mockExams.filter(e => {
-        const matchYear = !yearFilter || e.year === yearFilter;
-        const matchMonth = !monthFilter || e.month === monthFilter;
-        const matchGrade = !gradeFilter || e.grade === `고${gradeFilter}` || e.grade === e.grade;
-        return matchYear && matchMonth && matchGrade;
-      });
-
-      if (tbody) tbody.innerHTML = filteredExams.map(exam => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-4 px-6 font-semibold">${exam.year}년</td>
-          <td class="py-4 px-6 font-semibold">${exam.month}월</td>
-          <td class="py-4 px-6 font-bold text-slate-900">${exam.title}</td>
-          <td class="py-4 px-6 font-bold text-slate-700">${exam.grade || '고3'}</td>
-          <td class="py-4 px-6 text-center font-bold text-cyan-600">${exam.questionCount || 0}문항</td>
-          <td class="py-4 px-6 text-center">
-            <button onclick="openExamTypeSelector('${exam.id}')" class="text-cyan-600 hover:bg-cyan-50 p-2 rounded-lg" title="과제 보기 및 필터링">
-              <i class="fa-solid fa-folder-open text-xl"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function generateExamPaper() {
-      const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
-      const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
-      const limit = parseInt(document.getElementById('limitCount')?.value) || 50;
-
-      let matched = generatedQuestionsPool.filter(q => {
-        const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const prefix = currentSelectedExam ? `${currentSelectedExam.year}-${currentSelectedExam.month}` : '';
-        const isCurrentExam = prefix && q.id && q.id.includes(prefix);
-        return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
-      });
-
-      if (matched.length === 0) return alert('선택하신 조건에 매칭되는 문제가 없습니다.');
-
-      filteredQuestions = matched.slice(0, limit);
-      renderPaper();
-      switchView('paperView');
-    }
-
-    function switchView(v) {
-      ['examList', 'adminPanel', 'mockRegisterPanel', 'typeSelect', 'paperView', 'pdfParserPanel', 'myPage'].forEach(id => {
-        document.getElementById('view-' + id)?.classList.add('hidden');
-        document.getElementById('nav-' + id)?.classList.remove('active-nav');
-      });
-      document.getElementById('view-' + v)?.classList.remove('hidden');
-      document.getElementById('nav-' + v)?.classList.add('active-nav');
-    }
-
-    function initDropdownOptions() {
-      const years = Array.from({length: 12}, (_, i) => 2026 - i);
-      const months = [3, 4, 5, 6, 7, 9, 10, 11, 12];
-      const grades = [1, 2, 3];
-
-      const regYearEl = document.getElementById('regYear');
-      const regMonthEl = document.getElementById('regMonth');
-      const regGradeEl = document.getElementById('regGrade');
-
-      if (regYearEl) regYearEl.innerHTML = years.map(y => `<option value="${y}" ${y===2024?'selected':''}>${y}년</option>`).join('');
-      if (regMonthEl) regMonthEl.innerHTML = months.map(m => `<option value="${m}" ${m===3?'selected':''}>${m}월</option>`).join('');
-      if (regGradeEl) regGradeEl.innerHTML = grades.map(g => `<option value="${g}">${g===3?'고3':`고${g}`}</option>`).join('');
-
-      const filterYearEl = document.getElementById('filterYear');
-      const filterMonthEl = document.getElementById('filterMonth');
-      const filterGradeEl = document.getElementById('filterGrade');
-
-      if (filterYearEl) filterYearEl.innerHTML = `<option value="">년도 전체</option>` + years.map(y => `<option value="${y}">${y}년</option>`).join('');
-      if (filterMonthEl) filterMonthEl.innerHTML = `<option value="">월 전체</option>` + months.map(m => `<option value="${m}">${m}월</option>`).join('');
-      if (filterGradeEl) filterGradeEl.innerHTML = `<option value="">학년 전체</option>` + grades.map(g => `<option value="${g}">고${g}</option>`).join('');
-    }
-
-    function render25PassageInputForms() {
-      const c = document.getElementById('passageInputsContainer');
-      if (c) c.innerHTML = passageNumberList.map(n => `<textarea id="inputP_${n}" rows="3" class="w-full p-2 border text-xs font-mono" placeholder="${n}번 영어 지문 복사..."></textarea>`).join('');
-    }
-
-    async function saveAll25Passages() {
-      const year = document.getElementById('regYear')?.value || '2024';
-      const month = document.getElementById('regMonth')?.value || '6';
-      const grade = document.getElementById('regGrade')?.value || '3';
-      const upsertData = [];
-      passageNumberList.forEach(num => {
-        const text = document.getElementById(`inputP_${num}`)?.value.trim();
-        if (text) upsertData.push({ key: `${year}-${month}-${grade}-${num}`, year, month, grade, passage_num: num, sample: text.substring(0, 30) + '...', text });
-      });
-      if (upsertData.length > 0) {
-        await supabaseClient.from('passage_archive').upsert(upsertData);
-        alert('🎉 지문 DB 저장 완료!');
-        loadAllSupabaseData();
-      }
-    }
-
-    function renderPassageArchiveTable() {
-      const tbody = document.getElementById('passageArchiveTableBody'), totalArchived = document.getElementById('totalArchivedCount');
-      if (totalArchived) totalArchived.innerText = passageArchiveDB.length;
-      if (tbody) tbody.innerHTML = passageArchiveDB.map(p => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-2 px-4 text-center font-bold">${p.year}년</td><td class="py-2 px-4 text-center">${p.month}월</td>
-          <td class="py-2 px-4 text-center font-bold text-teal-700">고${p.grade}</td><td class="py-2 px-4 text-center font-black text-slate-900">${p.passage_num}번</td>
-          <td class="py-2 px-4 font-mono text-slate-600 truncate max-w-xs">${p.sample}</td><td class="py-2 px-4 text-center text-emerald-600 font-bold">등록완료</td>
-          <td class="py-2 px-4 text-center"><button onclick="deleteSinglePassage('${p.key}')" class="text-rose-600 hover:underline">삭제</button></td>
-        </tr>
-      `).join('');
-      updateMockSetDropdown();
-    }
-
-    function updateMockSetDropdown() {
-      const selectEl = document.getElementById('selectMockSet'), setMap = {};
-      passageArchiveDB.forEach(p => { const k = `${p.year}-${p.month}-${p.grade}`; setMap[k] = (setMap[k] || 0) + 1; });
-      if (selectEl) selectEl.innerHTML = '<option value="">-- 모의고사 세트 선택 --</option>' + Object.keys(setMap).map(k => `<option value="${k}">[${k}] 모의고사 세트 (${setMap[k]}개 지문)</option>`).join('');
-    }
-
-    async function deleteSinglePassage(key) {
-      await supabaseClient.from('passage_archive').delete().eq('key', key);
-      passageArchiveDB = passageArchiveDB.filter(p => p.key !== key);
-      renderPassageArchiveTable();
-    }
-
-    async function clearPassageArchiveDB() {
-      if (confirm('지문 ARCHIVE DB를 초기화하시겠습니까?')) {
-        await supabaseClient.from('passage_archive').delete().neq('key', 'dummy');
-        passageArchiveDB = [];
-        renderPassageArchiveTable();
-        loadAllSupabaseData();
-      }
-    }
-
-    async function clearGeneratedQuestionsDB() {
-      if (confirm('생성된 변형문제 DB를 전체 초기화하시겠습니까?')) {
-        await supabaseClient.from('generated_questions').delete().neq('id', 'dummy');
-        generatedQuestionsPool = [];
-        alert('🎉 변형문제 DB 초기화가 완료되었습니다.');
-        loadAllSupabaseData();
-      }
-    }
-
-    function handleDragOver(e) { e.preventDefault(); }
-    function handleDragLeave(e) { e.preventDefault(); }
-    function handleDrop(e) { e.preventDefault(); addFilesToQueue(Array.from(e.dataTransfer.files)); }
-    function handleFileInputChange(e) { addFilesToQueue(Array.from(e.target.files)); }
-
-    function addFilesToQueue(files) {
-      queuedPdfFiles.push(...files.filter(f => f.name.toLowerCase().endsWith('.pdf')));
-      renderQueuedFiles();
-    }
-
-    function renderQueuedFiles() {
-      const container = document.getElementById('queuedFilesContainer'), list = document.getElementById('queuedFileList'), countEl = document.getElementById('queuedFileCount');
-      if (!container || !list) return;
-      if (countEl) countEl.innerText = queuedPdfFiles.length;
-      if (queuedPdfFiles.length === 0) return container.classList.add('hidden');
-      container.classList.remove('hidden');
-      list.innerHTML = queuedPdfFiles.map((file, idx) => `
-        <div class="flex items-center justify-between p-2 bg-white rounded border text-xs">
-          <span class="truncate">${file.name}</span>
-          <button onclick="removeQueuedFile(${idx})" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-      `).join('');
-    }
-
-    function removeQueuedFile(idx) { queuedPdfFiles.splice(idx, 1); renderQueuedFiles(); }
-    function clearQueuedFiles() { queuedPdfFiles = []; renderQueuedFiles(); }
-
-    async function startBatchPdfClassification() {
-      const apiKey = getStoredApiKey();
-      if (!apiKey) return toggleApiKeyModal();
-      if (queuedPdfFiles.length === 0) return alert('분석할 PDF 파일이 없습니다.');
-
-      const logBox = document.getElementById('pdfLogTerminal'), btn = document.getElementById('btnStartBatch');
-      btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-bolt fa-spin"></i> 정밀 기출 분석 진행 중...';
-
-      let totalAddedCount = 0;
-      logBox.innerHTML = `<div>[BATCH START] 총 ${queuedPdfFiles.length}개 시험지 정밀 분석 가동...</div>`;
-
-      await Promise.all(queuedPdfFiles.map(async (file, i) => {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          let fullText = '';
-          for (let p = 1; p <= pdf.numPages; p++) fullText += (await (await pdf.getPage(p)).getTextContent()).items.map(item => item.str).join(' ') + '\n';
-
-          const parserPrompt = `
-당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
-[시험지 원문]:
-${fullText.slice(0, 15000)}
-
-출력형식 예시:
-## [어법] 1. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?
-- 킬러패턴: 준동사(v-ing) vs 본동사 위치 착시 및 수일치 복합 함정
-`;
-          const rawText = await callGeminiUniversal(apiKey, parserPrompt);
-          logBox.innerHTML += `<div class="text-emerald-300">✓ [${file.name}] 기출 분석 완료</div>`;
-        } catch (err) {
-          logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 분석 에러</div>`;
-        }
-      }));
-      btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
-      clearQueuedFiles();
-    }
-
-    function renderBenchmarkTable() {
-      const tbody = document.getElementById('benchmarkTableBody'), totalCount = document.getElementById('tableTotalCount');
-      const badge = document.getElementById('benchmarkCountBadge');
-      if (totalCount) totalCount.innerText = schoolBenchmarkDB.length;
-      if (badge) badge.innerText = `기출 ${schoolBenchmarkDB.length}제`;
-      if (tbody) tbody.innerHTML = schoolBenchmarkDB.map((item, idx) => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-2.5 px-4 text-center font-bold text-slate-400">${idx + 1}</td>
-          <td class="py-2.5 px-4 font-bold text-slate-800">${item.school} (${item.exam})</td>
-          <td class="py-2.5 px-4 text-center"><span class="bg-cyan-50 text-cyan-800 border border-cyan-200 px-2 py-0.5 rounded font-bold">${item.type}</span></td>
-          <td class="py-2.5 px-4"><div class="font-bold text-slate-800">${item.title}</div><div class="text-[11px] text-emerald-700"><strong>함정 패턴:</strong> ${item.trick}</div></td>
-        </tr>
-      `).join('');
-    }
-
-    async function resetBenchmarkDB() {
-      if(confirm('정말 기출 DB를 전체 초기화하시겠습니까?')) {
-        await supabaseClient.from('school_benchmark').delete().neq('id', 'dummy');
-        schoolBenchmarkDB = [];
-        renderBenchmarkTable();
-      }
-    }
-
-    // 🎯 Supabase 데이터 정밀 매칭
-    async function loadAllSupabaseData() {
-      const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
-      if (pData) passageArchiveDB = pData;
-      renderPassageArchiveTable();
-
-      const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
-      if (bData) schoolBenchmarkDB = bData;
-      renderBenchmarkTable();
-
-      const { data: qData } = await supabaseClient.from('generated_questions').select('*').order('created_at', { ascending: false });
-      if (qData) {
-        generatedQuestionsPool = qData;
-        const examMap = {};
-
-        passageArchiveDB.forEach(p => {
-          const k = `${p.year}-${p.month}-${p.grade}`;
-          if (!examMap[k]) {
-            examMap[k] = { 
-              id: k, 
-              year: p.year, 
-              month: p.month, 
-              grade: `고${p.grade}`, 
-              title: `${p.year}년 ${p.month}월 학력평가`, 
-              questionCount: 0 
-            };
-          }
-        });
-
-        // 🎯 연도 및 시행월 매칭을 통한 세트 문항 수 즉시 갱신
-        qData.forEach(q => {
-          Object.keys(examMap).forEach(setKey => {
-            const [y, m] = setKey.split('-');
-            if (q.id && q.id.includes(`${y}-${m}`)) {
-              examMap[setKey].questionCount++;
-            }
-          });
-        });
-
-        mockExams = Object.values(examMap);
-        renderExamTable();
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      checkLoggedUserSession();
-      initDropdownOptions();
-      render25PassageInputForms();
-      checkApiKeyStatus();
-    });
-  </script>
-</body>
-</html>
+          let cleanedJson = rawJson.replace(/```json/g, '').replace(/
