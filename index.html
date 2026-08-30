@@ -38,7 +38,7 @@
     .diff-btn.active-diff { background-color: #0f172a; color: #f59e0b; border-color: #0f172a; }
     .filter-diff-btn { padding: 7px 18px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; cursor: pointer; }
     .filter-diff-btn.active-filter-diff { background-color: #0f172a; color: #38bdf8; border-color: #0f172a; }
-    .nav-item { width: 100%; display: flex; align-items: center; justify-between: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
+    .nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #94a3b8; }
     .nav-item.active-nav { background-color: #1e293b !important; color: #ffffff !important; font-weight: 700; border-left: 4px solid #38bdf8; }
 
     @media print {
@@ -178,7 +178,6 @@
         </div>
       </section>
 
-      <!-- VIEW 2: 모의고사 세트 선택 (칩 복원 및 정상 매칭) -->
       <section id="view-typeSelect" class="p-8 space-y-6 hidden">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -599,49 +598,50 @@
       throw new Error('API 통신 실패');
     }
 
+    // 🎯 로그인 로직 교정 (무반응 에러 해결)
     function handleLogin(e) {
       if (e) e.preventDefault();
-      const id = document.getElementById('loginId').value.trim();
-      const pw = document.getElementById('loginPw').value.trim();
+      const id = document.getElementById('loginId')?.value.trim();
+      const pw = document.getElementById('loginPw')?.value.trim();
 
       if (id === 'admin' && pw === '1234') {
         currentUser = { id: 'admin', role: 'admin', name: '원장 선생님' };
         sessionStorage.setItem('SDH_LOGGED_USER', JSON.stringify(currentUser));
-        document.getElementById('loginModal').classList.add('hidden');
+        document.getElementById('loginModal')?.classList.add('hidden');
         updateSidebarRoleUI();
         loadAllSupabaseData();
         switchView('examList');
       } else {
-        alert('아이디 또는 비밀번호가 틀립니다.');
+        alert('아이디(admin) 및 비밀번호(1234)를 확인해 주십시오.');
       }
     }
 
     function handleLogout() {
       sessionStorage.removeItem('SDH_LOGGED_USER');
       currentUser = null;
-      document.getElementById('loginId').value = '';
-      document.getElementById('loginPw').value = '';
-      document.getElementById('loginModal').classList.remove('hidden');
+      if (document.getElementById('loginId')) document.getElementById('loginId').value = '';
+      if (document.getElementById('loginPw')) document.getElementById('loginPw').value = '';
+      document.getElementById('loginModal')?.classList.remove('hidden');
     }
 
     function checkLoggedUserSession() {
       const saved = sessionStorage.getItem('SDH_LOGGED_USER');
       if (saved) {
         currentUser = JSON.parse(saved);
-        document.getElementById('loginModal').classList.add('hidden');
+        document.getElementById('loginModal')?.classList.add('hidden');
         updateSidebarRoleUI();
         loadAllSupabaseData();
       } else {
-        document.getElementById('loginModal').classList.remove('hidden');
+        document.getElementById('loginModal')?.classList.remove('hidden');
       }
     }
 
     function updateSidebarRoleUI() {
       if (!currentUser) return;
-      document.getElementById('currentUserName').innerText = currentUser.name;
+      const el = document.getElementById('currentUserName');
+      if (el) el.innerText = currentUser.name;
     }
 
-    // 🎯 칩 복원 렌더링 로직 (ID 하이픈 상충 방지 통일)
     function renderTypeChips() {
       const container = document.getElementById('typeChipContainer');
       if (!container) return;
@@ -649,7 +649,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
+        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
         const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
         return isCurrentExam && diffMatch && passageMatch;
       });
@@ -672,7 +672,7 @@
       const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
       const pool = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
+        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
         const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
         return isCurrentExam && diffMatch && typeMatch;
       });
@@ -701,7 +701,7 @@
       const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
       const matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
+        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
       const el = document.getElementById('selectedTotalCount');
@@ -710,14 +710,16 @@
 
     function openExamTypeSelector(examId) {
       currentSelectedExam = mockExams.find(e => e.id === examId) || mockExams[0];
-      if (currentSelectedExam) document.getElementById('selectViewTitle').innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade || '고3'})`;
+      if (currentSelectedExam) {
+        const el = document.getElementById('selectViewTitle');
+        if (el) el.innerText = `${currentSelectedExam.title} (${currentSelectedExam.grade || '고3'})`;
+      }
       renderTypeChips();
       renderPassageChips();
       updateSelectedCountText();
       switchView('typeSelect');
     }
 
-    // 🎯 ID 결합 및 자바스크립트 구조 파싱 교정
     function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, idx) {
       let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
       let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
@@ -878,7 +880,7 @@ JSON 출력 예시:
       }
     }
 
-    // 🎯 표 레이아웃 밀림 및 학원용 표기 전면 교정
+    // 🎯 표 레이아웃 및 학년 데이터 바인딩 완벽 수정
     function renderExamTable() {
       const tbody = document.getElementById('examTableBody');
       const yearFilter = document.getElementById('filterYear')?.value || '';
@@ -915,7 +917,7 @@ JSON 출력 예시:
 
       let matched = generatedQuestionsPool.filter(q => {
         const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-        const isCurrentExam = currentSelectedExam && q.id.includes(`Q-${currentSelectedExam.id}-`);
+        const isCurrentExam = currentSelectedExam && (q.id.includes(`Q-${currentSelectedExam.id}-`) || q.id.startsWith(`Q-${currentSelectedExam.id}-`));
         return isCurrentExam && diffMatch && selectedTypes.includes(q.type) && selectedPassages.includes(q.passage_num);
       });
 
@@ -1091,93 +1093,56 @@ ${fullText.slice(0, 15000)}
       }
     }
 
-    // 🎯 1. Supabase 데이터 로드 및 수량 매칭 완벽 교정
-async function loadAllSupabaseData() {
-  const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
-  if (pData) passageArchiveDB = pData;
-  renderPassageArchiveTable();
+    // 🎯 ID 규격 매칭 정밀 역추적 로직 포함
+    async function loadAllSupabaseData() {
+      const { data: pData } = await supabaseClient.from('passage_archive').select('*').order('created_at', { ascending: false });
+      if (pData) passageArchiveDB = pData;
+      renderPassageArchiveTable();
 
-  const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
-  if (bData) schoolBenchmarkDB = bData;
-  renderBenchmarkTable();
+      const { data: bData } = await supabaseClient.from('school_benchmark').select('*').order('created_at', { ascending: false });
+      if (bData) schoolBenchmarkDB = bData;
+      renderBenchmarkTable();
 
-  const { data: qData } = await supabaseClient.from('generated_questions').select('*').order('created_at', { ascending: false });
-  if (qData) {
-    generatedQuestionsPool = qData;
-    const examMap = {};
+      const { data: qData } = await supabaseClient.from('generated_questions').select('*').order('created_at', { ascending: false });
+      if (qData) {
+        generatedQuestionsPool = qData;
+        const examMap = {};
 
-    // DB 지문 기반 세트 맵 생성
-    passageArchiveDB.forEach(p => {
-      const k = `${p.year}-${p.month}-${p.grade}`;
-      if (!examMap[k]) {
-        examMap[k] = { 
-          id: k, 
-          year: p.year, 
-          month: p.month, 
-          grade: `고${p.grade}`, 
-          title: `${p.year}년 ${p.month}월 학력평가`, 
-          questionCount: 0 
-        };
+        passageArchiveDB.forEach(p => {
+          const k = `${p.year}-${p.month}-${p.grade}`;
+          if (!examMap[k]) {
+            examMap[k] = { 
+              id: k, 
+              year: p.year, 
+              month: p.month, 
+              grade: `고${p.grade}`, 
+              title: `${p.year}년 ${p.month}월 학력평가`, 
+              questionCount: 0 
+            };
+          }
+        });
+
+        qData.forEach(q => {
+          const match = q.id.match(/^Q-(\d{4}-\d+-\d+)-/);
+          if (match && match[1]) {
+            const setKey = match[1];
+            if (examMap[setKey]) {
+              examMap[setKey].questionCount++;
+            }
+          }
+        });
+
+        mockExams = Object.values(examMap);
+        renderExamTable();
       }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLoggedUserSession();
+      initDropdownOptions();
+      render25PassageInputForms();
+      checkApiKeyStatus();
     });
-
-    // 🎯 ID 매칭 키 정확 역추적 (Q-2015-3-3-... 규격 분석)
-    qData.forEach(q => {
-      const match = q.id.match(/^Q-(\d{4}-\d+-\d+)-/);
-      if (match && match[1]) {
-        const setKey = match[1];
-        if (examMap[setKey]) {
-          examMap[setKey].questionCount++;
-        }
-      }
-    });
-
-    mockExams = Object.values(examMap);
-    renderExamTable();
-  }
-}
-
-// 🎯 2. 선택 화면 진입 및 필터 카운트 매칭 교정
-function renderTypeChips() {
-  const container = document.getElementById('typeChipContainer');
-  if (!container) return;
-
-  const selectedPassages = Array.from(document.querySelectorAll('input[name="passageFilter"]:checked')).map(cb => cb.value);
-  const pool = generatedQuestionsPool.filter(q => {
-    const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-    const isCurrentExam = currentSelectedExam && q.id.startsWith(`Q-${currentSelectedExam.id}-`);
-    const passageMatch = selectedPassages.length === 0 || selectedPassages.includes(q.passage_num);
-    return isCurrentExam && diffMatch && passageMatch;
-  });
-
-  const typeCounts = {}; pool.forEach(q => { typeCounts[q.type] = (typeCounts[q.type] || 0) + 1; });
-  let html = '';
-  typeCategories.forEach(cat => {
-    html += `<span class="text-xs font-bold ${cat.bg} text-white px-3 py-1.5 rounded-full shadow-sm">${cat.category}</span>`;
-    cat.types.forEach(t => {
-      html += `<label class="type-chip"><input type="checkbox" name="qTypeFilter" value="${t}" checked onchange="updateSelectedCountText()" /><span>${t}</span><span class="count-badge">${typeCounts[t] || 0}</span></label>`;
-    });
-  });
-  container.innerHTML = html;
-}
-
-function renderPassageChips() {
-  const container = document.getElementById('passageChipContainer');
-  if (!container) return;
-
-  const selectedTypes = Array.from(document.querySelectorAll('input[name="qTypeFilter"]:checked')).map(cb => cb.value);
-  const pool = generatedQuestionsPool.filter(q => {
-    const diffMatch = (selectedFilterDifficulty === '혼합' || q.difficulty === selectedFilterDifficulty);
-    const isCurrentExam = currentSelectedExam && q.id.startsWith(`Q-${currentSelectedExam.id}-`);
-    const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(q.type);
-    return isCurrentExam && diffMatch && typeMatch;
-  });
-
-  const passageCounts = {}; pool.forEach(q => { passageCounts[q.passage_num] = (passageCounts[q.passage_num] || 0) + 1; });
-  container.innerHTML = passageNumberList.map(num => `
-    <label class="passage-chip flex items-center justify-between">
-      <div class="flex items-center gap-1.5"><input type="checkbox" name="passageFilter" value="${num}" checked onchange="updateSelectedCountText()" /><span>${num}번</span></div>
-      <span class="p-badge">${passageCounts[num] || 0}</span>
-    </label>
-  `).join('');
-}
+  </script>
+</body>
+</html>
