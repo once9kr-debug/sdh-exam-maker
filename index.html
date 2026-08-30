@@ -56,7 +56,6 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-  <!-- 로그인 팝업 모달 -->
   <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
       <div class="text-center mb-6">
@@ -258,6 +257,7 @@
         </div>
       </section>
 
+      <!-- VIEW: 변형문제 AI 출제 (🎯 11개 핵심 유형) -->
       <section id="view-adminPanel" class="p-8 space-y-6 hidden">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
           <div class="flex items-center justify-between border-b pb-4">
@@ -292,26 +292,28 @@
               </div>
 
               <div class="space-y-3">
-                <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 세부 변형문제 유형 선택</label>
-                <div id="adminGenTypeBox" class="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-3 rounded-xl border">
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="주제" checked /> 주제</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="제목" checked /> 제목</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="주장" checked /> 주장</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="요지" checked /> 요지</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="목적" checked /> 목적</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="요약" checked /> 요약</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="일치" checked /> 일치</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="불일치" checked /> 불일치</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="함축의미" checked /> 함축의미</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="빈칸" checked /> 빈칸</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="연결사" checked /> 연결사</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="순서" checked /> 순서</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="삽입" checked /> 삽입</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="흐름" checked /> 흐름</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="어법" checked /> 어법</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="어휘" checked /> 어휘</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="서술형" checked /> 서술형</label>
-                  <label class="flex items-center gap-1"><input type="checkbox" name="adminGenType" value="단답형" checked /> 단답형</label>
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-700 pt-1">자동 생성할 내신 핵심 11개 변형유형 선택</label>
+                  <div class="flex gap-1.5 text-[11px]">
+                    <button type="button" onclick="toggleAdminTypes(true)" class="text-slate-500 hover:text-slate-800 underline">전체선택</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" onclick="toggleAdminTypes(false)" class="text-slate-500 hover:text-slate-800 underline">전체해제</button>
+                  </div>
+                </div>
+                
+                <!-- 🎯 11개 핵심 유형 체크박스 그룹 -->
+                <div id="adminGenTypeBox" class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="주제/제목" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">1. 주제/제목</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="함축의미" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">2. 함축의미</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="일치/불일치" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">3. 일치/불일치</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="어법" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">4. 어법</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="어휘" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">5. 어휘</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="빈칸" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">6. 빈칸</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="흐름" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">7. 흐름</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="순서" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">8. 순서</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="삽입" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">9. 삽입</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm"><input type="checkbox" name="adminGenType" value="요약" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">10. 요약</span></label>
+                  <label class="flex items-center gap-2 p-1 bg-white rounded border border-slate-100 shadow-sm col-span-2"><input type="checkbox" name="adminGenType" value="주관식(서술/단답형)" checked class="w-4 h-4 text-amber-500 rounded" /><span class="font-bold text-slate-800">11. 주관식(서술/단답형)</span></label>
                 </div>
               </div>
 
@@ -535,27 +537,25 @@
     let currentSelectedExam = null;
 
     const standardTitleMap = {
-      '주제': '다음 글의 주제로 가장 적절한 것은?',
-      '제목': '다음 글의 제목으로 가장 적절한 것은?',
-      '요지': '다음 글의 요지로 가장 적절한 것은?',
-      '일치': '다음 글의 내용과 일치하는 것은?',
-      '불일치': '다음 글의 내용과 일치하지 않는 것은?',
+      '주제/제목': '다음 글의 주제 및 제목으로 가장 적절한 것은?',
       '함축의미': '다음 글의 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?',
-      '빈칸': '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
-      '순서': '주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?',
-      '삽입': '글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?',
+      '일치/불일치': '다음 글의 내용과 일치하거/불일치하는 것은?',
       '어법': '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
       '어휘': '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
-      '서술형': '[주관식 서술형] 다음 글을 읽고 [조건]에 맞추어 알맞은 답안을 작성하시오.',
-      '단답형': '[주관식 단답형] 다음 글의 빈칸에 들어갈 알맞은 단어를 본문에서 찾아 쓰시오.'
+      '빈칸': '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
+      '흐름': '다음 글에서 전체 흐름과 관계 없는 문장은?',
+      '순서': '주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?',
+      '삽입': '글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?',
+      '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 적절한 것은?',
+      '주관식(서술/단답형)': '[주관식 서술/단답형] 다음 글을 읽고 [조건]에 맞추어 답안을 작성하시오.'
     };
 
+    // 🎯 11개 핵심 유형 칩 카테고리 구성
     const typeCategories = [
-      { category: '대의 파악', types: ['주제', '제목', '주장', '요지', '목적', '요약'], bg: 'bg-amber-500' },
-      { category: '내용 이해', types: ['일치', '불일치'], bg: 'bg-teal-600' },
-      { category: '언어 논리', types: ['함축의미', '빈칸', '연결사', '순서', '삽입', '흐름'], bg: 'bg-cyan-600' },
+      { category: '대의/내용', types: ['주제/제목', '함축의미', '일치/불일치', '요약'], bg: 'bg-amber-500' },
       { category: '어법/어휘', types: ['어법', '어휘'], bg: 'bg-sky-600' },
-      { category: '주관식', types: ['서술형', '단답형'], bg: 'bg-slate-800' }
+      { category: '언어논리', types: ['빈칸', '흐름', '순서', '삽입'], bg: 'bg-cyan-600' },
+      { category: '주관식', types: ['주관식(서술/단답형)'], bg: 'bg-slate-800' }
     ];
 
     function getStoredApiKey() { return (localStorage.getItem('SDH_GEMINI_API_KEY') || '').trim(); }
@@ -572,6 +572,10 @@
       if (!input) return alert('API Key를 입력하세요.');
       localStorage.setItem('SDH_GEMINI_API_KEY', input);
       toggleApiKeyModal(); checkApiKeyStatus(); alert('API Key 저장 완료!');
+    }
+
+    function toggleAdminTypes(checked) {
+      document.querySelectorAll('input[name="adminGenType"]').forEach(cb => cb.checked = checked);
     }
 
     function setDifficulty(diff) {
@@ -735,7 +739,7 @@
           });
           finalPassage = p;
         }
-      } else if (qType === '빈칸' || qType === '단답형') {
+      } else if (qType === '빈칸') {
         if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
           finalPassage = origPassage.replace(item.target_blank_word, '__________');
         }
@@ -755,13 +759,15 @@
         if (s.length >= 5) {
           finalPassage = `${s[0]}. ( ① ) ${s[1]}. ( ② ) ${s[2]}. ( ③ ) ${s[3]}. ( ④ ) ${s[4]}. ( ⑤ ) ${s.slice(5).join('. ')}`;
         }
-      } else if (qType === '서술형') {
-        conditionText = item.condition_text || '[조건] 본문 어휘 활용 작성';
+      } else if (qType === '요약') {
+        summaryText = item.summary_text || '';
+      } else if (qType === '주관식(서술/단답형)') {
+        conditionText = item.condition_text || '[조건] 본문 어휘 및 구문 맥락 활용 작성';
         summaryText = item.summary_text || '';
       }
 
       return {
-        passage_id: passageId, // 🎯 주석 구문 교정
+        passage_id: passageId,
         set_key: setKey,
         passage_num: String(passageNum),
         type: qType,
@@ -772,11 +778,12 @@
         condition_box: conditionText,
         summary_box: summaryText,
         options: Array.isArray(item.options) ? item.options : [],
-        answer: item.answer || '①',
+        answer: item.answer || '답안 참조',
         explanation: item.explanation || '본문 맥락 해설'
       };
     }
 
+    // 🎯 11개 핵심 유형 프롬프트 가동 엔진
     async function executeFastParallelGenerate() {
       const apiKey = getStoredApiKey();
       if (!apiKey) return toggleApiKeyModal();
@@ -791,28 +798,36 @@
 
       const logBox = document.getElementById('generationLogBox');
       logBox.classList.remove('hidden');
-      logBox.innerHTML = `<div>🚀 [SQL RELATIONAL ENGINE] 출제 시작 (${setKey})...</div>`;
+      logBox.innerHTML = `<div>🚀 [11개 핵심유형] 출제 가동 - 세트: ${setKey} / 난이도: ${selectedDifficulty}...</div>`;
 
-      await supabaseClient.from('questions').delete().eq('set_key', setKey);
+      // 동일 세트 & 난이도 기존 문제만 교체
+      await supabaseClient.from('questions')
+        .delete()
+        .eq('set_key', setKey)
+        .eq('difficulty', selectedDifficulty);
 
       let totalCount = 0;
 
       for (let pObj of targetPassages) {
         const prompt = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
-아래 [영어 지문 (${pObj.passage_num}번)]:
+[지문 (${pObj.passage_num}번)]:
 ${pObj.full_text}
 
-[출제 요청 유형들]:
-${selectedTypes.join(', ')}
+[출제 난이도]: ${selectedDifficulty}
+[요청 유형들]: ${selectedTypes.join(', ')}
+
+지문 1개당 요청된 유형을 각 1문항씩 생성하여 JSON 배열로 출력하세요.
+'주관식(서술/단답형)' 유형의 경우, options는 빈 배열 []로 두고 condition_text([조건]) 및 주관식 정답/해설을 간결하게 작성하세요.
+해설은 2문장 이내로 핵심만 작성하세요.
 
 JSON 출력 예시:
 [
   {
-    "type": "주제",
+    "type": "주제/제목",
     "options": ["① opt1", "② opt2", "③ opt3", "④ opt4", "⑤ opt5"],
     "answer": "①",
-    "explanation": "상세 해설"
+    "explanation": "핵심 주제 해설"
   }
 ]
 `;
@@ -824,14 +839,14 @@ JSON 출력 예시:
             const verifiedItems = parsed.map((item) => processVerifiedQuestion(item, pObj.full_text, item.type || selectedTypes[0], setKey, pObj.passage_num, pObj.id));
             await supabaseClient.from('questions').insert(verifiedItems);
             totalCount += verifiedItems.length;
-            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완료 (+${verifiedItems.length}문항)</div>`;
+            logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 지문 완료 [난이도: ${selectedDifficulty}] (+${verifiedItems.length}문항)</div>`;
             logBox.scrollTop = logBox.scrollHeight;
           }
         } catch (e) { console.error(e); }
       }
 
       logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
-      alert('🎉 출제 완료!');
+      alert(`🎉 [난이도: ${selectedDifficulty}] 핵심유형 ${totalCount}문항 출제 완료!`);
       await loadAllSupabaseData();
     }
 
@@ -843,20 +858,20 @@ JSON 출력 예시:
       if (!qContainer) return;
 
       qContainer.innerHTML = filteredQuestions.map((q, idx) => {
-        const isSubjective = (q.type === '서술형' || q.type === '단답형');
+        const isSubjective = (q.type === '주관식(서술/단답형)');
         return `
           <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
             <div class="font-bold text-[13.5px] mb-1">
               <span>${idx + 1}. ${q.title}</span>
-              <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type}]</span>
+              <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type} / 난이도:${q.difficulty}]</span>
             </div>
             ${q.given_box ? `<div class="given-box exam-eng-font font-medium"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
             <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
             ${isSubjective ? `
               ${q.condition_box ? `<div class="text-[11px] font-bold text-slate-800 my-1">${q.condition_box}</div>` : ''}
-              ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-              <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
+              <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형/단답형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
             ` : ''}
+            ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
             ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${o}</div>`).join('')}</div>` : ''}
           </div>
         `;
@@ -866,7 +881,7 @@ JSON 출력 예시:
         quickGrid.innerHTML = filteredQuestions.map((q, idx) => `
           <div class="border p-1 rounded bg-white h-10 flex flex-col justify-center items-center">
             <span class="text-[9px] text-slate-400 font-bold">${idx + 1}번</span>
-            <span class="font-black text-xs">${(q.type === '서술형' || q.type === '단답형') ? '서술형' : q.answer}</span>
+            <span class="font-black text-xs">${(q.type === '주관식(서술/단답형)') ? '주관식' : q.answer}</span>
           </div>
         `).join('');
       }
