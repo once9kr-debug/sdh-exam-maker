@@ -22,6 +22,7 @@ const typeCategories = [
 function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
   let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
+  let finalOptions = Array.isArray(item.options) ? item.options : [];
 
   if (qType.includes('어법') || qType.includes('어휘')) {
     if (Array.isArray(item.target_words) && item.target_words.length === 5) {
@@ -31,6 +32,8 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
         p = p.replace(w.orig || w, `${sym} <u>${w.mod || w.orig || w}</u>`);
       });
       finalPassage = p;
+      // 🎯 [오류 1 수정] 어법/어휘 보기 기호를 ①~⑤로 보정
+      finalOptions = ['①', '②', '③', '④', '⑤'];
     }
   } else if (qType.includes('빈칸')) {
     if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
@@ -61,15 +64,26 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     }
   } else if (qType.includes('요약')) {
     summaryText = item.summary_text || '';
+    // 🎯 [오류 2 수정] 요약문 객체 배열 렌더링 깨짐([object Object]) 방지
+    if (finalOptions.length > 0 && typeof finalOptions[0] === 'object') {
+      finalOptions = finalOptions.map((o, idx) => {
+        const numSym = ['①', '②', '③', '④', '⑤'][idx];
+        return `${numSym} (A) ${o.A || o.a || ''} -- (B) ${o.B || o.b || ''}`;
+      });
+    }
   } else if (qType.includes('주관식')) {
     conditionText = item.condition_text || '[조건] 본문 어휘 및 구문 맥락을 활용하여 작성하시오.';
   }
+
+  // 🎯 [오류 3 수정] 서술형 정답 및 해설 텍스트 정밀화
+  let ansText = item.answer || '정답 참조';
+  if (typeof ansText === 'object') ansText = JSON.stringify(ansText);
 
   return {
     passage_id: passageId, set_key: setKey, passage_num: String(passageNum), type: qType,
     difficulty: selectedDifficulty || '상', title: finalTitle, passage: finalPassage,
     given_box: givenBoxText, condition_box: conditionText, summary_box: summaryText,
-    options: Array.isArray(item.options) ? item.options : [], answer: item.answer || '답안 참조', explanation: item.explanation || '본문 맥락 해설'
+    options: finalOptions, answer: ansText, explanation: item.explanation || '본문 맥락에 기반한 정밀 해설입니다.'
   };
 }
 
@@ -79,15 +93,20 @@ async function executeFastParallelGenerate() {
   const setKey = document.getElementById('selectMockSet').value;
   if (!setKey) return alert('모의고사 세트를 선택하세요.');
 
-  const targetPassages = passageArchiveDB.filter(p => p.set_key === setKey);
-  if (targetPassages.length === 0) return alert('선택한 세트에 지문이 없습니다.');
+  const targetPassages = passageArchiveDB.filter(p => 
+    p.set_key === setKey || p.set_key?.trim() === setKey.trim()
+  );
+
+  if (targetPassages.length === 0) {
+    return alert(`선택한 세트[${setKey}]에 등록된 지문이 없습니다. 지문 DB를 먼저 등록해주세요.`);
+  }
 
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
   if (selectedTypes.length === 0) return alert('유형을 선택하세요.');
 
   const logBox = document.getElementById('generationLogBox');
   logBox.classList.remove('hidden');
-  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 + 기출DB 벤치마크 연동] 출제 가동...</div>`;
+  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 + 기출DB 연동] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
 
   const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
     ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
@@ -110,14 +129,11 @@ ${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
 [출제 요청 난이도]: ${selectedDifficulty}
 [출제 요청 유형들 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
 
-위 지문을 바탕으로, 기출 킬러 패턴을 적용하여 요청된 선택 유형 ${selectedTypes.length}개를 단 하나도 누락하지 말고 각 유형당 정확히 1문항씩 출력하세요.
+위 지문을 바탕으로, 요청된 유형 ${selectedTypes.length}개를 하나도 누락하지 말고 각 유형당 정확히 1문항씩 출력하세요.
 
-⚠️ 필수 규칙:
-1. 반환되는 JSON 배열의 길이(문항 수)는 정확히 ${selectedTypes.length}개여야 합니다.
-2. '주관식(서술/단답형)' 유형도 반드시 1문항 포함하여 출력하세요.
-3. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 뽑아낸 삽입용 문장을 명시하세요.
-4. '빈칸' 유형: 반드시 "target_blank_word" 필드에 본문에서 빈칸으로 뚫을 정확한 단어를 명시하세요.
-5. '어법/어휘' 유형: "target_words" 필드에 [ { "orig": "원문단어", "mod": "변형단어" } ] 5개 배열을 만드세요.
+⚠️ 서술형 및 요약문 필수 지침:
+1. '주관식(서술/단답형)' 유형 생성 시, answer 필드에 모범 답안 문장을 정확히 작성하세요.
+2. '요약' 유형 생성 시, options 필드에는 [ {"A": "단어1", "B": "단어2"} ... ] 형태의 객체 배열을 구성하세요.
 `;
     try {
       const rawJson = await callGeminiUniversal(apiKey, promptText);
@@ -131,7 +147,6 @@ ${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
         for (let item of parsed) {
           const rawType = item.type || '';
           
-          // 선택된 유형 이름과 AI 반환 이름 간 정밀 매칭
           const matchedType = selectedTypes.find(st => 
             st === rawType || 
             (st.includes('주관식') && (rawType.includes('주관식') || rawType.includes('서술') || rawType.includes('단답'))) ||
@@ -149,7 +164,7 @@ ${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
         const verifiedItems = exactItems.map((item) => processVerifiedQuestion(item, pObj.full_text, item.type, setKey, pObj.passage_num, pObj.id));
         const { error } = await supabaseClient.from('questions').insert(verifiedItems);
         if (!error) totalCount += verifiedItems.length;
-        logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 [기출패턴 반영] (+${verifiedItems.length}문항)</div>`;
+        logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 (+${verifiedItems.length}문항)</div>`;
         logBox.scrollTop = logBox.scrollHeight;
       }
     } catch (e) {
@@ -157,11 +172,12 @@ ${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
     }
   }
 
-  logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 기출 반영 완벽 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
+  logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
   alert(`🎉 [난이도: ${selectedDifficulty}] 기출 벤치마크 반영 ${totalCount}문항 출제 완료!`);
   await loadAllSupabaseData();
 }
 
+// 🎯 [오류 4 수정] 빠른 정답표 그리드 텍스트 겹침 방지 레이아웃 개선
 function renderPaper() {
   const qContainer = document.getElementById('paperContent');
   const quickGrid = document.getElementById('quickAnswerGrid');
@@ -184,18 +200,21 @@ function renderPaper() {
           <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형/단답형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
         ` : ''}
         ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-        ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${o}</div>`).join('')}</div>` : ''}
+        ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${typeof o === 'object' ? JSON.stringify(o) : o}</div>`).join('')}</div>` : ''}
       </div>
     `;
   }).join('');
 
   if (quickGrid) {
-    quickGrid.innerHTML = filteredQuestions.map((q, idx) => `
-      <div class="border p-1 rounded bg-white h-10 flex flex-col justify-center items-center">
-        <span class="text-[9px] text-slate-400 font-bold">${idx + 1}번</span>
-        <span class="font-black text-xs">${q.type.includes('주관식') ? '주관식' : q.answer}</span>
-      </div>
-    `).join('');
+    quickGrid.innerHTML = filteredQuestions.map((q, idx) => {
+      const displayAns = q.type.includes('주관식') ? '서술형' : (q.answer.length > 8 ? q.answer.substring(0, 8) + '...' : q.answer);
+      return `
+        <div class="border p-1 rounded bg-white min-h-[48px] flex flex-col justify-center items-center shadow-sm">
+          <span class="text-[9px] text-slate-400 font-bold mb-0.5">${idx + 1}번</span>
+          <span class="font-black text-[11px] text-slate-800 truncate w-full text-center px-0.5">${displayAns}</span>
+        </div>
+      `;
+    }).join('');
   }
 
   if (aContainer) {
