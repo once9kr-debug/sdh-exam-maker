@@ -37,6 +37,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
       finalPassage = origPassage.replace(item.target_blank_word, '__________');
     } else {
+      // 🎯 백업 치환: AI가 target_blank_word를 깜빡했을 경우 지문 중앙 단어 치환
       const words = origPassage.split(' ');
       if (words.length > 10) {
         const midIdx = Math.floor(words.length / 2);
@@ -55,7 +56,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     const third = Math.floor(remainPart.length / 3);
     finalPassage = `(A) ${remainPart.substring(0, third)}\n(B) ${remainPart.substring(third, third*2)}\n(C) ${remainPart.substring(third*2)}`;
   } else if (qType.includes('삽입')) {
-    givenBoxText = item.given_sentence || item.given_box || '주어진 문장을 본문의 올바른 위치에 넣으시오.';
+    givenBoxText = item.given_sentence || item.given_box || '주어진 문장을 읽고 본문의 올바른 위치를 찾으시오.';
     const s = origPassage.split('. ');
     if (s.length >= 5) {
       finalPassage = `${s[0]}. ( ① ) ${s[1]}. ( ② ) ${s[2]}. ( ③ ) ${s[3]}. ( ④ ) ${s[4]}. ( ⑤ ) ${s.slice(5).join('. ')}`;
@@ -74,6 +75,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
   };
 }
 
+// 🎯 [핵심] 기출 DB 벤치마크 패턴 실시간 주입 AI 출제 엔진
 async function executeFastParallelGenerate() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -88,7 +90,12 @@ async function executeFastParallelGenerate() {
 
   const logBox = document.getElementById('generationLogBox');
   logBox.classList.remove('hidden');
-  logBox.innerHTML = `<div>🚀 [11개 핵심유형] 출제 가동 - 세트: ${setKey} / 난이도: ${selectedDifficulty}...</div>`;
+  logBox.innerHTML = `<div>🚀 [11개 핵심유형 + 기출DB 벤치마크 연동] 출제 가동...</div>`;
+
+  // 축적된 학교 기출 킬러 패턴에서 상위 10개 추출하여 AI에 전달할 텍스트 구성
+  const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
+    ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
+  ).join('\n');
 
   await supabaseClient.from('questions').delete().eq('set_key', setKey).eq('difficulty', selectedDifficulty);
 
@@ -97,22 +104,37 @@ async function executeFastParallelGenerate() {
   for (let pObj of targetPassages) {
     const promptText = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
-[지문 (${pObj.passage_num}번)]:
+
+[출제 대상 영어 지문 (${pObj.passage_num}번)]:
 ${pObj.full_text}
 
-[출제 난이도]: ${selectedDifficulty}
-[요청 유형들]: ${selectedTypes.join(', ')}
+[학원 축적 실제 학교 기출 킬러 패턴 참고 자료]:
+${benchmarkContext || "주요 고교 어법/어휘/빈칸 변형 패턴 참고"}
 
-위 지문을 바탕으로 요청된 각 유형별 변형문제를 1문항씩 작성하여 JSON 배열로 출력하세요.
-'삽입' 유형은 given_sentence(삽입할 문장)를 명시하고, '빈칸' 유형은 target_blank_word(빈칸 단어)를 지정하세요.
+[출제 요청 난이도]: ${selectedDifficulty}
+[출제 요청 유형들]: ${selectedTypes.join(', ')}
+
+위 지문을 바탕으로, 기출 킬러 패턴을 적용하여 요청된 유형별 변형문제를 1문항씩 생성해 JSON 배열로 출력하세요.
+
+⚠️ 필수 출력 필드 규격:
+1. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 뽑아낸 삽입용 문장을 명시하세요.
+2. '빈칸' 유형: 반드시 "target_blank_word" 필드에 본문에서 빈칸으로 뚫을 정확한 단어를 명시하세요.
+3. '어법/어휘' 유형: "target_words" 필드에 [ { "orig": "원문단어", "mod": "변형단어" } ] 5개 배열을 만드세요.
 
 JSON 출력 예시:
 [
   {
+    "type": "삽입",
+    "given_sentence": "He found that, regardless of the industry, it was incredibly important...",
+    "options": ["①", "②", "③", "④", "⑤"],
+    "answer": "②",
+    "explanation": "해설 작성"
+  },
+  {
     "type": "빈칸",
     "target_blank_word": "participants",
-    "options": ["① opt1", "② opt2", "③ opt3", "④ opt4", "⑤ opt5"],
-    "answer": "①",
+    "options": ["① excluded", "② participants", "③ ignored", "④ passive", "⑤ criticized"],
+    "answer": "②",
     "explanation": "해설 작성"
   }
 ]
@@ -125,7 +147,7 @@ JSON 출력 예시:
         const verifiedItems = parsed.map((item) => processVerifiedQuestion(item, pObj.full_text, item.type || selectedTypes[0], setKey, pObj.passage_num, pObj.id));
         const { error } = await supabaseClient.from('questions').insert(verifiedItems);
         if (!error) totalCount += verifiedItems.length;
-        logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 [난이도: ${selectedDifficulty}] (+${verifiedItems.length}문항)</div>`;
+        logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 [기출패턴 반영] (+${verifiedItems.length}문항)</div>`;
         logBox.scrollTop = logBox.scrollHeight;
       }
     } catch (e) {
@@ -133,8 +155,8 @@ JSON 출력 예시:
     }
   }
 
-  logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 출제 완벽 완료! 총 ${totalCount}문항 적재됨</div>`;
-  alert(`🎉 [난이도: ${selectedDifficulty}] 핵심유형 ${totalCount}문항 출제 완료!`);
+  logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 기출 반영 완벽 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
+  alert(`🎉 [난이도: ${selectedDifficulty}] 기출 벤치마크 반영 ${totalCount}문항 출제 완료!`);
   await loadAllSupabaseData();
 }
 
