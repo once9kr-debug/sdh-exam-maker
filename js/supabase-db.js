@@ -11,7 +11,6 @@ function updateBenchmarkCountUI(count) {
   if (totalCountEl) totalCountEl.innerText = count;
 }
 
-// 🎯 학년/월 파싱 복구 및 세트 맵 정밀화
 async function loadAllSupabaseData() {
   const { data: pData } = await supabaseClient.from('passages').select('*').order('created_at', { ascending: false });
   passageArchiveDB = pData || [];
@@ -28,11 +27,10 @@ async function loadAllSupabaseData() {
 
   const examMap = {};
   passageArchiveDB.forEach(p => {
-    // grade 및 month 값 보정
     const pYear = p.year || '2024';
     const pMonth = p.month || '3';
     const pGrade = p.grade ? (String(p.grade).startsWith('고') ? p.grade : `고${p.grade}`) : '고1';
-    const setKey = p.set_key || `${pYear}-${pMonth}`;
+    const setKey = p.set_key || `${pYear}-${pMonth}-${pGrade.replace('고', '')}`;
 
     if (!examMap[setKey]) {
       examMap[setKey] = {
@@ -40,14 +38,13 @@ async function loadAllSupabaseData() {
         year: pYear,
         month: pMonth,
         grade: pGrade,
-        title: `${pYear}년 ${pMonth}월 학력평가`,
+        title: `${pYear}년 ${pMonth}월 학력평가 (${pGrade})`,
         questionCount: 0
       };
     }
   });
 
   generatedQuestionsPool.forEach(q => {
-    // 유연한 set_key 매칭
     const matchedKey = Object.keys(examMap).find(k => k === q.set_key || k.startsWith(q.set_key) || q.set_key.startsWith(k));
     if (matchedKey) {
       examMap[matchedKey].questionCount++;
@@ -67,7 +64,7 @@ async function saveAll25Passages() {
 
   passageNumberList.forEach(num => {
     const text = document.getElementById(`inputP_${num}`)?.value.trim();
-    if (text) upsertData.push({ set_key: setKey, year, month, grade, passage_num: num, sample_text: text.substring(0, 30) + '...', full_text: text });
+    if (text) upsertData.push({ set_key: setKey, year, month, grade: `고${grade}`, passage_num: num, sample_text: text.substring(0, 30) + '...', full_text: text });
   });
 
   if (upsertData.length > 0) {
@@ -102,6 +99,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
+// 🎯 [개편] PDF에서 실제 학교 기출 '원문 발문' 및 '보기 양식' 전체를 보존 추출
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -112,23 +110,21 @@ async function startBatchPdfClassification() {
   const statusBadge = document.getElementById('parsedItemCount');
 
   btn.disabled = true; 
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> 정밀 기출 분석 진행 중...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> 정밀 기출 분석 및 원문 추출 중...';
 
-  logBox.innerHTML = `<div>🚀 [BATCH START] 총 ${queuedPdfFiles.length}개 시험지 정밀 분석 가동...</div>`;
+  logBox.innerHTML = `<div>🚀 [BENCHMARK PARSER] 총 ${queuedPdfFiles.length}개 시험지 정밀 원문 추출 가동...</div>`;
 
   for (let i = 0; i < queuedPdfFiles.length; i++) {
     const file = queuedPdfFiles[i];
     const percent = Math.round(((i) / queuedPdfFiles.length) * 100);
-    const progressBar = '▓'.repeat(Math.floor(percent / 10)) + '░'.repeat(10 - Math.floor(percent / 10));
 
     if (statusBadge) {
-      statusBadge.innerHTML = `<span class="text-amber-500 font-bold"><i class="fa-solid fa-sync fa-spin mr-1"></i>[${i+1}/${queuedPdfFiles.length}] 분석 중 (${percent}%)</span>`;
+      statusBadge.innerHTML = `<span class="text-amber-500 font-bold"><i class="fa-solid fa-sync fa-spin mr-1"></i>[${i+1}/${queuedPdfFiles.length}] 원문 파싱 중 (${percent}%)</span>`;
     }
 
     logBox.innerHTML += `
       <div class="my-1 text-slate-600">──────────────────────────────────────────</div>
-      <div class="text-cyan-300 font-bold">[PROGRESS: ${progressBar} ${percent}%]</div>
-      <div class="text-amber-400">⏳ [${i+1}/${queuedPdfFiles.length}] '${file.name}' AI 킬러 패턴 분석 중... <i class="fa-solid fa-circle-notch fa-spin"></i></div>
+      <div class="text-amber-400">⏳ [${i+1}/${queuedPdfFiles.length}] '${file.name}' 실제 발문 및 보기 원문 추출 중...</div>
     `;
     logBox.scrollTop = logBox.scrollHeight;
 
@@ -141,23 +137,21 @@ async function startBatchPdfClassification() {
       }
 
       const parserPrompt = `
-당신은 대한민국 고등학교 영어 시험지 분석 전문가입니다.
-[시험지 원문]:
+당신은 대한민국 고등학교 영어 내신 시험지 원문 분석가입니다.
+[시험지 텍스트]:
 ${fullText.slice(0, 15000)}
 
-시험지의 핵심 킬러 문항 1개를 분석하여 반드시 아래 규격의 JSON 객체로 작성하세요:
+위 시험지에서 가장 대표적인 킬러 문항 1개를 찾아 아래 규격의 JSON으로 작성하세요:
 {
-  "school": "학교명",
-  "exam": "시험구분",
-  "type": "유형 (반드시 어법, 빈칸, 순서, 삽입, 서술형, 주제 중 1개 선택)",
-  "title": "발문 요약",
-  "trick": "핵심 킬러 함정 패턴 분석 1문장"
+  "school": "학교명 (예: 세종고)",
+  "exam": "시험구분 (예: 1학기 기말)",
+  "type": "유형 (어법, 어휘, 빈칸, 순서, 삽입, 서술형, 주제, 요약 중 1개)",
+  "raw_title": "시험지에 실제로 쓰인 발문 문장 전체 (예: '다음 글의 밑줄 친 ①~⑤ 중 어법상 틀린 것의 개수는?')",
+  "raw_sample": "시험지의 보기 또는 조건 박스 양식 전체",
+  "trick": "핵심 출제 킬러 포인트 1문장 요약"
 }
-
-⚠️ [서술형 강력 구분 지침]:
-객관식 선택지(①~⑤)가 없고 <보기> 단어 배열, 영작, 조건을 보고 답안을 작성하는 문제는 발문에 '빈칸'이 포함되어 있더라도 type을 반드시 "서술형"으로 표기하세요.
 `;
-      await sleep(1200);
+      await sleep(1000);
 
       const rawJson = await callGeminiWithRetry(apiKey, parserPrompt);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -169,8 +163,9 @@ ${fullText.slice(0, 15000)}
           school: parsed.school,
           exam: parsed.exam || '기출',
           type: parsed.type || '어법',
-          title: parsed.title || '기출 분석 결과',
-          trick: parsed.trick || '핵심 패턴 분석 완료'
+          title: parsed.raw_title || parsed.title || '실제 기출 발문',
+          trick: parsed.trick || '기출 정밀 분석 완료',
+          raw_sample: parsed.raw_sample || ''
         };
 
         const { data: inserted, error } = await supabaseClient
@@ -182,22 +177,19 @@ ${fullText.slice(0, 15000)}
           schoolBenchmarkDB.unshift(inserted[0]);
           updateBenchmarkCountUI(schoolBenchmarkDB.length);
           renderBenchmarkFolderView();
-
-          logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ [${file.name}] DB 적재 성공! (현재 기출: ${schoolBenchmarkDB.length}제)</div>`;
+          logBox.innerHTML += `<div class="text-emerald-300 font-bold">✓ [${file.name}] 실제 기출 원문 적재 성공!</div>`;
         } else {
-          logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] DB 저장 실패: ${error?.message || '알 수 없는 오류'}</div>`;
+          logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 저장 실패: ${error?.message}</div>`;
         }
-      } else {
-        logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 데이터 형식이 올바르지 않습니다.</div>`;
       }
     } catch (err) {
-      logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 분석 에러: ${err.message}</div>`;
+      logBox.innerHTML += `<div class="text-rose-400">❌ [${file.name}] 에러: ${err.message}</div>`;
     }
     logBox.scrollTop = logBox.scrollHeight;
   }
 
-  if (statusBadge) statusBadge.innerHTML = `<span class="text-emerald-400 font-bold">✓ 전체 분석 완료</span>`;
-  logBox.innerHTML += `<div class="text-cyan-300 font-bold mt-3">🎉 전체 PDF 분석 및 DB 적재 완료! (총 ${schoolBenchmarkDB.length}제 축적됨)</div>`;
+  if (statusBadge) statusBadge.innerHTML = `<span class="text-emerald-400 font-bold">✓ 정밀 원문 적재 완료</span>`;
+  logBox.innerHTML += `<div class="text-cyan-300 font-bold mt-3">🎉 기출 원문 DB 적재 완료!</div>`;
   
   btn.disabled = false; 
   btn.innerHTML = '<i class="fa-solid fa-bolt"></i> 초고속 동시 병렬 분석 및 DB 적재 시작';
@@ -225,23 +217,11 @@ function renderBenchmarkFolderView() {
   
   schoolBenchmarkDB.forEach(item => {
     const t = item.type || '';
-    const title = item.title || '';
-    const trick = item.trick || '';
-    const fullText = `${t} ${title} ${trick}`;
-
-    const isSubjective = /서술|주관|영작|배열|완성|조건|단답|쓰시오|작성/i.test(fullText);
-
-    if (isSubjective) {
-      groups['서술형'].push(item);
-    } else if (t.includes('어법') || t.includes('어휘')) {
-      groups['어법'].push(item);
-    } else if (t.includes('빈칸')) {
-      groups['빈칸'].push(item);
-    } else if (t.includes('순서') || t.includes('삽입') || t.includes('흐름')) {
-      groups['순서'].push(item);
-    } else {
-      groups['기타'].push(item);
-    }
+    if (t.includes('서술') || t.includes('주관')) groups['서술형'].push(item);
+    else if (t.includes('어법') || t.includes('어휘')) groups['어법'].push(item);
+    else if (t.includes('빈칸')) groups['빈칸'].push(item);
+    else if (t.includes('순서') || t.includes('삽입') || t.includes('흐름')) groups['순서'].push(item);
+    else groups['기타'].push(item);
   });
 
   container.innerHTML = categories.map((cat, folderIdx) => {
@@ -261,10 +241,10 @@ function renderBenchmarkFolderView() {
           ${list.length === 0 ? `<div class="p-4 text-center text-xs text-slate-400">등록된 기출이 없습니다.</div>` : list.map((item, idx) => `
             <div class="p-3.5 hover:bg-slate-50 transition flex items-start gap-4 text-xs">
               <span class="font-bold text-slate-400 w-6 shrink-0 text-center">${idx + 1}</span>
-              <div class="w-44 shrink-0 font-bold text-slate-800">${item.school || '고등학교'} <span class="text-[11px] text-slate-500 font-normal">(${item.exam || '기출'})</span></div>
+              <div class="w-44 shrink-0 font-bold text-slate-800">${item.school || '고교'} <span class="text-[11px] text-slate-500 font-normal">(${item.exam || '기출'})</span></div>
               <div class="flex-1">
-                <div class="font-bold text-slate-900 mb-0.5">${item.title}</div>
-                <div class="text-[11px] text-emerald-700"><strong>킬러 패턴:</strong> ${item.trick}</div>
+                <div class="font-bold text-slate-900 mb-0.5">[원문 발문] ${item.title}</div>
+                <div class="text-[11px] text-cyan-700"><strong>포인트:</strong> ${item.trick}</div>
               </div>
             </div>
           `).join('')}
