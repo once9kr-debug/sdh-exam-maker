@@ -33,8 +33,27 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
+// 🎯 JSON 안전 파서 (특수문자 파싱 에러 방지)
+function safeJsonParse(rawStr) {
+  try {
+    let clean = rawStr.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    try {
+      let sanitized = rawStr
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .replace(/[\u0000-\u001F]+/g, ' ')
+        .trim();
+      return JSON.parse(sanitized);
+    } catch (err) {
+      console.error("JSON Parse Fail:", rawStr);
+      throw new Error("AI 응답 데이터 파싱 실패 (JSON 형식 오류)");
+    }
+  }
+}
+
 function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
-  // 🎯 AI가 기출 원문 발문을 생성했으면 그 발문을 100% 우선 사용
   let finalTitle = item.title || standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
@@ -66,7 +85,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     givenBoxText = sentences.slice(0, 2).join('. ') + '.';
     const remainPart = sentences.slice(2).join('. ');
     const third = Math.floor(remainPart.length / 3);
-    finalPassage = `(A) ${remainPart.substring(0, third)}\n(B) ${remainPart.substring(third, third*2)}\n(C) ${remainPart.substring(third*2)}`;
+    finalPassage = `(A) ${remainPart.substring(0, third)}\n<br/>(B) ${remainPart.substring(third, third*2)}\n<br/>(C) ${remainPart.substring(third*2)}`;
   } else if (qType.includes('삽입')) {
     let gSent = item.given_sentence || item.given_box || '';
     if (!gSent || gSent.includes('주어진 문장을 읽고')) {
@@ -148,7 +167,6 @@ async function executeFastParallelGenerate() {
 
   logBox.innerHTML = `<div>🚀 [기출 원문 Few-Shot 주입 엔진 가동] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
 
-  // 🎯 [핵심 개편] 축적된 기출의 '실제 원문 발문'을 Few-Shot 예시로 AI에 직접 주입
   const benchmarkSamples = schoolBenchmarkDB.slice(0, 15).map(b => 
     ` - [${b.school || '고교'} ${b.type || '유형'}] 실제 시험지 발문: "${b.title || ''}"`
   ).join('\n');
@@ -173,14 +191,13 @@ ${benchmarkSamples || "대한민국 고교 정식 내신 표준 발문 지침 �
 위 지문을 바탕으로 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
 
 ⚠️ 엄격 출제 지침:
-1. 각 문항의 'title' 필드에는 위 기출 원문 발문 예시처럼 고등학교 정식 내신 시험지 발문 어조를 100% 동일하게 작성하세요. 절대 "일치하거나 불일치하는"과 같은 엉뚱한 표현을 쓰지 마세요.
+1. 각 문항의 'title' 필드에는 위 기출 원문 발문 예시처럼 고등학교 정식 내신 시험지 발문 어조를 100% 동일하게 작성하세요.
 2. '일치/불일치' 유형은 반드시 "다음 글의 내용과 일치하지 않는 것은?" 또는 "다음 글의 내용과 일치하는 것은?" 중 하나로 명확히 단일 지정하세요.
 3. '주관식' 유형은 answer 필드에 모범 답안 문장을 적으세요.
 `;
     try {
       const rawJson = await callGeminiWithRetry(apiKey, promptText);
-      let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanedJson);
+      const parsed = safeJsonParse(rawJson);
 
       if (Array.isArray(parsed)) {
         const seenTypes = new Set();
@@ -232,12 +249,12 @@ function renderPaper() {
     const isSubjective = q.type.includes('주관식');
 
     return `
-      <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
+      <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] break-inside-avoid mb-6">
         <div class="font-bold text-[13.5px] mb-1">
           <span>${idx + 1}. ${q.title}</span>
           <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type} / 난이도:${q.difficulty}]</span>
         </div>
-        ${q.given_box ? `<div class="given-box exam-eng-font font-medium"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
+        ${q.given_box ? `<div class="given-box exam-eng-font font-medium my-1"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
         <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
         ${isSubjective ? `
           ${q.condition_box ? `<div class="text-[11px] font-bold text-slate-800 my-1">${q.condition_box}</div>` : ''}
@@ -274,7 +291,7 @@ function renderPaper() {
 
   if (aContainer) {
     aContainer.innerHTML = filteredQuestions.map((q, idx) => `
-      <div class="question-block border-b pb-2 mb-2">
+      <div class="question-block border-b pb-2 mb-2 break-inside-avoid">
         <div class="font-bold text-slate-900 mb-1">[${idx + 1}번 정답 : <strong class="text-blue-700">${q.answer}</strong>]</div>
         <div class="text-[11px] text-slate-700 font-sans bg-slate-50 p-2 rounded">${q.explanation}</div>
       </div>
