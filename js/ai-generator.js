@@ -1,14 +1,16 @@
+// 🎯 대한민국 고교 표준 내신/수능 완벽 매칭 발문 맵
 const standardTitleMap = {
   '주제/제목': '다음 글의 주제 및 제목으로 가장 적절한 것은?',
   '함축의미': '다음 글의 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?',
-  '일치/불일치': '다음 글의 내용과 일치하거나 불일치하는 것은?',
+  '일치': '다음 글의 내용과 일치하는 것은?',
+  '불일치': '다음 글의 내용과 일치하지 않는 것은?',
   '어법': '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
   '어휘': '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
   '빈칸': '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
   '흐름': '다음 글에서 전체 흐름과 관계 없는 문장은?',
   '순서': '주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?',
   '삽입': '글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?',
-  '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 적절한 것은?',
+  '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?',
   '주관식(서술/단답형)': '[주관식 서술/단답형] 다음 글을 읽고 [조건]에 맞추어 답안을 작성하시오.'
 };
 
@@ -19,26 +21,35 @@ const typeCategories = [
   { category: '주관식', types: ['주관식(서술/단답형)'], bg: 'bg-slate-800' }
 ];
 
-// 🎯 [핵심] qType에 따른 발문 타이틀 정밀 매칭 및 강제 보정
-function getNormalizedTitle(qType) {
-  if (!qType) return '다음 글을 읽고 물음에 답하시오.';
-  if (qType.includes('주제') || qType.includes('제목')) return standardTitleMap['주제/제목'];
-  if (qType.includes('함축')) return standardTitleMap['함축의미'];
-  if (qType.includes('일치') || qType.includes('불일치')) return standardTitleMap['일치/불일치'];
-  if (qType.includes('어법')) return standardTitleMap['어법'];
-  if (qType.includes('어휘')) return standardTitleMap['어휘'];
-  if (qType.includes('빈칸')) return standardTitleMap['빈칸'];
-  if (qType.includes('흐름')) return standardTitleMap['흐름'];
-  if (qType.includes('순서')) return standardTitleMap['순서'];
-  if (qType.includes('삽입')) return standardTitleMap['삽입'];
-  if (qType.includes('요약')) return standardTitleMap['요약'];
-  if (qType.includes('주관식') || qType.includes('서술') || qType.includes('단답')) return standardTitleMap['주관식(서술/단답형)'];
-  return standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
+// 🎯 발문 정밀 추출 로직 (일치 / 불일치 명확 구분)
+function getNormalizedTitle(item, qType) {
+  const typeStr = qType || item?.type || '';
+
+  if (typeStr.includes('주제') || typeStr.includes('제목')) return standardTitleMap['주제/제목'];
+  if (typeStr.includes('함축')) return standardTitleMap['함축의미'];
+  
+  // 일치 vs 불일치 명확 분기
+  if (typeStr.includes('일치')) {
+    if (typeStr.includes('불일치') || (item?.explanation && item.explanation.includes('일치하지 않'))) {
+      return standardTitleMap['불일치'];
+    }
+    return standardTitleMap['일치'];
+  }
+  
+  if (typeStr.includes('어법')) return standardTitleMap['어법'];
+  if (typeStr.includes('어휘')) return standardTitleMap['어휘'];
+  if (typeStr.includes('빈칸')) return standardTitleMap['빈칸'];
+  if (typeStr.includes('흐름')) return standardTitleMap['흐름'];
+  if (typeStr.includes('순서')) return standardTitleMap['순서'];
+  if (typeStr.includes('삽입')) return standardTitleMap['삽입'];
+  if (typeStr.includes('요약')) return standardTitleMap['요약'];
+  if (typeStr.includes('주관식') || typeStr.includes('서술') || typeStr.includes('단답')) return standardTitleMap['주관식(서술/단답형)'];
+  
+  return standardTitleMap[typeStr] || `다음 글의 ${typeStr}으로 가장 적절한 것은?`;
 }
 
 function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
-  // 발문 타이틀 정규화 적용
-  let finalTitle = getNormalizedTitle(qType);
+  let finalTitle = getNormalizedTitle(item, qType);
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
 
@@ -228,8 +239,8 @@ function renderPaper() {
 
   qContainer.innerHTML = filteredQuestions.map((q, idx) => {
     const isSubjective = q.type.includes('주관식');
-    // 🎯 렌더링 시점에도 발문 타이틀 강제 재검증
-    const displayTitle = getNormalizedTitle(q.type);
+    // 🎯 렌더링 시점에 개별 문항의 발문 정밀 계산
+    const displayTitle = getNormalizedTitle(q, q.type);
 
     return `
       <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
