@@ -99,7 +99,7 @@ async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
   }
 }
 
-// 🎯 [개편] PDF에서 실제 학교 기출 '원문 발문' 및 '보기 양식' 전체를 보존 추출
+// 🎯 [DB 호환 개편] raw_sample 컬럼 유무 상관없이 안전 저장을 보장
 async function startBatchPdfClassification() {
   const apiKey = getStoredApiKey();
   if (!apiKey) return toggleApiKeyModal();
@@ -124,7 +124,7 @@ async function startBatchPdfClassification() {
 
     logBox.innerHTML += `
       <div class="my-1 text-slate-600">──────────────────────────────────────────</div>
-      <div class="text-amber-400">⏳ [${i+1}/${queuedPdfFiles.length}] '${file.name}' 실제 발문 및 보기 원문 추출 중...</div>
+      <div class="text-amber-400">⏳ [${i+1}/${queuedPdfFiles.length}] '${file.name}' 실제 발문 원문 추출 중...</div>
     `;
     logBox.scrollTop = logBox.scrollHeight;
 
@@ -146,8 +146,7 @@ ${fullText.slice(0, 15000)}
   "school": "학교명 (예: 세종고)",
   "exam": "시험구분 (예: 1학기 기말)",
   "type": "유형 (어법, 어휘, 빈칸, 순서, 삽입, 서술형, 주제, 요약 중 1개)",
-  "raw_title": "시험지에 실제로 쓰인 발문 문장 전체 (예: '다음 글의 밑줄 친 ①~⑤ 중 어법상 틀린 것의 개수는?')",
-  "raw_sample": "시험지의 보기 또는 조건 박스 양식 전체",
+  "raw_title": "시험지에 실제로 쓰인 발문 문장 전체 (예: '다음 글의 밑줄 친 ①~⑤ 중 어법상 틀린 것만을 고른 것은?')",
   "trick": "핵심 출제 킬러 포인트 1문장 요약"
 }
 `;
@@ -158,14 +157,14 @@ ${fullText.slice(0, 15000)}
       const parsed = JSON.parse(cleanedJson);
       
       if (parsed && parsed.school) {
+        // 기존 DB 컬럼만 사용하여 100% 안전 저장
         const insertPayload = {
           id: Date.now() + Math.floor(Math.random() * 1000),
           school: parsed.school,
           exam: parsed.exam || '기출',
           type: parsed.type || '어법',
           title: parsed.raw_title || parsed.title || '실제 기출 발문',
-          trick: parsed.trick || '기출 정밀 분석 완료',
-          raw_sample: parsed.raw_sample || ''
+          trick: parsed.trick || '기출 정밀 분석 완료'
         };
 
         const { data: inserted, error } = await supabaseClient
