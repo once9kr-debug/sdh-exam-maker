@@ -13,43 +13,71 @@ const standardTitleMap = {
   '주관식(서술/단답형)': '[주관식 서술/단답형] 다음 글을 읽고 [조건]에 맞추어 답안을 작성하시오.'
 };
 
-const typeCategories = [
-  { category: '대의/내용', types: ['주제/제목', '함축의미', '일치/불일치', '요약'], bg: 'bg-amber-500' },
-  { category: '어법/어휘', types: ['어법', '어휘'], bg: 'bg-sky-600' },
-  { category: '언어논리', types: ['빈칸', '흐름', '순서', '삽입'], bg: 'bg-cyan-600' },
-  { category: '주관식', types: ['주관식(서술/단답형)'], bg: 'bg-slate-800' }
-];
+let selectedDifficulty = '상';
+let filteredQuestions = [];
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await callGeminiUniversal(apiKey, promptText);
-    } catch (err) {
-      if (attempt === maxRetries) throw err;
-      await delay(2000 * attempt);
+function setDifficulty(diff) {
+  selectedDifficulty = diff;
+  ['상', '중', '하'].forEach(d => {
+    const btn = document.getElementById(`btnDiff_${d}`);
+    if (btn) {
+      if (d === diff) {
+        btn.className = 'py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs transition';
+      } else {
+        btn.className = 'py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-200 transition';
+      }
     }
-  }
+  });
 }
 
-// 🎯 JSON 안전 파서 (특수문자 파싱 에러 방지)
+function switchView(viewName) {
+  const views = ['view-aiGenerator', 'view-paperView'];
+  views.forEach(v => {
+    const el = document.getElementById(v);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById(`view-${viewName}`);
+  if (target) target.classList.remove('hidden');
+}
+
+// 🎯 JSON 파싱 특수문자 파서
 function safeJsonParse(rawStr) {
   try {
     let clean = rawStr.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(clean);
   } catch (e) {
-    try {
-      let sanitized = rawStr
-        .replace(/```json/gi, '')
-        .replace(/```/g, '')
-        .replace(/[\u0000-\u001F]+/g, ' ')
-        .trim();
-      return JSON.parse(sanitized);
-    } catch (err) {
-      console.error("JSON Parse Fail:", rawStr);
-      throw new Error("AI 응답 데이터 파싱 실패 (JSON 형식 오류)");
-    }
+    let sanitized = rawStr
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .replace(/[\u0000-\u001F]+/g, ' ')
+      .trim();
+    return JSON.parse(sanitized);
+  }
+}
+
+// 🎯 실시간 프로그레스 바
+function updateProgressBar(current, total) {
+  const logBox = document.getElementById('generationLogBox');
+  if (!logBox) return;
+  
+  const percent = Math.round((current / total) * 100);
+  const progressBarHtml = `
+    <div class="my-2 p-2 bg-slate-900 rounded-lg border border-slate-800">
+      <div class="flex justify-between text-[11px] text-cyan-400 font-bold mb-1">
+        <span>출제 진행률 (${current}/${total} 지문)</span>
+        <span>${percent}%</span>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+        <div class="bg-cyan-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+      </div>
+    </div>
+  `;
+  
+  const existingBar = document.getElementById('genProgressBar');
+  if (existingBar) {
+    existingBar.outerHTML = `<div id="genProgressBar">${progressBarHtml}</div>`;
+  } else {
+    logBox.insertAdjacentHTML('afterbegin', `<div id="genProgressBar">${progressBarHtml}</div>`);
   }
 }
 
@@ -175,7 +203,10 @@ async function executeFastParallelGenerate() {
 
   let totalCount = 0;
 
-  for (let pObj of targetPassages) {
+  for (let i = 0; i < targetPassages.length; i++) {
+    const pObj = targetPassages[i];
+    updateProgressBar(i + 1, targetPassages.length);
+
     const promptText = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 
@@ -189,11 +220,6 @@ ${benchmarkSamples || "대한민국 고교 정식 내신 표준 발문 지침 �
 [출제 요청 유형들 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
 
 위 지문을 바탕으로 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
-
-⚠️ 엄격 출제 지침:
-1. 각 문항의 'title' 필드에는 위 기출 원문 발문 예시처럼 고등학교 정식 내신 시험지 발문 어조를 100% 동일하게 작성하세요.
-2. '일치/불일치' 유형은 반드시 "다음 글의 내용과 일치하지 않는 것은?" 또는 "다음 글의 내용과 일치하는 것은?" 중 하나로 명확히 단일 지정하세요.
-3. '주관식' 유형은 answer 필드에 모범 답안 문장을 적으세요.
 `;
     try {
       const rawJson = await callGeminiWithRetry(apiKey, promptText);
@@ -222,7 +248,10 @@ ${benchmarkSamples || "대한민국 고교 정식 내신 표준 발문 지침 �
 
         const verifiedItems = exactItems.map((item) => processVerifiedQuestion(item, pObj.full_text, item.type, setKey, pObj.passage_num, pObj.id));
         const { error } = await supabaseClient.from('questions').insert(verifiedItems);
-        if (!error) totalCount += verifiedItems.length;
+        if (!error) {
+          totalCount += verifiedItems.length;
+          filteredQuestions.push(...verifiedItems);
+        }
         logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 (+${verifiedItems.length}문항)</div>`;
         logBox.scrollTop = logBox.scrollHeight;
       }
@@ -232,8 +261,8 @@ ${benchmarkSamples || "대한민국 고교 정식 내신 표준 발문 지침 �
   }
 
   logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 완벽 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
-  alert(`🎉 [난이도: ${selectedDifficulty}] 기출 원문 1:1 반영 ${totalCount}문항 출제 완료!`);
-  await loadAllSupabaseData();
+  renderPaper();
+  switchView('paperView');
 }
 
 function renderPaper() {
@@ -296,5 +325,38 @@ function renderPaper() {
         <div class="text-[11px] text-slate-700 font-sans bg-slate-50 p-2 rounded">${q.explanation}</div>
       </div>
     `).join('');
+  }
+}
+
+// 🎯 인쇄 커스텀 조작 함수들
+function updatePaperHeader() {
+  const val = document.getElementById('paperCustomTitle')?.value;
+  const target = document.getElementById('paperTitleDisplay');
+  if (target && val) target.innerText = val;
+}
+
+function changePaperFontSize() {
+  const sizeClass = document.getElementById('paperFontSize')?.value || 'text-[12.5px]';
+  const container = document.getElementById('paperContent');
+  if (container) {
+    container.className = `exam-columns-2 text-slate-900 ${sizeClass}`;
+  }
+}
+
+function togglePaperWatermark() {
+  const isChecked = document.getElementById('chkShowWatermark')?.checked;
+  const headerBox = document.getElementById('paperHeaderBox');
+  if (headerBox) {
+    if (isChecked) headerBox.classList.remove('opacity-60');
+    else headerBox.classList.add('opacity-60');
+  }
+}
+
+function toggleAnswerPage() {
+  const isChecked = document.getElementById('chkShowAnswerPage')?.checked;
+  const answerSec = document.getElementById('paperAnswerSection');
+  if (answerSec) {
+    if (isChecked) answerSec.classList.remove('hidden');
+    else answerSec.classList.add('hidden');
   }
 }
