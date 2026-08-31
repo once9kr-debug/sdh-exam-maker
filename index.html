@@ -42,7 +42,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex">
 
-  <!-- 좌측 사이드바 -->
+  <!-- 좌측 글로벌 사이드바 -->
   <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 no-print">
     <div class="p-6 border-b border-slate-800 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -107,7 +107,7 @@
     </div>
   </aside>
 
-  <!-- 메인 콘텐트 (뷰별 독립 격리) -->
+  <!-- 메인 콘텐트 영역 (뷰별 독립 격리) -->
   <main class="flex-1 overflow-y-auto">
 
     <!-- VIEW 1: 모의고사 세트 목록 -->
@@ -121,7 +121,7 @@
       <div id="examTableContainer" class="grid grid-cols-3 gap-4"></div>
     </section>
 
-    <!-- VIEW 2: 모의고사 DB 등록 (독립 격리) -->
+    <!-- VIEW 2: 모의고사 DB 등록 -->
     <section id="view-regPassage" class="p-8 max-w-7xl mx-auto space-y-6 hidden">
       <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
         <div class="flex justify-between items-center border-b pb-4">
@@ -153,7 +153,7 @@
       </div>
     </section>
 
-    <!-- VIEW 3: 기출문제 DB 등록 (독립 격리) -->
+    <!-- VIEW 3: 기출문제 DB 등록 -->
     <section id="view-benchmarkDB" class="p-8 max-w-7xl mx-auto space-y-6 hidden">
       <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
         <div class="flex justify-between items-center border-b pb-4">
@@ -168,7 +168,7 @@
 
         <div id="pdfDropZone" class="border-2 border-dashed border-slate-300 hover:border-cyan-500 rounded-2xl p-8 text-center bg-slate-50 transition cursor-pointer">
           <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
-          <p class="text-xs font-bold text-slate-700">학교 기출 시험지 PDF 파일을 드래그하여 드롭하세요</p>
+          <p class="text-xs font-bold text-slate-700">학교 기출 시험지 PDF 파일을 드래그하여 드롭하거나 클릭하세요</p>
           <input type="file" id="pdfFileInput" multiple accept=".pdf" class="hidden" onchange="handlePdfSelect(event)">
         </div>
 
@@ -187,7 +187,7 @@
       </div>
     </section>
 
-    <!-- VIEW 4: 변형문제 AI 출제 Engine (독립 격리) -->
+    <!-- VIEW 4: 변형문제 AI 출제 Engine -->
     <section id="view-aiGenerator" class="p-8 max-w-7xl mx-auto space-y-6 hidden">
       <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
         <div class="flex items-center justify-between border-b pb-4">
@@ -249,7 +249,7 @@
       </div>
     </section>
 
-    <!-- VIEW 5: 인쇄 및 커스텀 조작 패널 (독립 격리) -->
+    <!-- VIEW 5: 인쇄 및 커스텀 조작 패널 -->
     <section id="view-paperView" class="p-8 space-y-6 hidden">
       <div class="no-print bg-white p-5 rounded-2xl border space-y-4 shadow-sm">
         <div class="flex justify-between items-center border-b pb-3">
@@ -316,39 +316,7 @@
 
   </main>
 
-  <!-- 안전한 화면 전환 스크립트 -->
-  <script>
-    function switchView(viewName) {
-      const views = ['examList', 'regPassage', 'benchmarkDB', 'aiGenerator', 'paperView'];
-      views.forEach(v => {
-        const el = document.getElementById(`view-${v}`);
-        if (el) el.classList.add('hidden');
-      });
-      const target = document.getElementById(`view-${viewName}`);
-      if (target) target.classList.remove('hidden');
-    }
-
-    function setSystemMode(mode) {
-      const adminGroup = document.getElementById('adminMenuGroup');
-      const label = document.getElementById('currentModeLabel');
-      const btnAdmin = document.getElementById('modeBtn_admin');
-      const btnTeacher = document.getElementById('modeBtn_teacher');
-
-      if (mode === 'admin') {
-        if (adminGroup) adminGroup.classList.remove('hidden');
-        if (label) label.innerText = '관리자 접속 중';
-        btnAdmin.className = 'flex-1 py-1.5 rounded-lg bg-cyan-500 text-slate-950 transition font-bold';
-        btnTeacher.className = 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-bold';
-      } else {
-        if (adminGroup) adminGroup.classList.add('hidden');
-        if (label) label.innerText = '선생님 모드 접속 중';
-        btnTeacher.className = 'flex-1 py-1.5 rounded-lg bg-cyan-500 text-slate-950 transition font-bold';
-        btnAdmin.className = 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition font-bold';
-        switchView('examList');
-      }
-    }
-  </script>
-
+  <!-- 스크립트 연결 -->
   <script src="js/supabase-db.js"></script>
   <script src="js/ai-generator.js"></script>
 </body>
