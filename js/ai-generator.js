@@ -1,4 +1,3 @@
-// 🎯 대한민국 고교 표준 내신/수능 완벽 매칭 발문 맵
 const standardTitleMap = {
   '주제/제목': '다음 글의 주제 및 제목으로 가장 적절한 것은?',
   '함축의미': '다음 글의 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?',
@@ -10,7 +9,7 @@ const standardTitleMap = {
   '흐름': '다음 글에서 전체 흐름과 관계 없는 문장은?',
   '순서': '주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?',
   '삽입': '글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?',
-  '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?',
+  '요약': '다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 적절한 것은?',
   '주관식(서술/단답형)': '[주관식 서술/단답형] 다음 글을 읽고 [조건]에 맞추어 답안을 작성하시오.'
 };
 
@@ -21,35 +20,22 @@ const typeCategories = [
   { category: '주관식', types: ['주관식(서술/단답형)'], bg: 'bg-slate-800' }
 ];
 
-// 🎯 발문 정밀 추출 로직 (일치 / 불일치 명확 구분)
-function getNormalizedTitle(item, qType) {
-  const typeStr = qType || item?.type || '';
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  if (typeStr.includes('주제') || typeStr.includes('제목')) return standardTitleMap['주제/제목'];
-  if (typeStr.includes('함축')) return standardTitleMap['함축의미'];
-  
-  // 일치 vs 불일치 명확 분기
-  if (typeStr.includes('일치')) {
-    if (typeStr.includes('불일치') || (item?.explanation && item.explanation.includes('일치하지 않'))) {
-      return standardTitleMap['불일치'];
+async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await callGeminiUniversal(apiKey, promptText);
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      await delay(2000 * attempt);
     }
-    return standardTitleMap['일치'];
   }
-  
-  if (typeStr.includes('어법')) return standardTitleMap['어법'];
-  if (typeStr.includes('어휘')) return standardTitleMap['어휘'];
-  if (typeStr.includes('빈칸')) return standardTitleMap['빈칸'];
-  if (typeStr.includes('흐름')) return standardTitleMap['흐름'];
-  if (typeStr.includes('순서')) return standardTitleMap['순서'];
-  if (typeStr.includes('삽입')) return standardTitleMap['삽입'];
-  if (typeStr.includes('요약')) return standardTitleMap['요약'];
-  if (typeStr.includes('주관식') || typeStr.includes('서술') || typeStr.includes('단답')) return standardTitleMap['주관식(서술/단답형)'];
-  
-  return standardTitleMap[typeStr] || `다음 글의 ${typeStr}으로 가장 적절한 것은?`;
 }
 
 function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
-  let finalTitle = getNormalizedTitle(item, qType);
+  // 🎯 AI가 기출 원문 발문을 생성했으면 그 발문을 100% 우선 사용
+  let finalTitle = item.title || standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
 
@@ -160,10 +146,11 @@ async function executeFastParallelGenerate() {
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
   if (selectedTypes.length === 0) return alert('유형을 선택하세요.');
 
-  logBox.innerHTML = `<div>🚀 [${selectedTypes.length}개 유형 정밀 생성] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
+  logBox.innerHTML = `<div>🚀 [기출 원문 Few-Shot 주입 엔진 가동] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
 
-  const benchmarkContext = schoolBenchmarkDB.slice(0, 10).map(b => 
-    ` - [${b.school || '고교'} ${b.type || '기출'}] ${b.title || ''} / 킬러패턴: ${b.trick || ''}`
+  // 🎯 [핵심 개편] 축적된 기출의 '실제 원문 발문'을 Few-Shot 예시로 AI에 직접 주입
+  const benchmarkSamples = schoolBenchmarkDB.slice(0, 15).map(b => 
+    ` - [${b.school || '고교'} ${b.type || '유형'}] 실제 시험지 발문: "${b.title || ''}"`
   ).join('\n');
 
   await supabaseClient.from('questions').delete().eq('set_key', setKey).eq('difficulty', selectedDifficulty);
@@ -174,20 +161,24 @@ async function executeFastParallelGenerate() {
     const promptText = `
 당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
 
-[지문 ${pObj.passage_num}번]:
+[출제 대상 지문 ${pObj.passage_num}번]:
 ${pObj.full_text}
 
-[기출 패턴 참고]:
-${benchmarkContext || "주요 고교 변형 패턴"}
+[실제 학교 기출 시험지의 원문 발문 예시 자료 (이 발문 어조를 100% 복제할 것)]:
+${benchmarkSamples || "대한민국 고교 정식 내신 표준 발문 지침 적용"}
 
-[난이도]: ${selectedDifficulty}
-[요청 유형 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
+[출제 요청 난이도]: ${selectedDifficulty}
+[출제 요청 유형들 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
 
-요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
-반드시 각 객체의 'type' 필드에 요청된 유형 이름을 일치시키세요.
+위 지문을 바탕으로 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
+
+⚠️ 엄격 출제 지침:
+1. 각 문항의 'title' 필드에는 위 기출 원문 발문 예시처럼 고등학교 정식 내신 시험지 발문 어조를 100% 동일하게 작성하세요. 절대 "일치하거나 불일치하는"과 같은 엉뚱한 표현을 쓰지 마세요.
+2. '일치/불일치' 유형은 반드시 "다음 글의 내용과 일치하지 않는 것은?" 또는 "다음 글의 내용과 일치하는 것은?" 중 하나로 명확히 단일 지정하세요.
+3. '주관식' 유형은 answer 필드에 모범 답안 문장을 적으세요.
 `;
     try {
-      const rawJson = await callGeminiUniversal(apiKey, promptText);
+      const rawJson = await callGeminiWithRetry(apiKey, promptText);
       let cleanedJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanedJson);
 
@@ -224,7 +215,7 @@ ${benchmarkContext || "주요 고교 변형 패턴"}
   }
 
   logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 완벽 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
-  alert(`🎉 [난이도: ${selectedDifficulty}] ${totalCount}문항 출제 완료!`);
+  alert(`🎉 [난이도: ${selectedDifficulty}] 기출 원문 1:1 반영 ${totalCount}문항 출제 완료!`);
   await loadAllSupabaseData();
 }
 
@@ -239,13 +230,11 @@ function renderPaper() {
 
   qContainer.innerHTML = filteredQuestions.map((q, idx) => {
     const isSubjective = q.type.includes('주관식');
-    // 🎯 렌더링 시점에 개별 문항의 발문 정밀 계산
-    const displayTitle = getNormalizedTitle(q, q.type);
 
     return `
       <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
         <div class="font-bold text-[13.5px] mb-1">
-          <span>${idx + 1}. ${displayTitle}</span>
+          <span>${idx + 1}. ${q.title}</span>
           <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type} / 난이도:${q.difficulty}]</span>
         </div>
         ${q.given_box ? `<div class="given-box exam-eng-font font-medium"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
