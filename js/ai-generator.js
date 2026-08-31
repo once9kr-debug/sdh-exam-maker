@@ -21,64 +21,65 @@ function setDifficulty(diff) {
   ['상', '중', '하'].forEach(d => {
     const btn = document.getElementById(`btnDiff_${d}`);
     if (btn) {
-      if (d === diff) {
-        btn.className = 'py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs transition';
-      } else {
-        btn.className = 'py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-200 transition';
-      }
+      if (d === diff) btn.className = 'py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs transition';
+      else btn.className = 'py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-200 transition';
     }
   });
 }
 
-function switchView(viewName) {
-  const views = ['view-aiGenerator', 'view-paperView'];
-  views.forEach(v => {
-    const el = document.getElementById(v);
-    if (el) el.classList.add('hidden');
-  });
-  const target = document.getElementById(`view-${viewName}`);
-  if (target) target.classList.remove('hidden');
+function getStoredApiKey() { return localStorage.getItem('SDH_GEMINI_API_KEY') || ''; }
+function toggleApiKeyModal() {
+  const k = prompt('Gemini API Key를 입력하세요:', getStoredApiKey());
+  if (k !== null) { localStorage.setItem('SDH_GEMINI_API_KEY', k.trim()); alert('API Key가 저장되었습니다.'); }
 }
 
-// 🎯 JSON 파싱 특수문자 파서
-function safeJsonParse(rawStr) {
-  try {
-    let clean = rawStr.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(clean);
-  } catch (e) {
-    let sanitized = rawStr
-      .replace(/```json/gi, '')
-      .replace(/```/g, '')
-      .replace(/[\u0000-\u001F]+/g, ' ')
-      .trim();
-    return JSON.parse(sanitized);
+async function callGeminiUniversal(apiKey, prompt) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  });
+  if (!res.ok) throw new Error(`API 오류 (${res.status})`);
+  const data = await res.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
+async function callGeminiWithRetry(apiKey, promptText, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await callGeminiUniversal(apiKey, promptText);
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      await sleep(2000 * attempt);
+    }
   }
 }
 
-// 🎯 실시간 프로그레스 바
+function safeJsonParse(rawStr) {
+  try {
+    return JSON.parse(rawStr.replace(/```json/g, '').replace(/```/g, '').trim());
+  } catch (e) {
+    return JSON.parse(rawStr.replace(/```json/gi, '').replace(/```/g, '').replace(/[\u0000-\u001F]+/g, ' ').trim());
+  }
+}
+
 function updateProgressBar(current, total) {
   const logBox = document.getElementById('generationLogBox');
   if (!logBox) return;
-  
   const percent = Math.round((current / total) * 100);
   const progressBarHtml = `
     <div class="my-2 p-2 bg-slate-900 rounded-lg border border-slate-800">
       <div class="flex justify-between text-[11px] text-cyan-400 font-bold mb-1">
-        <span>출제 진행률 (${current}/${total} 지문)</span>
-        <span>${percent}%</span>
+        <span>출제 진행률 (${current}/${total} 지문)</span><span>${percent}%</span>
       </div>
       <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
         <div class="bg-cyan-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
       </div>
     </div>
   `;
-  
   const existingBar = document.getElementById('genProgressBar');
-  if (existingBar) {
-    existingBar.outerHTML = `<div id="genProgressBar">${progressBarHtml}</div>`;
-  } else {
-    logBox.insertAdjacentHTML('afterbegin', `<div id="genProgressBar">${progressBarHtml}</div>`);
-  }
+  if (existingBar) existingBar.outerHTML = `<div id="genProgressBar">${progressBarHtml}</div>`;
+  else logBox.insertAdjacentHTML('afterbegin', `<div id="genProgressBar">${progressBarHtml}</div>`);
 }
 
 function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
@@ -93,9 +94,7 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
         const sym = ['①', '②', '③', '④', '⑤'][i];
         const origWord = w.orig || w;
         const modWord = w.mod || origWord;
-        if (p.includes(origWord)) {
-          p = p.replace(origWord, `${sym} <u>${modWord}</u>`);
-        }
+        if (p.includes(origWord)) p = p.replace(origWord, `${sym} <u>${modWord}</u>`);
       });
       finalPassage = p;
     }
@@ -104,62 +103,21 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     if (item.target_blank_word && origPassage.includes(item.target_blank_word)) {
       finalPassage = origPassage.replace(item.target_blank_word, '__________');
     }
-  } else if (qType.includes('함축의미')) {
-    if (item.target_phrase && origPassage.includes(item.target_phrase)) {
-      finalPassage = origPassage.replace(item.target_phrase, `<u>${item.target_phrase}</u>`);
-    }
   } else if (qType.includes('순서')) {
     const sentences = origPassage.split('. ');
     givenBoxText = sentences.slice(0, 2).join('. ') + '.';
     const remainPart = sentences.slice(2).join('. ');
     const third = Math.floor(remainPart.length / 3);
     finalPassage = `(A) ${remainPart.substring(0, third)}\n<br/>(B) ${remainPart.substring(third, third*2)}\n<br/>(C) ${remainPart.substring(third*2)}`;
-  } else if (qType.includes('삽입')) {
-    let gSent = item.given_sentence || item.given_box || '';
-    if (!gSent || gSent.includes('주어진 문장을 읽고')) {
-      const sList = origPassage.split('. ');
-      gSent = sList.length > 2 ? sList[2] + '.' : origPassage.substring(0, 50) + '...';
-    }
-    givenBoxText = gSent;
-
-    const s = origPassage.split('. ');
-    if (s.length >= 5) {
-      finalPassage = `${s[0]}. ( ① ) ${s[1]}. ( ② ) ${s[2]}. ( ③ ) ${s[3]}. ( ④ ) ${s[4]}. ( ⑤ ) ${s.slice(5).join('. ')}`;
-    }
-  } else if (qType.includes('요약')) {
-    summaryText = item.summary_text || '';
-    if (finalOptions.length > 0) {
-      finalOptions = finalOptions.map((o, idx) => {
-        if (typeof o === 'object' && o !== null) {
-          return `(A) ${o.A || o.a || ''}  ---  (B) ${o.B || o.b || ''}`;
-        } else if (typeof o === 'string' && o.trim().startsWith('{')) {
-          try {
-            const p = JSON.parse(o);
-            return `(A) ${p.A || ''}  ---  (B) ${p.B || ''}`;
-          } catch(e) { return o; }
-        }
-        return o;
-      });
-    }
   } else if (qType.includes('주관식')) {
     conditionText = item.condition_text || '[조건] 본문 어휘 및 구문 맥락을 활용하여 작성하시오.';
-  }
-
-  let ansText = item.answer || '본문 맥락에 맞는 조건별 정답';
-  if (typeof ansText === 'object' && ansText !== null) {
-    ansText = Object.entries(ansText).map(([k, v]) => `(${k}) ${v}`).join(' / ');
-  } else if (typeof ansText === 'string' && ansText.trim().startsWith('{')) {
-    try {
-      const pAns = JSON.parse(ansText);
-      ansText = Object.entries(pAns).map(([k, v]) => `(${k}) ${v}`).join(' / ');
-    } catch(e) {}
   }
 
   return {
     passage_id: passageId, set_key: setKey, passage_num: String(passageNum), type: qType,
     difficulty: selectedDifficulty || '상', title: finalTitle, passage: finalPassage,
     given_box: givenBoxText, condition_box: conditionText, summary_box: summaryText,
-    options: finalOptions, answer: String(ansText), explanation: item.explanation || '본문 맥락 기반 정밀 해설입니다.'
+    options: finalOptions, answer: String(item.answer || '모범 답안'), explanation: item.explanation || '해설'
   };
 }
 
@@ -173,34 +131,15 @@ async function executeFastParallelGenerate() {
   logBox.classList.remove('hidden');
 
   let targetPassages = passageArchiveDB.filter(p => p.set_key === setKey);
-
-  if (targetPassages.length === 0) {
-    const numbers = setKey.match(/\d+/g);
-    if (numbers && numbers.length >= 2) {
-      const year = numbers[0];
-      const month = numbers[1];
-      targetPassages = passageArchiveDB.filter(p => 
-        String(p.year) === year && String(p.month) === month
-      );
-    }
-  }
-
-  if (targetPassages.length === 0) {
-    logBox.innerHTML = `<div class="text-rose-400 font-bold">❌ 지문 검색 실패</div>`;
-    return alert(`선택 세트[${setKey}]의 지문을 DB에서 찾을 수 없습니다.`);
-  }
+  if (targetPassages.length === 0) return alert(`선택 세트[${setKey}] 지문이 없습니다.`);
 
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
   if (selectedTypes.length === 0) return alert('유형을 선택하세요.');
 
-  logBox.innerHTML = `<div>🚀 [기출 원문 Few-Shot 주입 엔진 가동] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
-
-  const benchmarkSamples = schoolBenchmarkDB.slice(0, 15).map(b => 
-    ` - [${b.school || '고교'} ${b.type || '유형'}] 실제 시험지 발문: "${b.title || ''}"`
-  ).join('\n');
+  logBox.innerHTML = `<div>🚀 [Few-Shot 주입 엔진] 총 ${targetPassages.length}개 지문 출제 시작...</div>`;
 
   await supabaseClient.from('questions').delete().eq('set_key', setKey).eq('difficulty', selectedDifficulty);
-
+  filteredQuestions = [];
   let totalCount = 0;
 
   for (let i = 0; i < targetPassages.length; i++) {
@@ -208,59 +147,28 @@ async function executeFastParallelGenerate() {
     updateProgressBar(i + 1, targetPassages.length);
 
     const promptText = `
-당신은 대한민국 고등학교 영어 내신 출제 전문가입니다.
-
-[출제 대상 지문 ${pObj.passage_num}번]:
+고교 영어 내신 출제 전문가로서 [지문 ${pObj.passage_num}번]:
 ${pObj.full_text}
-
-[실제 학교 기출 시험지의 원문 발문 예시 자료 (이 발문 어조를 100% 복제할 것)]:
-${benchmarkSamples || "대한민국 고교 정식 내신 표준 발문 지침 적용"}
-
-[출제 요청 난이도]: ${selectedDifficulty}
-[출제 요청 유형들 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
-
-위 지문을 바탕으로 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
+요청 유형(${selectedTypes.join(', ')})을 1문항씩 생성하여 JSON 배열로 반환하세요.
 `;
     try {
       const rawJson = await callGeminiWithRetry(apiKey, promptText);
       const parsed = safeJsonParse(rawJson);
 
       if (Array.isArray(parsed)) {
-        const seenTypes = new Set();
-        const exactItems = [];
-
-        for (let item of parsed) {
-          const rawType = item.type || '';
-          
-          const matchedType = selectedTypes.find(st => 
-            st === rawType || 
-            (st.includes('주관식') && (rawType.includes('주관식') || rawType.includes('서술') || rawType.includes('단답'))) ||
-            (st.includes('일치') && rawType.includes('일치')) ||
-            (st.includes('주제') && (rawType.includes('주제') || rawType.includes('제목')))
-          );
-
-          if (matchedType && !seenTypes.has(matchedType)) {
-            seenTypes.add(matchedType);
-            item.type = matchedType; 
-            exactItems.push(item);
-          }
-        }
-
-        const verifiedItems = exactItems.map((item) => processVerifiedQuestion(item, pObj.full_text, item.type, setKey, pObj.passage_num, pObj.id));
+        const verifiedItems = parsed.map(item => processVerifiedQuestion(item, pObj.full_text, item.type || '어법', setKey, pObj.passage_num, pObj.id));
         const { error } = await supabaseClient.from('questions').insert(verifiedItems);
         if (!error) {
           totalCount += verifiedItems.length;
           filteredQuestions.push(...verifiedItems);
         }
         logBox.innerHTML += `<div class="text-emerald-300">✓ ${pObj.passage_num}번 완료 (+${verifiedItems.length}문항)</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
       }
     } catch (e) {
       logBox.innerHTML += `<div class="text-rose-400">❌ ${pObj.passage_num}번 에러: ${e.message}</div>`;
     }
   }
 
-  logBox.innerHTML += `<div class="text-emerald-300 font-bold mt-2">🎉 완벽 출제 완료! 총 ${totalCount}문항 적재됨</div>`;
   renderPaper();
   switchView('paperView');
 }
@@ -269,58 +177,31 @@ function renderPaper() {
   const qContainer = document.getElementById('paperContent');
   const quickGrid = document.getElementById('quickAnswerGrid');
   const aContainer = document.getElementById('answerDetailContent');
-
   if (!qContainer) return;
 
   const circles = ['①', '②', '③', '④', '⑤'];
 
-  qContainer.innerHTML = filteredQuestions.map((q, idx) => {
-    const isSubjective = q.type.includes('주관식');
-
-    return `
-      <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] break-inside-avoid mb-6">
-        <div class="font-bold text-[13.5px] mb-1">
-          <span>${idx + 1}. ${q.title}</span>
-          <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type} / 난이도:${q.difficulty}]</span>
-        </div>
-        ${q.given_box ? `<div class="given-box exam-eng-font font-medium my-1"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
-        <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
-        ${isSubjective ? `
-          ${q.condition_box ? `<div class="text-[11px] font-bold text-slate-800 my-1">${q.condition_box}</div>` : ''}
-          <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형/단답형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
-        ` : ''}
-        ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-        ${(!isSubjective && q.options.length > 0) ? `
-          <div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">
-            ${q.options.map((o, oIdx) => {
-              const strVal = String(o).trim();
-              const formattedText = /^[①-⑤]/.test(strVal) ? strVal : `${circles[oIdx] || ''} ${strVal}`;
-              return `<div>${formattedText}</div>`;
-            }).join('')}
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
+  qContainer.innerHTML = filteredQuestions.map((q, idx) => `
+    <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px] mb-6">
+      <div class="font-bold text-[13.5px] mb-1">${idx + 1}. ${q.title} <span class="text-[10px] text-slate-500 font-sans">[${q.passage_num}번]</span></div>
+      ${q.given_box ? `<div class="given-box exam-eng-font my-1"><strong>[주어진 글]</strong><br/>${q.given_box}</div>` : ''}
+      <div class="passage-box exam-eng-font text-slate-800">${q.passage.replace(/\n/g, '<br/>')}</div>
+      ${q.options.length > 0 ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2">${q.options.map((o, oIdx) => `<div>${/^[①-⑤]/.test(String(o)) ? o : `${circles[oIdx]} ${o}`}</div>`).join('')}</div>` : ''}
+    </div>
+  `).join('');
 
   if (quickGrid) {
-    quickGrid.innerHTML = filteredQuestions.map((q, idx) => {
-      let displayAns = q.type.includes('주관식') ? '서술형' : q.answer;
-      if (displayAns.includes('{')) displayAns = '정답 참조';
-      if (displayAns.length > 6) displayAns = displayAns.substring(0, 6) + '..';
-
-      return `
-        <div class="border p-1 rounded bg-white min-h-[44px] flex flex-col justify-center items-center shadow-sm">
-          <span class="text-[9px] text-slate-400 font-bold mb-0.5">${idx + 1}번</span>
-          <span class="font-black text-[10px] text-slate-800 truncate w-full text-center px-0.5">${displayAns}</span>
-        </div>
-      `;
-    }).join('');
+    quickGrid.innerHTML = filteredQuestions.map((q, idx) => `
+      <div class="border p-1 rounded bg-white min-h-[44px] flex flex-col justify-center items-center shadow-sm">
+        <span class="text-[9px] text-slate-400 font-bold">${idx + 1}번</span>
+        <span class="font-black text-[10px] text-slate-800 truncate w-full text-center">${q.answer}</span>
+      </div>
+    `).join('');
   }
 
   if (aContainer) {
     aContainer.innerHTML = filteredQuestions.map((q, idx) => `
-      <div class="question-block border-b pb-2 mb-2 break-inside-avoid">
+      <div class="question-block border-b pb-2 mb-2">
         <div class="font-bold text-slate-900 mb-1">[${idx + 1}번 정답 : <strong class="text-blue-700">${q.answer}</strong>]</div>
         <div class="text-[11px] text-slate-700 font-sans bg-slate-50 p-2 rounded">${q.explanation}</div>
       </div>
@@ -328,7 +209,6 @@ function renderPaper() {
   }
 }
 
-// 🎯 인쇄 커스텀 조작 함수들
 function updatePaperHeader() {
   const val = document.getElementById('paperCustomTitle')?.value;
   const target = document.getElementById('paperTitleDisplay');
@@ -338,25 +218,17 @@ function updatePaperHeader() {
 function changePaperFontSize() {
   const sizeClass = document.getElementById('paperFontSize')?.value || 'text-[12.5px]';
   const container = document.getElementById('paperContent');
-  if (container) {
-    container.className = `exam-columns-2 text-slate-900 ${sizeClass}`;
-  }
+  if (container) container.className = `exam-columns-2 text-slate-900 ${sizeClass}`;
 }
 
 function togglePaperWatermark() {
   const isChecked = document.getElementById('chkShowWatermark')?.checked;
   const headerBox = document.getElementById('paperHeaderBox');
-  if (headerBox) {
-    if (isChecked) headerBox.classList.remove('opacity-60');
-    else headerBox.classList.add('opacity-60');
-  }
+  if (headerBox) headerBox.style.opacity = isChecked ? '1' : '0.4';
 }
 
 function toggleAnswerPage() {
   const isChecked = document.getElementById('chkShowAnswerPage')?.checked;
   const answerSec = document.getElementById('paperAnswerSection');
-  if (answerSec) {
-    if (isChecked) answerSec.classList.remove('hidden');
-    else answerSec.classList.add('hidden');
-  }
+  if (answerSec) answerSec.classList.toggle('hidden', !isChecked);
 }
