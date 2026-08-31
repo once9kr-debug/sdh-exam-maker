@@ -19,8 +19,26 @@ const typeCategories = [
   { category: '주관식', types: ['주관식(서술/단답형)'], bg: 'bg-slate-800' }
 ];
 
+// 🎯 [핵심] qType에 따른 발문 타이틀 정밀 매칭 및 강제 보정
+function getNormalizedTitle(qType) {
+  if (!qType) return '다음 글을 읽고 물음에 답하시오.';
+  if (qType.includes('주제') || qType.includes('제목')) return standardTitleMap['주제/제목'];
+  if (qType.includes('함축')) return standardTitleMap['함축의미'];
+  if (qType.includes('일치') || qType.includes('불일치')) return standardTitleMap['일치/불일치'];
+  if (qType.includes('어법')) return standardTitleMap['어법'];
+  if (qType.includes('어휘')) return standardTitleMap['어휘'];
+  if (qType.includes('빈칸')) return standardTitleMap['빈칸'];
+  if (qType.includes('흐름')) return standardTitleMap['흐름'];
+  if (qType.includes('순서')) return standardTitleMap['순서'];
+  if (qType.includes('삽입')) return standardTitleMap['삽입'];
+  if (qType.includes('요약')) return standardTitleMap['요약'];
+  if (qType.includes('주관식') || qType.includes('서술') || qType.includes('단답')) return standardTitleMap['주관식(서술/단답형)'];
+  return standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
+}
+
 function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, passageId) {
-  let finalTitle = standardTitleMap[qType] || `다음 글의 ${qType}으로 가장 적절한 것은?`;
+  // 발문 타이틀 정규화 적용
+  let finalTitle = getNormalizedTitle(qType);
   let finalPassage = origPassage, givenBoxText = '', conditionText = '', summaryText = '';
   let finalOptions = Array.isArray(item.options) ? item.options : [];
 
@@ -68,16 +86,15 @@ function processVerifiedQuestion(item, origPassage, qType, setKey, passageNum, p
     summaryText = item.summary_text || '';
     if (finalOptions.length > 0) {
       finalOptions = finalOptions.map((o, idx) => {
-        const sym = ['①', '②', '③', '④', '⑤'][idx];
         if (typeof o === 'object' && o !== null) {
-          return `${sym} (A) ${o.A || o.a || ''}  ---  (B) ${o.B || o.b || ''}`;
+          return `(A) ${o.A || o.a || ''}  ---  (B) ${o.B || o.b || ''}`;
         } else if (typeof o === 'string' && o.trim().startsWith('{')) {
           try {
             const p = JSON.parse(o);
-            return `${sym} (A) ${p.A || ''}  ---  (B) ${p.B || ''}`;
-          } catch(e) { return `${sym} ${o}`; }
+            return `(A) ${p.A || ''}  ---  (B) ${p.B || ''}`;
+          } catch(e) { return o; }
         }
-        return `${sym} ${o}`;
+        return o;
       });
     }
   } else if (qType.includes('주관식')) {
@@ -111,10 +128,8 @@ async function executeFastParallelGenerate() {
   const logBox = document.getElementById('generationLogBox');
   logBox.classList.remove('hidden');
 
-  // 🎯 [근본 차단] 문자열 완벽 일치에 의존하지 않고 다중 조건 검색으로 지문 수집
   let targetPassages = passageArchiveDB.filter(p => p.set_key === setKey);
 
-  // 1차 검색 실패 시 년도/월 추출 방식 보완 검색
   if (targetPassages.length === 0) {
     const numbers = setKey.match(/\d+/g);
     if (numbers && numbers.length >= 2) {
@@ -126,14 +141,9 @@ async function executeFastParallelGenerate() {
     }
   }
 
-  // 여전히 지문이 없는 경우 안내 로그 출력 후 안전 중단
   if (targetPassages.length === 0) {
-    logBox.innerHTML = `
-      <div class="text-rose-400 font-bold">❌ 지문 검색 실패</div>
-      <div class="text-slate-400 text-xs mt-1">선택 세트 [${setKey}]에 해당되는 지문을 DB에서 찾지 못했습니다.</div>
-      <div class="text-slate-400 text-xs">현재 등록된 전체 지문 수: ${passageArchiveDB.length}개</div>
-    `;
-    return alert(`선택 세트[${setKey}]의 지문 데이터를 지문 DB에서 찾을 수 없습니다. 지문 등록 여부를 확인해 주세요.`);
+    logBox.innerHTML = `<div class="text-rose-400 font-bold">❌ 지문 검색 실패</div>`;
+    return alert(`선택 세트[${setKey}]의 지문을 DB에서 찾을 수 없습니다.`);
   }
 
   const selectedTypes = Array.from(document.querySelectorAll('input[name="adminGenType"]:checked')).map(cb => cb.value);
@@ -163,11 +173,7 @@ ${benchmarkContext || "주요 고교 변형 패턴"}
 [요청 유형 (${selectedTypes.length}개)]: ${selectedTypes.join(', ')}
 
 요청된 유형 ${selectedTypes.length}개를 각각 1문항씩 생성하세요.
-
-⚠️ 규격 지침:
-1. '삽입' 유형: 반드시 "given_sentence" 필드에 본문에서 발췌한 실제 문장을 작성하세요.
-2. '어법/어휘' 유형: target_words 필드에 [ {"orig": "본문단어1", "mod": "변형단어1"}, ... ] 5개 객체를 만드세요.
-3. '주관식' 유형: answer 필드에 완결된 모범 답안 문장을 적으세요.
+반드시 각 객체의 'type' 필드에 요청된 유형 이름을 일치시키세요.
 `;
     try {
       const rawJson = await callGeminiUniversal(apiKey, promptText);
@@ -218,12 +224,17 @@ function renderPaper() {
 
   if (!qContainer) return;
 
+  const circles = ['①', '②', '③', '④', '⑤'];
+
   qContainer.innerHTML = filteredQuestions.map((q, idx) => {
     const isSubjective = q.type.includes('주관식');
+    // 🎯 렌더링 시점에도 발문 타이틀 강제 재검증
+    const displayTitle = getNormalizedTitle(q.type);
+
     return `
       <div class="question-block exam-paper-font text-slate-900 leading-relaxed text-[12.5px]">
         <div class="font-bold text-[13.5px] mb-1">
-          <span>${idx + 1}. ${q.title}</span>
+          <span>${idx + 1}. ${displayTitle}</span>
           <span class="text-[10px] text-slate-500 font-sans ml-1">[${q.passage_num}번 / ${q.type} / 난이도:${q.difficulty}]</span>
         </div>
         ${q.given_box ? `<div class="given-box exam-eng-font font-medium"><strong>[주어진 글 / 문장]</strong><br/>${q.given_box}</div>` : ''}
@@ -233,7 +244,15 @@ function renderPaper() {
           <div class="mt-2 border p-3 rounded bg-white font-sans"><span class="text-[11px] font-bold text-slate-700 block mb-1">[서술형/단답형 답안 작성란]</span><div class="border-b border-dashed h-5"></div></div>
         ` : ''}
         ${q.summary_box ? `<div class="p-2 border bg-slate-50 font-sans text-xs my-1"><strong>[요약문]</strong><br/>${q.summary_box}</div>` : ''}
-        ${(!isSubjective && q.options.length > 0) ? `<div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">${q.options.map(o => `<div>${o}</div>`).join('')}</div>` : ''}
+        ${(!isSubjective && q.options.length > 0) ? `
+          <div class="grid grid-cols-1 gap-1 pl-1 mt-2 text-[12px] exam-eng-font">
+            ${q.options.map((o, oIdx) => {
+              const strVal = String(o).trim();
+              const formattedText = /^[①-⑤]/.test(strVal) ? strVal : `${circles[oIdx] || ''} ${strVal}`;
+              return `<div>${formattedText}</div>`;
+            }).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
   }).join('');
