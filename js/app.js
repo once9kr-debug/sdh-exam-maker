@@ -1,19 +1,21 @@
 // SDH STUDIO - Main Application Controller
 const App = {
+  currentSetKey: null,
   currentQuestions: [],
+  selectedQuestions: [],
 
   async init() {
     this.bindEvents();
     const ok = await AppState.init();
     if (ok) {
-      this.renderExamList();
+      this.renderExamTable();
       this.populateMockSelect();
       this.renderBenchmarkList();
     }
   },
 
   switchView(viewName) {
-    const views = ['examList', 'regPassage', 'benchmarkDB', 'aiGenerator', 'paperView'];
+    const views = ['examList', 'examDetail', 'regPassage', 'benchmarkDB', 'aiGenerator', 'paperView'];
     views.forEach(v => {
       const el = document.getElementById(`view-${v}`);
       if (el) el.classList.add('hidden');
@@ -43,29 +45,107 @@ const App = {
     }
   },
 
-  renderExamList() {
-    const container = document.getElementById('examTableContainer');
+  // 1. 모의고사 세트 목록 (깔끔한 테이블 뷰)
+  renderExamTable() {
+    const container = document.getElementById('examTableBody');
     if (!container) return;
 
     if (AppState.mockSets.length === 0) {
-      container.innerHTML = `<div class="col-span-3 p-8 text-center text-slate-400 bg-white rounded-2xl border border-dashed">보관된 모의고사 세트가 없습니다.</div>`;
+      container.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">등록된 모의고사 지문 세트가 없습니다.</td></tr>`;
       return;
     }
 
-    container.innerHTML = AppState.mockSets.map(exam => `
-      <div class="bg-white p-5 rounded-2xl border hover:border-cyan-500 shadow-sm transition space-y-4">
-        <div class="flex justify-between items-start">
-          <div>
-            <span class="bg-slate-100 text-slate-600 font-bold text-[10px] px-2 py-0.5 rounded-full">${exam.grade}</span>
-            <h3 class="font-black text-slate-900 text-sm mt-1">${exam.title}</h3>
-          </div>
-          <span class="bg-cyan-50 text-cyan-700 font-bold text-xs px-2.5 py-1 rounded-lg border border-cyan-100">${exam.questionCount}문항</span>
+    container.innerHTML = AppState.mockSets.map((exam, idx) => `
+      <tr class="border-b hover:bg-slate-50/80 transition text-xs">
+        <td class="p-4 text-center font-bold text-slate-500">${idx + 1}</td>
+        <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 font-bold text-slate-700 rounded-md">${exam.grade}</span></td>
+        <td class="p-4 font-bold text-slate-900">${exam.title}</td>
+        <td class="p-4 text-center">
+          <span class="px-2.5 py-1 bg-cyan-50 text-cyan-700 font-bold rounded-lg border border-cyan-100">${exam.questionCount}문항</span>
+        </td>
+        <td class="p-4 text-center">
+          <button onclick="App.openExamDetail('${exam.id}')" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-cyan-400 rounded-xl font-bold transition flex items-center gap-1.5 mx-auto">
+            <i class="fa-solid fa-sliders text-xs"></i> 문항 선택 및 출제
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  },
+
+  // 2. 세트 상세 / 지문 및 유형 선택 화면 열기
+  openExamDetail(setKey) {
+    this.currentSetKey = setKey;
+    const exam = AppState.mockSets.find(e => e.id === setKey);
+    const questions = AppState.getQuestionsBySet(setKey);
+
+    document.getElementById('detailExamTitle').innerText = exam ? exam.title : setKey;
+    document.getElementById('detailTotalCount').innerText = `전체 보유 문항: ${questions.length}개`;
+
+    // 지문 번호 목록 추출
+    const passageNums = [...new Set(questions.map(q => q.passage_num))].sort((a, b) => Number(a) - Number(b));
+    const pContainer = document.getElementById('detailPassageFilters');
+    pContainer.innerHTML = passageNums.map(n => `
+      <label class="flex items-center gap-1.5 px-3 py-1.5 bg-white border rounded-lg cursor-pointer hover:bg-slate-50 text-xs font-bold text-slate-700">
+        <input type="checkbox" name="filterPassage" value="${n}" checked onchange="App.filterDetailQuestions()">
+        <span>${n}번</span>
+      </label>
+    `).join('');
+
+    // 출제 유형 목록 추출
+    const types = [...new Set(questions.map(q => q.type))];
+    const tContainer = document.getElementById('detailTypeFilters');
+    tContainer.innerHTML = types.map(t => `
+      <label class="flex items-center gap-1.5 px-3 py-1.5 bg-white border rounded-lg cursor-pointer hover:bg-slate-50 text-xs font-bold text-slate-700">
+        <input type="checkbox" name="filterType" value="${t}" checked onchange="App.filterDetailQuestions()">
+        <span>${t}</span>
+      </label>
+    `).join('');
+
+    this.filterDetailQuestions();
+    this.switchView('examDetail');
+  },
+
+  // 지문/유형 체크박스에 따른 문제 리스트 필터링
+  filterDetailQuestions() {
+    const questions = AppState.getQuestionsBySet(this.currentSetKey);
+    const checkedPassages = Array.from(document.querySelectorAll('input[name="filterPassage"]:checked')).map(cb => cb.value);
+    const checkedTypes = Array.from(document.querySelectorAll('input[name="filterType"]:checked')).map(cb => cb.value);
+
+    this.selectedQuestions = questions.filter(q => checkedPassages.includes(q.passage_num) && checkedTypes.includes(q.type));
+
+    const listContainer = document.getElementById('detailQuestionList');
+    document.getElementById('detailSelectedCount').innerText = `선택된 출제 문항: ${this.selectedQuestions.length}개`;
+
+    if (this.selectedQuestions.length === 0) {
+      listContainer.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white rounded-xl border border-dashed">선택된 조건에 해당하는 문항이 없습니다.</div>`;
+      return;
+    }
+
+    listContainer.innerHTML = this.selectedQuestions.map((q, idx) => `
+      <div class="p-4 bg-white border rounded-xl space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-slate-900">${idx + 1}. [${q.passage_num}번] ${q.title}</span>
+          <span class="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded">${q.type}</span>
         </div>
-        <button onclick="App.loadPaper('${exam.id}')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-print"></i> 문제지 미리보기 및 인쇄
-        </button>
+        <p class="text-slate-600 line-clamp-2">${q.passage.replace(/<[^>]*>?/gm, '')}</p>
+        <div class="text-[11px] text-slate-500 font-bold">정답: ${q.answer}</div>
       </div>
     `).join('');
+  },
+
+  toggleAllFilter(name, check) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => cb.checked = check);
+    this.filterDetailQuestions();
+  },
+
+  // 3. 최종 시험지 출력 화면으로 진입
+  generateSelectedPaper() {
+    if (this.selectedQuestions.length === 0) {
+      alert('출제할 문항을 최소 1개 이상 선택해 주세요.');
+      return;
+    }
+    PaperRenderer.render(this.selectedQuestions);
+    this.switchView('paperView');
   },
 
   populateMockSelect() {
@@ -73,16 +153,6 @@ const App = {
     if (!select) return;
     select.innerHTML = '<option value="">-- 모의고사 세트를 선택하세요 --</option>' + 
       AppState.mockSets.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
-  },
-
-  loadPaper(setKey) {
-    this.currentQuestions = AppState.getQuestionsBySet(setKey);
-    if (this.currentQuestions.length === 0) {
-      alert('출제된 변형문제가 없습니다. AI Engine에서 먼저 생성해주세요.');
-      return;
-    }
-    PaperRenderer.render(this.currentQuestions);
-    this.switchView('paperView');
   },
 
   renderBenchmarkList() {
@@ -105,15 +175,12 @@ const App = {
   },
 
   bindEvents() {
-    // 폰트 크기 변경
     document.getElementById('paperFontSize')?.addEventListener('change', (e) => {
       PaperRenderer.setFontSize(e.target.value);
     });
-    // 워터마크 토글
     document.getElementById('chkShowWatermark')?.addEventListener('change', (e) => {
       PaperRenderer.toggleWatermark(e.target.checked);
     });
-    // 정답지 토글
     document.getElementById('chkShowAnswerPage')?.addEventListener('change', (e) => {
       PaperRenderer.toggleAnswers(e.target.checked);
     });
