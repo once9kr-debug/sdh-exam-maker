@@ -12,7 +12,6 @@ const AppState = {
   workbooks: [],
   mockSets: [],
 
-  // 1. 초기 데이터 로드 (페이징 최적화)
   async init() {
     try {
       const [pRes, bRes, qRes] = await Promise.all([
@@ -33,7 +32,6 @@ const AppState = {
     }
   },
 
-  // 2. 모의고사 세트 메타 구성
   rebuildMockSets() {
     const setMap = {};
     this.passages.forEach(p => {
@@ -65,7 +63,6 @@ const AppState = {
     this.mockSets = Object.values(setMap);
   },
 
-  // 3. 지문 DB 저장/업데이트
   async savePassageBatch(passagesArray) {
     const { data, error } = await supabaseClient.from('passages').upsert(passagesArray).select();
     if (!error) {
@@ -75,7 +72,6 @@ const AppState = {
     return { success: false, error };
   },
 
-  // 4. 기출 벤치마크 단건 저장
   async saveBenchmark(benchmarkItem) {
     const { data, error } = await supabaseClient.from('school_benchmark').insert([benchmarkItem]).select();
     if (!error && data) {
@@ -85,7 +81,6 @@ const AppState = {
     return { success: false, error };
   },
 
-  // 5. 기출 DB 전체 초기화
   async clearBenchmarks() {
     const { error } = await supabaseClient.from('school_benchmark').delete().neq('id', 0);
     if (!error) {
@@ -95,7 +90,6 @@ const AppState = {
     return false;
   },
 
-  // 6. 생성된 변형문제 저장
   async saveGeneratedQuestions(questionsArray) {
     const { data, error } = await supabaseClient.from('questions').insert(questionsArray).select();
     if (!error) {
@@ -106,11 +100,32 @@ const AppState = {
     return { success: false, error };
   },
 
-  // 7. 특정 세트의 문제 불러오기
   getQuestionsBySet(setKey, difficulty = null) {
     return this.questions.filter(q => {
       const matchSet = q.set_key === setKey || setKey.includes(q.set_key) || q.set_key.includes(setKey);
       return difficulty ? matchSet && q.difficulty === difficulty : matchSet;
     });
+  },
+
+  // ✨ 신규: 단건 문항 삭제
+  async deleteQuestion(id) {
+    const { error } = await supabaseClient.from('questions').delete().eq('id', id);
+    if (!error) {
+      this.questions = this.questions.filter(q => q.id !== id);
+      this.rebuildMockSets();
+      return true;
+    }
+    return false;
+  },
+
+  // ✨ 신규: 세트 내 모든 변형문제 일괄 초기화
+  async clearQuestionsBySet(setKey) {
+    const { error } = await supabaseClient.from('questions').delete().eq('set_key', setKey);
+    if (!error) {
+      this.questions = this.questions.filter(q => q.set_key !== setKey);
+      this.rebuildMockSets();
+      return true;
+    }
+    return false;
   }
 };
