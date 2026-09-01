@@ -45,7 +45,6 @@ const App = {
     }
   },
 
-  // 1. 모의고사 세트 목록 (깔끔한 테이블 뷰)
   renderExamTable() {
     const container = document.getElementById('examTableBody');
     if (!container) return;
@@ -63,16 +62,18 @@ const App = {
         <td class="p-4 text-center">
           <span class="px-2.5 py-1 bg-cyan-50 text-cyan-700 font-bold rounded-lg border border-cyan-100">${exam.questionCount}문항</span>
         </td>
-        <td class="p-4 text-center">
-          <button onclick="App.openExamDetail('${exam.id}')" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-cyan-400 rounded-xl font-bold transition flex items-center gap-1.5 mx-auto">
-            <i class="fa-solid fa-sliders text-xs"></i> 문항 선택 및 출제
+        <td class="p-4 text-center flex justify-center items-center gap-2">
+          <button onclick="App.openExamDetail('${exam.id}')" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 rounded-xl font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-sliders text-xs"></i> 문항 선택/출제
+          </button>
+          <button onclick="App.clearSetQuestions('${exam.id}')" title="이 세트의 변형문제 비우기" class="px-2.5 py-1.5 border border-rose-200 text-rose-500 hover:bg-rose-50 rounded-xl font-bold transition">
+            <i class="fa-solid fa-trash-can text-xs"></i>
           </button>
         </td>
       </tr>
     `).join('');
   },
 
-  // 2. 세트 상세 / 지문 및 유형 선택 화면 열기
   openExamDetail(setKey) {
     this.currentSetKey = setKey;
     const exam = AppState.mockSets.find(e => e.id === setKey);
@@ -81,7 +82,6 @@ const App = {
     document.getElementById('detailExamTitle').innerText = exam ? exam.title : setKey;
     document.getElementById('detailTotalCount').innerText = `전체 보유 문항: ${questions.length}개`;
 
-    // 지문 번호 목록 추출
     const passageNums = [...new Set(questions.map(q => q.passage_num))].sort((a, b) => Number(a) - Number(b));
     const pContainer = document.getElementById('detailPassageFilters');
     pContainer.innerHTML = passageNums.map(n => `
@@ -91,7 +91,6 @@ const App = {
       </label>
     `).join('');
 
-    // 출제 유형 목록 추출
     const types = [...new Set(questions.map(q => q.type))];
     const tContainer = document.getElementById('detailTypeFilters');
     tContainer.innerHTML = types.map(t => `
@@ -105,7 +104,6 @@ const App = {
     this.switchView('examDetail');
   },
 
-  // 지문/유형 체크박스에 따른 문제 리스트 필터링
   filterDetailQuestions() {
     const questions = AppState.getQuestionsBySet(this.currentSetKey);
     const checkedPassages = Array.from(document.querySelectorAll('input[name="filterPassage"]:checked')).map(cb => cb.value);
@@ -122,15 +120,36 @@ const App = {
     }
 
     listContainer.innerHTML = this.selectedQuestions.map((q, idx) => `
-      <div class="p-4 bg-white border rounded-xl space-y-2 text-xs">
-        <div class="flex justify-between items-center">
+      <div class="p-4 bg-white border rounded-xl space-y-2 text-xs relative group hover:border-cyan-500 transition">
+        <div class="flex justify-between items-center pr-8">
           <span class="font-bold text-slate-900">${idx + 1}. [${q.passage_num}번] ${q.title}</span>
           <span class="px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded">${q.type}</span>
         </div>
         <p class="text-slate-600 line-clamp-2">${q.passage.replace(/<[^>]*>?/gm, '')}</p>
         <div class="text-[11px] text-slate-500 font-bold">정답: ${q.answer}</div>
+        <button onclick="App.deleteSingleQuestion(${q.id})" title="문항 삭제" class="absolute top-3 right-3 text-slate-300 hover:text-rose-500 p-1 transition">
+          <i class="fa-solid fa-trash-can text-sm"></i>
+        </button>
       </div>
     `).join('');
+  },
+
+  async deleteSingleQuestion(id) {
+    if (confirm('이 문항을 삭제하시겠습니까?')) {
+      await AppState.deleteQuestion(id);
+      this.filterDetailQuestions();
+      this.renderExamTable();
+    }
+  },
+
+  async clearSetQuestions(setKey) {
+    if (confirm(`'${setKey}' 세트에 생성된 변형문제를 모두 비우시겠습니까?`)) {
+      await AppState.clearQuestionsBySet(setKey);
+      this.renderExamTable();
+      if (this.currentSetKey === setKey) {
+        this.openExamDetail(setKey);
+      }
+    }
   },
 
   toggleAllFilter(name, check) {
@@ -138,7 +157,6 @@ const App = {
     this.filterDetailQuestions();
   },
 
-  // 3. 최종 시험지 출력 화면으로 진입
   generateSelectedPaper() {
     if (this.selectedQuestions.length === 0) {
       alert('출제할 문항을 최소 1개 이상 선택해 주세요.');
